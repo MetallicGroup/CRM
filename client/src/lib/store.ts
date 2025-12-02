@@ -129,7 +129,7 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
 
   // Costuri per showroom (pentru distribuire)
   const showroomTotals: Record<string, number> = {};
-  const showroomRevenues: Record<string, number> = {};
+  const showroomAgentCount: Record<string, number> = {};
   
   showrooms.forEach(s => {
     let cost = Object.values(s.costs).reduce((a, b) => a + b, 0);
@@ -140,9 +140,8 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
     }
 
     showroomTotals[s.id] = cost;
-    showroomRevenues[s.id] = agents
-      .filter(a => a.showroomId === s.id)
-      .reduce((sum, a) => sum + (a.monthlyData[month]?.venitTVA || 0), 0);
+    // Numărăm toți agenții din acest showroom (indiferent de venit)
+    showroomAgentCount[s.id] = agents.filter(a => a.showroomId === s.id).length;
   });
 
   return {
@@ -151,7 +150,7 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
     totalVenitFirma,
     totalVenitGardFirma,
     showroomTotals,
-    showroomRevenues,
+    showroomAgentCount,
     costBucDirect20,
     costBucIndirect80
   };
@@ -170,7 +169,7 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   // Asigură inițializare date lunare pentru angajați noi
   const data = emp.monthlyData?.[month] || emptyMonthlyData(month);
   
-  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma, showroomTotals, showroomRevenues } = totals;
+  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma, showroomTotals, showroomAgentCount } = totals;
 
   // Pentru PRODUCTIE și INDIRECT, nu calculăm profit (ei nu vând)
   if (emp.type !== 'AGENT') {
@@ -225,10 +224,10 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   const costuriProprii = (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 
                         (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
 
-  // Cost Showroom (proporțional cu venitul în cadrul showroom-ului)
-  const showroomRevenue = emp.showroomId ? (showroomRevenues[emp.showroomId] || 0) : 0;
+  // Cost Showroom (împărțit egal între toți agenții showroom-ului)
+  const agentCount = emp.showroomId ? (showroomAgentCount[emp.showroomId] || 0) : 0;
   const costShowroomTotal = emp.showroomId ? (showroomTotals[emp.showroomId] || 0) : 0;
-  const costShowroom = showroomRevenue > 0 ? costShowroomTotal * (venitTVA / showroomRevenue) : 0;
+  const costShowroom = agentCount > 0 ? costShowroomTotal / agentCount : 0;
 
   // Cost Producție (doar pentru cei cu venit garduri, proporțional)
   const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * (venitGard / totalVenitGardFirma) : 0;
