@@ -1,0 +1,331 @@
+Construiește o aplicație web completă (backend + frontend) în Replit, care funcționează ca un CRM financiar intern.
+Toată logica financiară trebuie implementată conform explicației de mai jos.
+Aplicația trebuie să includă baze de date interne (JSON, SQLite sau orice variantă locală) și o interfață cu tabele editabile.
+Nu folosi Google Sheets. Totul trebuie să fie construit în aplicație.
+
+🟦 STRUCTURA GENERALĂ A APLICAȚIEI
+
+Aplicația CRM trebuie să aibă următoarele module principale:
+
+Showroom București HQ (cu angajați)
+
+Showroom-uri regionale (Constanța, Giurgiu, Teleorman)
+
+Producție (cu angajați)
+
+Cheltuieli Indirecte Speciale
+
+Agenți (cu calcule complete)
+
+Distribuitori
+
+Dashboard (grafic + sumar profituri)
+
+Setări (unde pot asocia agenți cu showroom-uri)
+
+🟥 MODULE ȘI LOGICA INTERNĂ (OBLIGATORIU)
+🔥 A. SHOWROOM BUCUREȘTI HQ
+
+Angajați în showroom București HQ:
+
+Daniel
+
+Mădălina
+
+Dana
+
+Raluca
+
+Aceștia au costuri lunare:
+
+Salarii
+
+Auto
+
+Chirii
+
+Utilități
+
+Marketing
+
+Abonamente
+
+Consumabile
+
+Totalul acestor costuri se împarte TUTUROR agenților, proporțional cu:
+
+Cost_HQ_Agent = (Venit_Agent) / (Total_Venit_Firma) * Cost_HQ_Total
+
+
+UI:
+– un tabel cu angajați și cheltuieli
+– un card cu “Total HQ”
+
+🔥 B. SHOWROOM-URI REGIONALE
+
+Fiecare showroom regional are o singură linie de costuri:
+
+Chirii
+
+Utilitati
+
+Marketing
+
+Abonamente
+
+Consumabile
+
+TOTAL
+
+Asignări agenți la showroom-uri:
+
+Constanța: Dragos, Oana
+Giurgiu: Marian Toma, Cristina Toma
+Teleorman: Alexandra TR
+București: Alexandru Croitoru, Marian Costache, Iulian Marcu
+
+Distribuire showroom regional
+
+Costul total se împarte doar agenților acelui showroom:
+
+Cost_Showroom_Agent = Cost_Showroom_Total * (Venit_Agent / Total_Venit_Showroom)
+
+
+UI:
+– trei tabele (Constanța, Giurgiu, Teleorman)
+– câte un card „TOTAL”
+
+🔥 C. PRODUCȚIE
+
+Angajați producție:
+
+Kuke
+
+Laurențiu
+
+Marin
+
+Marian
+
+Costurile lor (salarii / auto / util / etc) formează TOTAL producție.
+
+Distribuire cost producție
+
+Se împarte doar agenților care au vendut garduri:
+
+Cost_Prod_Agent = Total_Prod * (Venit_Gard_Agent / Total_Venit_Gard_Firmă)
+
+
+Dacă un agent nu a vândut gard → cost producție = 0.
+
+UI:
+– tabel angajați producție
+– card TOTAL Producție
+
+🔥 D. CHELTUIELI INDIRECTE SPECIALE
+
+O singură linie de cheltuieli:
+
+Salarii
+
+Auto
+
+Chirii
+
+Utilități
+
+Marketing
+
+Abonamente
+
+Consumabile
+
+TOTAL
+
+Distribuire:
+Cost_Indirect_Agent = Cost_Indirect_Total * (Venit_Agent / Total_Venit_Firma)
+
+🟩 E. AGENȚI – CEL MAI IMPORTANT MODUL
+
+Pentru fiecare agent se creează un tabel cu 12 luni și următoarele coloane:
+
+Luna
+
+Venit TVA
+
+Venit Gard
+
+Venit Acoperis
+
+Comision %
+
+Valoare Comision
+
+Achizitie TVA
+
+Venit Brut
+
+TVA
+
+Venit Net
+
+Amortizare Auto
+
+Salariu
+
+Combustibil
+
+Revizii
+
+Alte Cheltuieli Auto
+
+Abonamente
+
+Diurne / Deplasari
+
+Costuri Variabile TOTAL
+
+Cost Showroom
+
+Cost HQ
+
+Cost Productie
+
+Cost Indirecte Speciale
+
+Cost Ambalare Propriu
+
+Cost Curier Ambalare
+
+Cost Curier Transport
+
+Transport Intern
+
+Profit Garduri
+
+Profit Acoperisuri
+
+Profit General
+
+Profitabilitate Totala
+
+Formule obligatorii:
+
+Valoare comision:
+
+Valoare_Comision = Venit_TVA * (Comision/100)
+
+
+Venit Brut:
+
+Venit_Brut = Venit_TVA - Achizitie_TVA
+
+
+TVA:
+
+TVA = Venit_TVA * 0.19
+
+
+Venit Net:
+
+Venit_Net = Venit_Brut - TVA
+
+
+Costuri Variabile TOTAL:
+
+Costuri_Var = sum(Amortizare Auto → Diurne)
+
+
+Profit Garduri:
+
+Profit_Garduri = Venit_Gard - (Cost_Showroom + Cost_HQ + Cost_Productie + Cost_Indirecte)
+
+
+Profit Acoperisuri:
+
+Profit_Acoperisuri = Venit_Acoperis - (Cost_Showroom + Cost_HQ + Cost_Indirecte)
+
+
+Profit General:
+
+Profit_General = Venit_Net - Costuri_Var
+
+
+Profit Final:
+
+Profit_Final = Venit_Net - (Costuri_Var + Cost_Showroom + Cost_HQ + Cost_Productie + Cost_Indirecte + Costuri_Logistice)
+
+🟦 F. DISTRIBUITORI
+
+Coloane necesare:
+
+Nume Distribuitor
+
+Venit TVA
+
+Achizitie TVA
+
+ADAOS TVA = Venit - Achizitie
+
+TVA = Venit * 0.19
+
+ADAOS NET = ADAOS TVA - TVA
+
+Comision %
+
+Comision Valoare = Venit * (Comision/100)
+
+Cheltuieli Marketing
+
+Cost Productie Alocat
+
+Cost Indirecte Speciale
+
+Profit Net = ADAOS_NET – Comision – CostProd – CostIndirecte
+
+Distribuire cost producție și indirecte:
+Cost_Prod_Distrib = Total_Prod * (Venit_Distrib / Total_Venit_Distrib)
+Cost_Indirect_Distrib = Total_Indirecte * (Venit_Distrib / Total_Venit_Distrib)
+
+🟨 G. DASHBOARD
+
+Include:
+
+Total venit firmă
+
+Total profit firmă
+
+Profit per agent
+
+Profit per showroom
+
+Profit garduri vs acoperișuri
+
+Top 10 agenți
+
+Grafic venituri lunare
+
+Grafic profit lunar
+
+🟧 H. FUNCȚIONALITĂȚI OBLIGATORII
+
+CRUD complet pentru agenți, showroom-uri, producție, distribuitori
+
+Toate calculele se fac în backend
+
+Frontend modern (React / Bootstrap / Tailwind)
+
+Salvare date în JSON / SQLite
+
+Repartizare automată costuri
+
+Recalculare la fiecare modificare
+
+Posibilitate selectare lună
+
+Posibilitate export CSV / PDF
+
+🟩 IMPORTANT – LOGICA FINANCIARĂ TREBUIE IMPLEMENTATĂ EXACT CA MAI SUS
+
+Nicio aproximație.
+Nicio abatere.
