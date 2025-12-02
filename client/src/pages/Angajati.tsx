@@ -61,7 +61,7 @@ export default function Angajati() {
       "Angajat", "Tip", "Showroom",
       "Venit Gard", "Achiziție Gard", "Adaos Net Gard",
       "Venit Acoperiș", "Achiziție Acoperiș", "Adaos Net Acoperiș",
-      "Adaos Net Total", "Venit TVA", "Comision %", "Valoare Comision",
+      "ADAOS FĂRĂ TVA", "Venit TVA", "Comision %", "Valoare Comision",
       "Salariu", "Amortizare Auto", "Combustibil", "Revizii", "Alte Chelt.", "Abonamente", "Diurne", "Total Cheltuieli",
       "Cost Showroom", "Cost Producție", "Cost Indirecte",
       "PROFIT FINAL"
@@ -194,8 +194,8 @@ export default function Angajati() {
                     <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950">Achiz. Acop</TableHead>
                     <TableHead className="min-w-[100px] bg-amber-100 dark:bg-amber-900 font-bold">Adaos Net A</TableHead>
 
-                    {/* TOTALS */}
-                    <TableHead className="min-w-[110px] bg-purple-100 dark:bg-purple-900 font-bold border-l-2 border-purple-500">ADAOS TOTAL</TableHead>
+                    {/* ADAOS FĂRĂ TVA - din acesta se scad toate cheltuielile */}
+                    <TableHead className="min-w-[130px] bg-purple-100 dark:bg-purple-900 font-bold border-l-2 border-purple-500">ADAOS FĂRĂ TVA</TableHead>
                     
                     <TableHead className="min-w-[100px]">Venit TVA</TableHead>
                     <TableHead className="min-w-[70px] bg-green-50 dark:bg-green-950">Com %</TableHead>
@@ -297,8 +297,8 @@ export default function Angajati() {
                         </TableCell>
                         <TableCell className="font-bold">{isAgent ? metrics.adaosNetAcoperis.toFixed(0) : '-'}</TableCell>
 
-                        {/* TOTALS */}
-                        <TableCell className="font-bold text-purple-600">{isAgent ? metrics.adaosNetTotal.toFixed(0) : '-'}</TableCell>
+                        {/* ADAOS FĂRĂ TVA */}
+                        <TableCell className="font-bold text-purple-600 bg-purple-50 dark:bg-purple-950">{isAgent ? metrics.adaosNetTotal.toFixed(0) : '-'}</TableCell>
 
                         <TableCell>
                           {isAgent ? (
