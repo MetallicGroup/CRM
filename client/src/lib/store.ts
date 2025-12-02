@@ -105,7 +105,13 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   const totalIndirectEmployeeCosts = indirectEmployees.reduce((sum, emp) => 
     sum + getEmployeeMonthlyCosts(emp, month), 0);
 
-  // Cost showroom București - 80% merge la indirecte
+  // Costuri indirecte DOAR pentru distribuitori (doar Dana, Raluca, Iulian - fără București)
+  const distributorIndirectEmployeeIds = ['emp_dana', 'emp_raluca', 'emp_iulian'];
+  const totalIndirectCostsDistributors = indirectEmployees
+    .filter(emp => distributorIndirectEmployeeIds.includes(emp.id))
+    .reduce((sum, emp) => sum + getEmployeeMonthlyCosts(emp, month), 0);
+
+  // Cost showroom București - 80% merge la indirecte (doar pentru agenți)
   const showrooms = state.showrooms || [];
   const showroomBuc = showrooms.find(s => s.location === 'Bucuresti');
   let costShowroomBucTotal = 0;
@@ -115,7 +121,7 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   const costBucDirect20 = costShowroomBucTotal * 0.20;
   const costBucIndirect80 = costShowroomBucTotal * 0.80;
 
-  // Total INDIRECTE = costuri angajați INDIRECT + 80% București
+  // Total INDIRECTE pentru AGENȚI = costuri toți angajați INDIRECT + 80% București
   const totalIndirectCosts = totalIndirectEmployeeCosts + costBucIndirect80;
 
   // Venituri totale
@@ -147,6 +153,7 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   return {
     totalProductionCosts,
     totalIndirectCosts,
+    totalIndirectCostsDistributors,
     totalVenitFirma,
     totalVenitGardFirma,
     showroomTotals,
@@ -266,7 +273,7 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
   const data = dist.monthlyData[month] || {
     month, venitTVA: 0, achizitieTVA: 0, comisionPercent: 0, cheltuieliMarketing: 0, costTransport: 0, costAmbalare: 0
   };
-  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma } = totals;
+  const { totalProductionCosts, totalIndirectCostsDistributors, totalVenitFirma, totalVenitGardFirma } = totals;
 
   const adaosTVA = (data.venitTVA || 0) - (data.achizitieTVA || 0);
   const tva = (data.venitTVA || 0) * 0.19;
@@ -274,7 +281,8 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
   const comisionValoare = (data.venitTVA || 0) * ((data.comisionPercent || 0) / 100);
 
   const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * ((data.venitTVA || 0) / totalVenitGardFirma) : 0;
-  const costIndirecte = totalVenitFirma > 0 ? totalIndirectCosts * ((data.venitTVA || 0) / totalVenitFirma) : 0;
+  // Pentru distribuitori: doar costurile Dana, Raluca, Iulian (fără 80% București)
+  const costIndirecte = totalVenitFirma > 0 ? totalIndirectCostsDistributors * ((data.venitTVA || 0) / totalVenitFirma) : 0;
 
   const profitNet = adaosNet - comisionValoare - costProductie - costIndirecte - (data.cheltuieliMarketing || 0) - (data.costTransport || 0) - (data.costAmbalare || 0);
   
