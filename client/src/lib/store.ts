@@ -212,7 +212,7 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   const venitAcoperis = data.venitAcoperis || 0;
   const achizitieAcoperis = data.achizitieAcoperis || 0;
   const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-  const tvaAcoperis = adaosTVAAcoperis * 0.19;  // TVA din diferență, nu din venit
+  const tvaAcoperis = adaosTVAAcoperis * 0.21;  // TVA 21% din diferență
   const adaosNetAcoperis = adaosTVAAcoperis - tvaAcoperis;
   
   const adaosNetTotal = adaosNetGard + adaosNetAcoperis;
