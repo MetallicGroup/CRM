@@ -7,30 +7,12 @@ export const MONTHS: Month[] = [
   'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'
 ];
 
-export interface CostItem {
-  id: string;
-  name: string;
-  amount: number;
-}
-
-export interface Employee {
-  id: string;
-  name: string;
-  role: string;
-  costs: {
-    salary: number;
-    auto: number; 
-    fuel: number;
-    maintenance: number; 
-    otherAuto: number;
-    subsistence: number; 
-  };
-}
+export type EmployeeType = 'AGENT' | 'PRODUCTIE' | 'INDIRECT';
 
 export interface Showroom {
   id: string;
   name: string;
-  location: 'Bucuresti_HQ' | 'Constanta' | 'Giurgiu' | 'Teleorman' | 'Bucuresti_Showroom'; 
+  location: 'Constanta' | 'Giurgiu' | 'Teleorman' | 'Bucuresti'; 
   costs: {
     rent: number;
     utilities: number;
@@ -38,64 +20,44 @@ export interface Showroom {
     subscriptions: number;
     consumables: number;
   };
-  employees: string[]; 
 }
 
-export interface Production {
-  employees: {
-    id: string;
-    name: string;
-    salary: number;
-    auto: number;
-    utilities: number;
-    other: number;
-  }[];
-}
-
-export interface IndirectCosts {
-  salaries: number;
-  auto: number;
-  rent: number;
-  utilities: number;
-  marketing: number;
-  subscriptions: number;
-  consumables: number;
-}
-
-export interface AgentMonthlyData {
+export interface EmployeeMonthlyData {
   month: Month;
   
-  // Venituri - MANUAL
+  // Venituri - MANUAL (pentru AGENT, pentru PRODUCTIE/INDIRECT vor fi 0)
   venitTVA: number;
   venitGard: number; 
   venitAcoperis: number; 
   
-  // Achiziții - MANUAL (separate pentru Gard și Acoperiș)
+  // Achiziții - MANUAL
   achizitieGard: number;
   achizitieAcoperis: number;
   
   comisionPercent: number;
   
-  // Costuri Auto & Logistica (Input per month)
-  amortizareAuto: number;
+  // Costuri directe (Input per month) - toți angajații au
   salariu: number;
+  amortizareAuto: number;
   combustibil: number;
   revizii: number;
   alteCheltuieliAuto: number;
   abonamente: number;
   diurne: number;
   
+  // Costuri logistice (doar pentru AGENT)
   costAmbalarePropriu: number;
   costCurierAmbalare: number;
   costCurierTransport: number;
   transportIntern: number;
 }
 
-export interface Agent {
+export interface Employee {
   id: string;
   name: string;
-  showroomId: string; 
-  monthlyData: Record<Month, AgentMonthlyData>;
+  type: EmployeeType; // AGENT, PRODUCTIE, sau INDIRECT
+  showroomId: string | null; // null pentru PRODUCTIE și INDIRECT
+  monthlyData: Record<Month, EmployeeMonthlyData>;
 }
 
 export interface Distributor {
@@ -110,8 +72,6 @@ export interface DistributorMonthlyData {
   achizitieTVA: number;
   comisionPercent: number;
   cheltuieliMarketing: number;
-  
-  // Transport și Ambalare
   costTransport: number;
   costAmbalare: number;
 }

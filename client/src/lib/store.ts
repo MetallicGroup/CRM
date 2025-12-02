@@ -1,30 +1,27 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Agent, Distributor, Employee, IndirectCosts, Production, Showroom, Month } from './types';
-import { INITIAL_AGENTS, INITIAL_DISTRIBUTORS, INITIAL_HQ_EMPLOYEES, INITIAL_INDIRECT_COSTS, INITIAL_PRODUCTION, INITIAL_SHOWROOMS } from './mock-data';
+import { Employee, Distributor, Showroom, Month, EmployeeMonthlyData } from './types';
+import { INITIAL_EMPLOYEES, INITIAL_DISTRIBUTORS, INITIAL_SHOWROOMS } from './mock-data';
 
 interface StoreState {
   selectedMonth: Month;
-  hqEmployees: Employee[];
   showrooms: Showroom[];
-  production: Production;
-  indirectCosts: IndirectCosts;
-  agents: Agent[];
+  employees: Employee[];
   distributors: Distributor[];
 
   setSelectedMonth: (month: Month) => void;
-  updateAgentData: (agentId: string, month: Month, data: Partial<Agent['monthlyData'][Month]>) => void;
-  updateDistributorData: (distId: string, month: Month, data: Partial<Distributor['monthlyData'][Month]>) => void;
   
-  updateHQEmployee: (id: string, data: Partial<Employee>) => void;
-  addHQEmployee: (employee: Employee) => void;
-  removeHQEmployee: (id: string) => void;
+  // Employee operations
+  updateEmployeeData: (empId: string, month: Month, data: Partial<EmployeeMonthlyData>) => void;
+  updateEmployee: (id: string, data: Partial<Employee>) => void;
+  addEmployee: (employee: Employee) => void;
+  removeEmployee: (id: string) => void;
   
+  // Showroom operations
   updateShowroom: (id: string, data: Partial<Showroom>) => void;
-  updateProductionEmployee: (index: number, data: Partial<Production['employees'][0]>) => void;
-  updateIndirectCosts: (data: Partial<IndirectCosts>) => void;
   
-  updateAgent: (id: string, data: Partial<Agent>) => void;
+  // Distributor operations
+  updateDistributorData: (distId: string, month: Month, data: Partial<Distributor['monthlyData'][Month]>) => void;
   
   resetData: () => void;
 }
@@ -33,21 +30,34 @@ export const useStore = create<StoreState>()(
   persist(
     (set) => ({
       selectedMonth: 'Ianuarie',
-      hqEmployees: INITIAL_HQ_EMPLOYEES,
       showrooms: INITIAL_SHOWROOMS,
-      production: INITIAL_PRODUCTION,
-      indirectCosts: INITIAL_INDIRECT_COSTS,
-      agents: INITIAL_AGENTS,
+      employees: INITIAL_EMPLOYEES,
       distributors: INITIAL_DISTRIBUTORS,
 
       setSelectedMonth: (month) => set({ selectedMonth: month }),
 
-      updateAgentData: (agentId, month, data) => set((state) => ({
-        agents: state.agents.map(agent => 
-          agent.id === agentId 
-            ? { ...agent, monthlyData: { ...agent.monthlyData, [month]: { ...agent.monthlyData[month], ...data } } }
-            : agent
+      updateEmployeeData: (empId, month, data) => set((state) => ({
+        employees: state.employees.map(emp => 
+          emp.id === empId 
+            ? { ...emp, monthlyData: { ...emp.monthlyData, [month]: { ...emp.monthlyData[month], ...data } } }
+            : emp
         )
+      })),
+
+      updateEmployee: (id, data) => set((state) => ({
+        employees: state.employees.map(emp => emp.id === id ? { ...emp, ...data } : emp)
+      })),
+
+      addEmployee: (employee) => set((state) => ({
+        employees: [...state.employees, employee]
+      })),
+
+      removeEmployee: (id) => set((state) => ({
+        employees: state.employees.filter(emp => emp.id !== id)
+      })),
+
+      updateShowroom: (id, data) => set((state) => ({
+        showrooms: state.showrooms.map(s => s.id === id ? { ...s, ...data } : s)
       })),
 
       updateDistributorData: (distId, month, data) => set((state) => ({
@@ -58,93 +68,73 @@ export const useStore = create<StoreState>()(
         )
       })),
 
-      updateHQEmployee: (id, data) => set((state) => ({
-        hqEmployees: state.hqEmployees.map(emp => emp.id === id ? { ...emp, ...data } : emp)
-      })),
-
-      addHQEmployee: (employee) => set((state) => ({
-        hqEmployees: [...state.hqEmployees, employee]
-      })),
-
-      removeHQEmployee: (id) => set((state) => ({
-        hqEmployees: state.hqEmployees.filter(emp => emp.id !== id)
-      })),
-
-      updateShowroom: (id, data) => set((state) => ({
-        showrooms: state.showrooms.map(s => s.id === id ? { ...s, ...data } : s)
-      })),
-
-      updateProductionEmployee: (index, data) => set((state) => {
-        const newEmployees = [...state.production.employees];
-        newEmployees[index] = { ...newEmployees[index], ...data };
-        return { production: { ...state.production, employees: newEmployees } };
-      }),
-
-      updateIndirectCosts: (data) => set((state) => ({
-        indirectCosts: { ...state.indirectCosts, ...data }
-      })),
-
-      updateAgent: (id, data) => set((state) => ({
-        agents: state.agents.map(agent => agent.id === id ? { ...agent, ...data } : agent)
-      })),
-
       resetData: () => set({
-        hqEmployees: INITIAL_HQ_EMPLOYEES,
         showrooms: INITIAL_SHOWROOMS,
-        production: INITIAL_PRODUCTION,
-        indirectCosts: INITIAL_INDIRECT_COSTS,
-        agents: INITIAL_AGENTS,
+        employees: INITIAL_EMPLOYEES,
         distributors: INITIAL_DISTRIBUTORS,
       })
     }),
     {
-      name: 'crm-storage',
+      name: 'crm-storage-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )
 );
 
+// Helper function to get employee costs for a month
+const getEmployeeMonthlyCosts = (emp: Employee, month: Month): number => {
+  const data = emp.monthlyData[month];
+  if (!data) return 0;
+  return (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 
+         (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
+};
+
 // Selectors for Calculations
-
 export const getTotalsForMonth = (state: StoreState, month: Month) => {
-  const totalHQCostsRaw = state.hqEmployees.reduce((sum, emp) => 
-    sum + emp.costs.salary + emp.costs.auto + emp.costs.fuel + emp.costs.maintenance + emp.costs.otherAuto + emp.costs.subsistence, 0);
+  const agents = state.employees.filter(e => e.type === 'AGENT');
+  const productionEmployees = state.employees.filter(e => e.type === 'PRODUCTIE');
+  const indirectEmployees = state.employees.filter(e => e.type === 'INDIRECT');
+  const distributors = state.distributors;
 
-  const totalProductionCosts = state.production.employees.reduce((sum, emp) => 
-    sum + emp.salary + emp.auto + emp.utilities + emp.other, 0);
+  // Total costuri PRODUCȚIE (de la angajații tip PRODUCTIE)
+  const totalProductionCosts = productionEmployees.reduce((sum, emp) => 
+    sum + getEmployeeMonthlyCosts(emp, month), 0);
 
-  let totalIndirectCosts = Object.values(state.indirectCosts).reduce((sum, val) => sum + val, 0);
+  // Total costuri INDIRECT (de la angajații tip INDIRECT)
+  const totalIndirectEmployeeCosts = indirectEmployees.reduce((sum, emp) => 
+    sum + getEmployeeMonthlyCosts(emp, month), 0);
 
-  const showroomBuc = state.showrooms.find(s => s.location === 'Bucuresti_Showroom');
+  // Cost showroom București - 80% merge la indirecte
+  const showroomBuc = state.showrooms.find(s => s.location === 'Bucuresti');
   let costShowroomBucTotal = 0;
   if (showroomBuc) {
     costShowroomBucTotal = Object.values(showroomBuc.costs).reduce((a, b) => a + b, 0);
   }
-
   const costBucDirect20 = costShowroomBucTotal * 0.20;
   const costBucIndirect80 = costShowroomBucTotal * 0.80;
 
-  totalIndirectCosts += costBucIndirect80;
-  totalIndirectCosts += totalHQCostsRaw; 
+  // Total INDIRECTE = costuri angajați INDIRECT + 80% București
+  const totalIndirectCosts = totalIndirectEmployeeCosts + costBucIndirect80;
 
-  const agents = state.agents;
-  const distributors = state.distributors;
+  // Venituri totale
+  const totalVenitAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[month]?.venitTVA || 0), 0);
+  const totalVenitDistribuitori = distributors.reduce((sum, d) => sum + (d.monthlyData[month]?.venitTVA || 0), 0);
+  const totalVenitFirma = totalVenitAgenti + totalVenitDistribuitori;
 
-  const totalVenitFirma = agents.reduce((sum, a) => sum + (a.monthlyData[month]?.venitTVA || 0), 0) +
-                          distributors.reduce((sum, d) => sum + (d.monthlyData[month]?.venitTVA || 0), 0);
+  // Venit GARDURI (pentru distribuirea costurilor de producție)
+  const totalVenitGardAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[month]?.venitGard || 0), 0);
+  const totalVenitGardFirma = totalVenitGardAgenti + totalVenitDistribuitori; // distribuitorii vând și ei garduri
 
-  const totalVenitGardFirma = agents.reduce((sum, a) => sum + (a.monthlyData[month]?.venitGard || 0), 0); 
-  
-  const totalVenitProductionBase = totalVenitGardFirma + distributors.reduce((sum, d) => sum + (d.monthlyData[month]?.venitTVA || 0), 0);
-
+  // Costuri per showroom (pentru distribuire)
   const showroomTotals: Record<string, number> = {};
   const showroomRevenues: Record<string, number> = {};
   
   state.showrooms.forEach(s => {
     let cost = Object.values(s.costs).reduce((a, b) => a + b, 0);
     
-    if (s.location === 'Bucuresti_Showroom') {
-        cost = costBucDirect20;
+    // București: doar 20% se distribuie agenților
+    if (s.location === 'Bucuresti') {
+      cost = costBucDirect20;
     }
 
     showroomTotals[s.id] = cost;
@@ -154,37 +144,67 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   });
 
   return {
-    totalHQCostsRaw,
     totalProductionCosts,
     totalIndirectCosts,
     totalVenitFirma,
     totalVenitGardFirma,
-    totalVenitProductionBase,
     showroomTotals,
-    showroomRevenues
+    showroomRevenues,
+    costBucDirect20,
+    costBucIndirect80
   };
 };
 
-export const calculateAgentMetrics = (agent: Agent, month: Month, totals: ReturnType<typeof getTotalsForMonth>) => {
-  const data = agent.monthlyData[month] || {
+export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: ReturnType<typeof getTotalsForMonth>) => {
+  const data = emp.monthlyData[month] || {
     month,
     venitTVA: 0, venitGard: 0, venitAcoperis: 0, 
     achizitieGard: 0, achizitieAcoperis: 0,
     comisionPercent: 0,
-    amortizareAuto: 0, salariu: 0, combustibil: 0, revizii: 0, alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
+    salariu: 0, amortizareAuto: 0, combustibil: 0, revizii: 0, alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
     costAmbalarePropriu: 0, costCurierAmbalare: 0, costCurierTransport: 0, transportIntern: 0
   };
   
-  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitProductionBase, showroomTotals, showroomRevenues } = totals;
+  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma, showroomTotals, showroomRevenues } = totals;
 
-  // GARDURI - folosim achizitieGard manual
+  // Pentru PRODUCTIE și INDIRECT, nu calculăm profit (ei nu vând)
+  if (emp.type !== 'AGENT') {
+    const costuriProprii = (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 
+                          (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
+    return {
+      ...data,
+      venitGard: 0,
+      venitAcoperis: 0,
+      venitTVA: 0,
+      achizitieGard: 0,
+      achizitieAcoperis: 0,
+      tvaGard: 0,
+      tvaAcoperis: 0,
+      adaosTVAGard: 0,
+      adaosNetGard: 0,
+      adaosTVAAcoperis: 0,
+      adaosNetAcoperis: 0,
+      adaosNetTotal: 0,
+      valoareComision: 0,
+      costuriProprii,
+      costShowroom: 0,
+      costProductie: 0,
+      costIndirecte: 0,
+      profitFinal: 0,
+      contributionType: emp.type
+    };
+  }
+
+  // === CALCULE PENTRU AGENȚI ===
+
+  // GARDURI
   const venitGard = data.venitGard || 0;
   const achizitieGard = data.achizitieGard || 0;
   const adaosTVAGard = venitGard - achizitieGard;
   const tvaGard = venitGard * 0.21;
   const adaosNetGard = adaosTVAGard - tvaGard;
 
-  // ACOPERISURI - folosim achizitieAcoperis manual
+  // ACOPERISURI
   const venitAcoperis = data.venitAcoperis || 0;
   const achizitieAcoperis = data.achizitieAcoperis || 0;
   const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
@@ -196,18 +216,27 @@ export const calculateAgentMetrics = (agent: Agent, month: Month, totals: Return
   const venitTVA = data.venitTVA || 0;
   const valoareComision = venitTVA * ((data.comisionPercent || 0) / 100);
   
-  const costuriVariabile = (data.amortizareAuto || 0) + (data.salariu || 0) + (data.combustibil || 0) + (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
+  // Costuri proprii ale agentului
+  const costuriProprii = (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 
+                        (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
 
-  // Distributions
-  const showroomRevenue = showroomRevenues[agent.showroomId] || 0;
-  const costShowroomTotal = showroomTotals[agent.showroomId] || 0;
+  // Cost Showroom (proporțional cu venitul în cadrul showroom-ului)
+  const showroomRevenue = emp.showroomId ? (showroomRevenues[emp.showroomId] || 0) : 0;
+  const costShowroomTotal = emp.showroomId ? (showroomTotals[emp.showroomId] || 0) : 0;
   const costShowroom = showroomRevenue > 0 ? costShowroomTotal * (venitTVA / showroomRevenue) : 0;
 
-  const costProductie = totalVenitProductionBase > 0 ? totalProductionCosts * (venitGard / totalVenitProductionBase) : 0;
+  // Cost Producție (doar pentru cei cu venit garduri, proporțional)
+  const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * (venitGard / totalVenitGardFirma) : 0;
 
+  // Cost Indirecte (proporțional cu venitul total)
   const costIndirecte = totalVenitFirma > 0 ? totalIndirectCosts * (venitTVA / totalVenitFirma) : 0;
 
-  const profitFinal = adaosNetTotal - valoareComision - costuriVariabile - costShowroom - costProductie - costIndirecte - (data.costAmbalarePropriu || 0) - (data.costCurierAmbalare || 0) - (data.costCurierTransport || 0) - (data.transportIntern || 0);
+  // Costuri logistice
+  const costuriLogistice = (data.costAmbalarePropriu || 0) + (data.costCurierAmbalare || 0) + 
+                          (data.costCurierTransport || 0) + (data.transportIntern || 0);
+
+  // PROFIT FINAL
+  const profitFinal = adaosNetTotal - valoareComision - costuriProprii - costShowroom - costProductie - costIndirecte - costuriLogistice;
 
   return {
     ...data,
@@ -224,11 +253,13 @@ export const calculateAgentMetrics = (agent: Agent, month: Month, totals: Return
     adaosNetAcoperis,
     adaosNetTotal,
     valoareComision,
-    costuriVariabile,
+    costuriProprii,
+    costuriLogistice,
     costShowroom,
     costProductie,
     costIndirecte,
-    profitFinal
+    profitFinal,
+    contributionType: 'AGENT'
   };
 };
 
@@ -236,14 +267,14 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
   const data = dist.monthlyData[month] || {
     month, venitTVA: 0, achizitieTVA: 0, comisionPercent: 0, cheltuieliMarketing: 0, costTransport: 0, costAmbalare: 0
   };
-  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitProductionBase } = totals;
+  const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma } = totals;
 
   const adaosTVA = (data.venitTVA || 0) - (data.achizitieTVA || 0);
   const tva = (data.venitTVA || 0) * 0.19;
   const adaosNet = adaosTVA - tva;
   const comisionValoare = (data.venitTVA || 0) * ((data.comisionPercent || 0) / 100);
 
-  const costProductie = totalVenitProductionBase > 0 ? totalProductionCosts * ((data.venitTVA || 0) / totalVenitProductionBase) : 0;
+  const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * ((data.venitTVA || 0) / totalVenitGardFirma) : 0;
   const costIndirecte = totalVenitFirma > 0 ? totalIndirectCosts * ((data.venitTVA || 0) / totalVenitFirma) : 0;
 
   const profitNet = adaosNet - comisionValoare - costProductie - costIndirecte - (data.cheltuieliMarketing || 0) - (data.costTransport || 0) - (data.costAmbalare || 0);
