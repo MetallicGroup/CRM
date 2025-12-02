@@ -205,14 +205,14 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   const venitGard = data.venitGard || 0;
   const achizitieGard = data.achizitieGard || 0;
   const adaosTVAGard = venitGard - achizitieGard;
-  const tvaGard = venitGard * 0.21;
+  const tvaGard = adaosTVAGard * 0.21;  // TVA din diferență, nu din venit
   const adaosNetGard = adaosTVAGard - tvaGard;
 
   // ACOPERISURI
   const venitAcoperis = data.venitAcoperis || 0;
   const achizitieAcoperis = data.achizitieAcoperis || 0;
   const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-  const tvaAcoperis = venitAcoperis * 0.19;
+  const tvaAcoperis = adaosTVAAcoperis * 0.19;  // TVA din diferență, nu din venit
   const adaosNetAcoperis = adaosTVAAcoperis - tvaAcoperis;
   
   const adaosNetTotal = adaosNetGard + adaosNetAcoperis;
