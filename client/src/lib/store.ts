@@ -276,7 +276,7 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
   const { totalProductionCosts, totalIndirectCostsDistributors, totalVenitFirma, totalVenitGardFirma } = totals;
 
   const adaosTVA = (data.venitTVA || 0) - (data.achizitieTVA || 0);
-  const tva = (data.venitTVA || 0) * 0.19;
+  const tva = adaosTVA * 0.21;  // TVA 21% din adaos, nu din venit
   const adaosNet = adaosTVA - tva;
   const comisionValoare = (data.venitTVA || 0) * ((data.comisionPercent || 0) / 100);
 
