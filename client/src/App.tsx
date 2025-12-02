@@ -1,28 +1,42 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Layout } from "@/components/layout/Layout";
+
+import Dashboard from "@/pages/Dashboard";
+import ShowroomHQ from "@/pages/ShowroomHQ";
+import ShowroomRegional from "@/pages/ShowroomRegional";
+import Production from "@/pages/Production";
+import IndirectCosts from "@/pages/IndirectCosts";
+import Agents from "@/pages/Agents";
+import Distributors from "@/pages/Distributors";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
-    <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
-      <Route component={NotFound} />
-    </Switch>
+    <Layout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/showroom-hq" component={ShowroomHQ} />
+        <Route path="/showroom-regional" component={ShowroomRegional} />
+        <Route path="/production" component={Production} />
+        <Route path="/indirect-costs" component={IndirectCosts} />
+        <Route path="/agents" component={Agents} />
+        <Route path="/distributors" component={Distributors} />
+        <Route path="/settings" component={Settings} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <Toaster />
+      <Router />
     </QueryClientProvider>
   );
 }
