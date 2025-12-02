@@ -15,7 +15,7 @@ export default function Distributors() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Distribuitori</h1>
-          <p className="text-muted-foreground">Calcul profitabilitate distribuitori</p>
+          <p className="text-muted-foreground">Logică nouă: Include Transport, Ambalare și distribuire Producție</p>
         </div>
         <MonthSelector />
       </div>
@@ -39,6 +39,8 @@ export default function Distributors() {
                     <TableHead className="min-w-[100px]">Comision %</TableHead>
                     <TableHead className="min-w-[120px]">Valoare Comision</TableHead>
                     <TableHead className="min-w-[120px]">Cheltuieli Marketing</TableHead>
+                    <TableHead className="min-w-[120px]">Cost Transport</TableHead>
+                    <TableHead className="min-w-[120px]">Cost Ambalare</TableHead>
                     <TableHead className="min-w-[120px]">Cost Producție</TableHead>
                     <TableHead className="min-w-[120px]">Cost Indirecte</TableHead>
                     <TableHead className="min-w-[140px] font-bold text-lg border-l-4 border-blue-500">PROFIT NET</TableHead>
@@ -63,6 +65,9 @@ export default function Distributors() {
                         <TableCell><Input type="number" className="w-16 h-8" value={metrics.comisionPercent} onChange={(e) => updateDistributorData(dist.id, selectedMonth, { comisionPercent: Number(e.target.value) })} /></TableCell>
                         <TableCell>{metrics.comisionValoare.toFixed(2)}</TableCell>
                         <TableCell><Input type="number" className="w-24 h-8" value={metrics.cheltuieliMarketing} onChange={(e) => updateDistributorData(dist.id, selectedMonth, { cheltuieliMarketing: Number(e.target.value) })} /></TableCell>
+                        
+                        <TableCell><Input type="number" className="w-24 h-8" value={metrics.costTransport} onChange={(e) => updateDistributorData(dist.id, selectedMonth, { costTransport: Number(e.target.value) })} /></TableCell>
+                        <TableCell><Input type="number" className="w-24 h-8" value={metrics.costAmbalare} onChange={(e) => updateDistributorData(dist.id, selectedMonth, { costAmbalare: Number(e.target.value) })} /></TableCell>
                         
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{metrics.costProductie.toFixed(2)}</TableCell>
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{metrics.costIndirecte.toFixed(2)}</TableCell>

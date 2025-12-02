@@ -88,7 +88,8 @@ MONTHS.forEach(month => {
   INITIAL_DISTRIBUTORS.forEach(dist => {
     dist.monthlyData[month] = {
       month,
-      venitTVA: 0, achizitieTVA: 0, comisionPercent: 0, cheltuieliMarketing: 0
+      venitTVA: 0, achizitieTVA: 0, comisionPercent: 0, cheltuieliMarketing: 0,
+      costTransport: 0, costAmbalare: 0
     };
   });
 });

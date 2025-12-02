@@ -19,18 +19,18 @@ export interface Employee {
   role: string;
   costs: {
     salary: number;
-    auto: number; // Amortizare/Chirie auto
+    auto: number; 
     fuel: number;
-    maintenance: number; // Revizii
+    maintenance: number; 
     otherAuto: number;
-    subsistence: number; // Diurne
+    subsistence: number; 
   };
 }
 
 export interface Showroom {
   id: string;
   name: string;
-  location: 'Bucuresti_HQ' | 'Constanta' | 'Giurgiu' | 'Teleorman' | 'Bucuresti_Showroom'; // Bucuresti_HQ vs Bucuresti regional showroom
+  location: 'Bucuresti_HQ' | 'Constanta' | 'Giurgiu' | 'Teleorman' | 'Bucuresti_Showroom'; 
   costs: {
     rent: number;
     utilities: number;
@@ -38,7 +38,7 @@ export interface Showroom {
     subscriptions: number;
     consumables: number;
   };
-  employees: string[]; // IDs of agents assigned here
+  employees: string[]; 
 }
 
 export interface Production {
@@ -67,8 +67,8 @@ export interface AgentMonthlyData {
   
   // Inputs
   venitTVA: number;
-  venitGard: number; // Portion of revenue from Fences
-  venitAcoperis: number; // Portion of revenue from Roofs
+  venitGard: number; 
+  venitAcoperis: number; 
   achizitieTVA: number;
   comisionPercent: number;
   
@@ -85,31 +85,12 @@ export interface AgentMonthlyData {
   costCurierAmbalare: number;
   costCurierTransport: number;
   transportIntern: number;
-
-  // Calculated Fields (Computed in store/selector)
-  // valoareComision: number;
-  // venitBrut: number;
-  // tva: number;
-  // venitNet: number;
-  // costuriVariabile: number;
-  
-  // Distributed Costs (Computed)
-  // costShowroom: number;
-  // costHQ: number;
-  // costProductie: number;
-  // costIndirecte: number;
-  
-  // Profits (Computed)
-  // profitGarduri: number;
-  // profitAcoperisuri: number;
-  // profitGeneral: number;
-  // profitFinal: number;
 }
 
 export interface Agent {
   id: string;
   name: string;
-  showroomId: string; // Where they are assigned
+  showroomId: string; 
   monthlyData: Record<Month, AgentMonthlyData>;
 }
 
@@ -126,12 +107,7 @@ export interface DistributorMonthlyData {
   comisionPercent: number;
   cheltuieliMarketing: number;
   
-  // Computed
-  // adaosTVA: number;
-  // tva: number;
-  // adaosNet: number;
-  // comisionValoare: number;
-  // costProductieAlocat: number;
-  // costIndirecteSpeciale: number;
-  // profitNet: number;
+  // New fields for Distributors
+  costTransport: number;
+  costAmbalare: number;
 }
