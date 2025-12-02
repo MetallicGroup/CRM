@@ -1,0 +1,15 @@
+Sa sterg showroom București si sa las doar regional shworooms. scoatem si producția, si băgăm la agenți care se transforma in angajați ii băgăm pe toți iar totalul de la producție din băieții din spate + Mădălina sa se atribuie. 
+
+Distribuitorii sa aibă acelasi tabel cum au deja + încă o coloana cu transport si ambalare.
+
+Cheltuielile showroom ului din București sa fie distribuite astfel : o împărțim in 2 : 20% către agenții din București : 2 agenți = 10% cu 10%. Restul de 80% sa se ducă in cheltuieli indirecte + salariile angajaților neproductivi din fata la indirecte (deci la coloana cu cheltuieli indirecte sa fie 80% din cheltuielile showroomul ului din buc +salariii neproductive din fata +marketing). Acest total din cheltuieli indirecte sa fie împărțit procentual si împărțit pe venitul total pe luna respectivă al fiecărui agent cu tot cu cei din București. 
+
+Deci agenții din Buc plătesc odată 20% singuri pentru spațiul folosit iar restul de 80% către toți inclusiv agenții din buc.
+
+Productia se împarte la venitul total al gardurilor si al elementelor speciale tot procentual si împărțit pe venitul total pe luna respectivă al fiecărui agent care a vândut garduri.
+
+Cheltuielile din celelalte showroom uri sa se împartă procentual pe venitul total al agenților asignati showroom ului respectiv pentru a se vedea profitabilitatea agentului., iar pt productivitatea showroom ului se scad cheltuielile totale din showroom minus profitul net al agenților din showroom ul respectiv pentru  a se vedea profitabilitatea din showroom. 
+
+Coloane din foaia principală : VENIT TVA , VENIT TVA GARD, VENIT ACHIZITIE TVA GARD, ADAOS TVA GARD, TVA 21% GARD, ADAOS NET GARD , după aceleași lucruri dar in loc de gard sa fie acoperiș. , după avem adaos net total adică adaos net din gard + adaos net acoperiș. După avem salariu, amortizare auto - tipurile pe care le avem deja de cheltuieli . Scoatem costurile HQ si la indirecte punem costurile din buc atribuite cum am explicat mai sus.
+
+La distribuitori sa fie la fel ca la agenți același tabel
