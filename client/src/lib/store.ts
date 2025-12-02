@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Agent, Distributor, Employee, IndirectCosts, Production, Showroom, Month, MONTHS } from './types';
 import { INITIAL_AGENTS, INITIAL_DISTRIBUTORS, INITIAL_HQ_EMPLOYEES, INITIAL_INDIRECT_COSTS, INITIAL_PRODUCTION, INITIAL_SHOWROOMS } from './mock-data';
 
@@ -26,65 +27,85 @@ interface StoreState {
   
   // Settings Actions
   updateAgent: (id: string, data: Partial<Agent>) => void;
+  
+  // Reset
+  resetData: () => void;
 }
 
-export const useStore = create<StoreState>((set, get) => ({
-  selectedMonth: 'Ianuarie',
-  hqEmployees: INITIAL_HQ_EMPLOYEES,
-  showrooms: INITIAL_SHOWROOMS,
-  production: INITIAL_PRODUCTION,
-  indirectCosts: INITIAL_INDIRECT_COSTS,
-  agents: INITIAL_AGENTS,
-  distributors: INITIAL_DISTRIBUTORS,
+export const useStore = create<StoreState>()(
+  persist(
+    (set, get) => ({
+      selectedMonth: 'Ianuarie',
+      hqEmployees: INITIAL_HQ_EMPLOYEES,
+      showrooms: INITIAL_SHOWROOMS,
+      production: INITIAL_PRODUCTION,
+      indirectCosts: INITIAL_INDIRECT_COSTS,
+      agents: INITIAL_AGENTS,
+      distributors: INITIAL_DISTRIBUTORS,
 
-  setSelectedMonth: (month) => set({ selectedMonth: month }),
+      setSelectedMonth: (month) => set({ selectedMonth: month }),
 
-  updateAgentData: (agentId, month, data) => set((state) => ({
-    agents: state.agents.map(agent => 
-      agent.id === agentId 
-        ? { ...agent, monthlyData: { ...agent.monthlyData, [month]: { ...agent.monthlyData[month], ...data } } }
-        : agent
-    )
-  })),
+      updateAgentData: (agentId, month, data) => set((state) => ({
+        agents: state.agents.map(agent => 
+          agent.id === agentId 
+            ? { ...agent, monthlyData: { ...agent.monthlyData, [month]: { ...agent.monthlyData[month], ...data } } }
+            : agent
+        )
+      })),
 
-  updateDistributorData: (distId, month, data) => set((state) => ({
-    distributors: state.distributors.map(dist => 
-      dist.id === distId 
-        ? { ...dist, monthlyData: { ...dist.monthlyData, [month]: { ...dist.monthlyData[month], ...data } } }
-        : dist
-    )
-  })),
+      updateDistributorData: (distId, month, data) => set((state) => ({
+        distributors: state.distributors.map(dist => 
+          dist.id === distId 
+            ? { ...dist, monthlyData: { ...dist.monthlyData, [month]: { ...dist.monthlyData[month], ...data } } }
+            : dist
+        )
+      })),
 
-  updateHQEmployee: (id, data) => set((state) => ({
-    hqEmployees: state.hqEmployees.map(emp => emp.id === id ? { ...emp, ...data } : emp)
-  })),
+      updateHQEmployee: (id, data) => set((state) => ({
+        hqEmployees: state.hqEmployees.map(emp => emp.id === id ? { ...emp, ...data } : emp)
+      })),
 
-  addHQEmployee: (employee) => set((state) => ({
-    hqEmployees: [...state.hqEmployees, employee]
-  })),
+      addHQEmployee: (employee) => set((state) => ({
+        hqEmployees: [...state.hqEmployees, employee]
+      })),
 
-  removeHQEmployee: (id) => set((state) => ({
-    hqEmployees: state.hqEmployees.filter(emp => emp.id !== id)
-  })),
+      removeHQEmployee: (id) => set((state) => ({
+        hqEmployees: state.hqEmployees.filter(emp => emp.id !== id)
+      })),
 
-  updateShowroom: (id, data) => set((state) => ({
-    showrooms: state.showrooms.map(s => s.id === id ? { ...s, ...data } : s)
-  })),
+      updateShowroom: (id, data) => set((state) => ({
+        showrooms: state.showrooms.map(s => s.id === id ? { ...s, ...data } : s)
+      })),
 
-  updateProductionEmployee: (index, data) => set((state) => {
-    const newEmployees = [...state.production.employees];
-    newEmployees[index] = { ...newEmployees[index], ...data };
-    return { production: { ...state.production, employees: newEmployees } };
-  }),
+      updateProductionEmployee: (index, data) => set((state) => {
+        const newEmployees = [...state.production.employees];
+        newEmployees[index] = { ...newEmployees[index], ...data };
+        return { production: { ...state.production, employees: newEmployees } };
+      }),
 
-  updateIndirectCosts: (data) => set((state) => ({
-    indirectCosts: { ...state.indirectCosts, ...data }
-  })),
+      updateIndirectCosts: (data) => set((state) => ({
+        indirectCosts: { ...state.indirectCosts, ...data }
+      })),
 
-  updateAgent: (id, data) => set((state) => ({
-    agents: state.agents.map(agent => agent.id === id ? { ...agent, ...data } : agent)
-  })),
-}));
+      updateAgent: (id, data) => set((state) => ({
+        agents: state.agents.map(agent => agent.id === id ? { ...agent, ...data } : agent)
+      })),
+
+      resetData: () => set({
+        hqEmployees: INITIAL_HQ_EMPLOYEES,
+        showrooms: INITIAL_SHOWROOMS,
+        production: INITIAL_PRODUCTION,
+        indirectCosts: INITIAL_INDIRECT_COSTS,
+        agents: INITIAL_AGENTS,
+        distributors: INITIAL_DISTRIBUTORS,
+      })
+    }),
+    {
+      name: 'crm-storage', // name of the item in the storage (must be unique)
+      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+    }
+  )
+);
 
 // Selectors for Calculations
 

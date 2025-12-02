@@ -5,13 +5,46 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useStore, getTotalsForMonth, calculateAgentMetrics } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
-import { formatCurrency } from "@/lib/utils";
+import { Download } from "lucide-react";
 
 export default function Agents() {
-  const { agents, updateAgentData, selectedMonth, store } = useStore();
-  // We need the full store to calculate totals
+  const { agents, updateAgentData, selectedMonth } = useStore();
   const fullStore = useStore(); 
   const totals = getTotalsForMonth(fullStore, selectedMonth);
+
+  const handleExportCSV = () => {
+    const headers = [
+      "Agent", "Showroom", 
+      "Venit TVA", "Venit Gard", "Venit Acoperiș", "Achiziție TVA",
+      "Comision %", "Valoare Comision", "Venit Brut", "TVA", "Venit Net",
+      "Salariu", "Amortizare Auto", "Combustibil", "Revizii", "Alte Chelt. Auto", "Abonamente", "Diurne", "Total Variabile",
+      "Cost Ambalare", "Curier Ambalare", "Curier Transport", "Transport Intern",
+      "Cost HQ", "Cost Showroom", "Cost Producție", "Cost Indirecte",
+      "Profit Garduri", "Profit Acoperiș", "Profit General", "PROFIT FINAL"
+    ];
+
+    const rows = agents.map(agent => {
+      const m = calculateAgentMetrics(agent, selectedMonth, totals);
+      return [
+        agent.name, agent.showroomId,
+        m.venitTVA, m.venitGard, m.venitAcoperis, m.achizitieTVA,
+        m.comisionPercent, m.valoareComision, m.venitBrut, m.tva, m.venitNet,
+        m.salariu, m.amortizareAuto, m.combustibil, m.revizii, m.alteCheltuieliAuto, m.abonamente, m.diurne, m.costuriVariabile,
+        m.costAmbalarePropriu, m.costCurierAmbalare, m.costCurierTransport, m.transportIntern,
+        m.costHQ, m.costShowroom, m.costProductie, m.costIndirecte,
+        m.profitGarduri, m.profitAcoperisuri, m.profitGeneral, m.profitFinal
+      ].join(",");
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `raport_agenti_${selectedMonth}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-8">
@@ -20,7 +53,12 @@ export default function Agents() {
           <h1 className="text-3xl font-bold tracking-tight">Agenți - Detaliat ({selectedMonth})</h1>
           <p className="text-muted-foreground">Calcule complete comisioane și profitabilitate</p>
         </div>
-        <MonthSelector />
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+                <Download className="mr-2 h-4 w-4" /> Export CSV
+            </Button>
+            <MonthSelector />
+        </div>
       </div>
 
       <Card className="w-full overflow-hidden">
