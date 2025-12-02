@@ -182,15 +182,13 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
       venitTVA: 0,
       achizitieGard: 0,
       achizitieAcoperis: 0,
-      tvaGard: 0,
-      tvaAcoperis: 0,
       adaosTVAGard: 0,
-      adaosNetGard: 0,
       adaosTVAAcoperis: 0,
-      adaosNetAcoperis: 0,
-      adaosNetTotal: 0,
+      adaosTotalCuTVA: 0,
+      adaosFaraTVA: 0,
       valoareComision: 0,
       costuriProprii,
+      costuriLogistice: 0,
       costShowroom: 0,
       costProductie: 0,
       costIndirecte: 0,
@@ -201,21 +199,21 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
 
   // === CALCULE PENTRU AGENȚI ===
 
-  // GARDURI
+  // GARDURI - adaos cu TVA
   const venitGard = data.venitGard || 0;
   const achizitieGard = data.achizitieGard || 0;
   const adaosTVAGard = venitGard - achizitieGard;
-  const tvaGard = adaosTVAGard * 0.21;  // TVA din diferență, nu din venit
-  const adaosNetGard = adaosTVAGard - tvaGard;
 
-  // ACOPERISURI
+  // ACOPERISURI - adaos cu TVA
   const venitAcoperis = data.venitAcoperis || 0;
   const achizitieAcoperis = data.achizitieAcoperis || 0;
   const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-  const tvaAcoperis = adaosTVAAcoperis * 0.21;  // TVA 21% din diferență
-  const adaosNetAcoperis = adaosTVAAcoperis - tvaAcoperis;
   
-  const adaosNetTotal = adaosNetGard + adaosNetAcoperis;
+  // ADAOS TOTAL CU TVA (suma marjelor brute)
+  const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
+  
+  // ADAOS FĂRĂ TVA (împărțit la 1.21 pentru a scoate TVA-ul de 21%)
+  const adaosFaraTVA = adaosTotalCuTVA / 1.21;
 
   const venitTVA = data.venitTVA || 0;
   const valoareComision = venitTVA * ((data.comisionPercent || 0) / 100);
@@ -239,8 +237,8 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   const costuriLogistice = (data.costAmbalarePropriu || 0) + (data.costCurierAmbalare || 0) + 
                           (data.costCurierTransport || 0) + (data.transportIntern || 0);
 
-  // PROFIT FINAL
-  const profitFinal = adaosNetTotal - valoareComision - costuriProprii - costShowroom - costProductie - costIndirecte - costuriLogistice;
+  // PROFIT FINAL = Adaos fără TVA - TOATE cheltuielile
+  const profitFinal = adaosFaraTVA - valoareComision - costuriProprii - costShowroom - costProductie - costIndirecte - costuriLogistice;
 
   return {
     ...data,
@@ -249,13 +247,10 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
     venitTVA,
     achizitieGard,
     achizitieAcoperis,
-    tvaGard,
-    tvaAcoperis,
     adaosTVAGard,
-    adaosNetGard,
     adaosTVAAcoperis,
-    adaosNetAcoperis,
-    adaosNetTotal,
+    adaosTotalCuTVA,
+    adaosFaraTVA,
     valoareComision,
     costuriProprii,
     costuriLogistice,

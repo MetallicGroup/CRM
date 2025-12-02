@@ -59,9 +59,9 @@ export default function Angajati() {
   const handleExportCSV = () => {
     const headers = [
       "Angajat", "Tip", "Showroom",
-      "Venit Gard", "Achiziție Gard", "Adaos Net Gard",
-      "Venit Acoperiș", "Achiziție Acoperiș", "Adaos Net Acoperiș",
-      "ADAOS FĂRĂ TVA", "Venit TVA", "Comision %", "Valoare Comision",
+      "Venit Gard", "Achiziție Gard", "Adaos Gard",
+      "Venit Acoperiș", "Achiziție Acoperiș", "Adaos Acoperiș",
+      "ADAOS CU TVA", "ADAOS FĂRĂ TVA", "Venit TVA", "Comision %", "Valoare Comision",
       "Salariu", "Amortizare Auto", "Combustibil", "Revizii", "Alte Chelt.", "Abonamente", "Diurne", "Total Cheltuieli",
       "Cost Showroom", "Cost Producție", "Cost Indirecte",
       "PROFIT FINAL"
@@ -71,9 +71,9 @@ export default function Angajati() {
       const m = calculateEmployeeMetrics(emp, selectedMonth, totals);
       return [
         emp.name, emp.type, emp.showroomId || '-',
-        m.venitGard, m.achizitieGard, m.adaosNetGard,
-        m.venitAcoperis, m.achizitieAcoperis, m.adaosNetAcoperis,
-        m.adaosNetTotal, m.venitTVA, m.comisionPercent, m.valoareComision,
+        m.venitGard, m.achizitieGard, m.adaosTVAGard,
+        m.venitAcoperis, m.achizitieAcoperis, m.adaosTVAAcoperis,
+        m.adaosTotalCuTVA, m.adaosFaraTVA, m.venitTVA, m.comisionPercent, m.valoareComision,
         m.salariu, m.amortizareAuto, m.combustibil, m.revizii, m.alteCheltuieliAuto, m.abonamente, m.diurne, m.costuriProprii,
         m.costShowroom, m.costProductie, m.costIndirecte,
         m.profitFinal
@@ -187,15 +187,16 @@ export default function Angajati() {
                     {/* GARDURI */}
                     <TableHead className="min-w-[100px] bg-blue-50 dark:bg-blue-950 border-l-2 border-blue-500">Venit Gard</TableHead>
                     <TableHead className="min-w-[100px] bg-blue-50 dark:bg-blue-950">Achiz. Gard</TableHead>
-                    <TableHead className="min-w-[100px] bg-blue-100 dark:bg-blue-900 font-bold">Adaos Net G</TableHead>
+                    <TableHead className="min-w-[100px] bg-blue-100 dark:bg-blue-900 font-bold">Adaos Gard</TableHead>
                     
                     {/* ACOPERISURI */}
                     <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950 border-l-2 border-amber-500">Venit Acop</TableHead>
                     <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950">Achiz. Acop</TableHead>
-                    <TableHead className="min-w-[100px] bg-amber-100 dark:bg-amber-900 font-bold">Adaos Net A</TableHead>
+                    <TableHead className="min-w-[100px] bg-amber-100 dark:bg-amber-900 font-bold">Adaos Acop</TableHead>
 
-                    {/* ADAOS FĂRĂ TVA - din acesta se scad toate cheltuielile */}
-                    <TableHead className="min-w-[130px] bg-purple-100 dark:bg-purple-900 font-bold border-l-2 border-purple-500">ADAOS FĂRĂ TVA</TableHead>
+                    {/* ADAOS CU TVA și FĂRĂ TVA */}
+                    <TableHead className="min-w-[120px] bg-indigo-100 dark:bg-indigo-900 font-bold border-l-2 border-indigo-500">ADAOS CU TVA</TableHead>
+                    <TableHead className="min-w-[130px] bg-purple-200 dark:bg-purple-800 font-bold">ADAOS FĂRĂ TVA</TableHead>
                     
                     <TableHead className="min-w-[100px]">Venit TVA</TableHead>
                     <TableHead className="min-w-[70px] bg-green-50 dark:bg-green-950">Com %</TableHead>
@@ -276,7 +277,7 @@ export default function Angajati() {
                             />
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
-                        <TableCell className="font-bold">{isAgent ? metrics.adaosNetGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold">{isAgent ? metrics.adaosTVAGard.toFixed(0) : '-'}</TableCell>
                         
                         {/* ACOPERISURI */}
                         <TableCell>
@@ -295,10 +296,11 @@ export default function Angajati() {
                             />
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
-                        <TableCell className="font-bold">{isAgent ? metrics.adaosNetAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold">{isAgent ? metrics.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
 
-                        {/* ADAOS FĂRĂ TVA */}
-                        <TableCell className="font-bold text-purple-600 bg-purple-50 dark:bg-purple-950">{isAgent ? metrics.adaosNetTotal.toFixed(0) : '-'}</TableCell>
+                        {/* ADAOS CU TVA și FĂRĂ TVA */}
+                        <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? metrics.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900">{isAgent ? metrics.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
 
                         <TableCell>
                           {isAgent ? (
