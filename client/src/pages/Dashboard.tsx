@@ -1,26 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStore, getTotalsForMonth, calculateAgentMetrics } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Dashboard() {
-  const { selectedMonth, agents, distributors } = useStore();
-  const store = useStore(); // Get full store for selector
+  const { selectedMonth, agents, showrooms } = useStore();
+  const store = useStore();
   const totals = getTotalsForMonth(store, selectedMonth);
 
-  // Calculate metrics for all agents to get profits
   const agentMetrics = agents.map(agent => ({
     ...agent,
     metrics: calculateAgentMetrics(agent, selectedMonth, totals)
   }));
 
-  const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0) + 
-                           distributors.reduce((sum, d) => sum + (d.monthlyData[selectedMonth].profitNet || 0), 0); // Mock distributor profit logic if needed
-
+  const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
   const totalVenitFirma = totals.totalVenitFirma;
 
-  // Chart Data
   const profitByAgent = agentMetrics
     .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
     .slice(0, 10)
@@ -29,30 +24,28 @@ export default function Dashboard() {
       profit: Math.round(a.metrics.profitFinal)
     }));
 
-  const profitByShowroom = Object.entries(totals.showroomRevenues).map(([id, revenue]) => {
-    const showroomName = store.showrooms.find(s => s.id === id)?.name || id;
-    // Approximate profit by showroom (sum of agents in that showroom)
+  const profitByShowroom = showrooms.map(s => {
     const profit = agentMetrics
-      .filter(a => a.showroomId === id)
+      .filter(a => a.showroomId === s.id)
       .reduce((sum, a) => sum + a.metrics.profitFinal, 0);
-    return { name: showroomName, profit: Math.round(profit) };
+    return { name: s.name.replace('Showroom ', ''), profit: Math.round(profit) };
   });
 
-  const profitGarduri = agentMetrics.reduce((sum, a) => sum + a.metrics.profitGarduri, 0);
-  const profitAcoperisuri = agentMetrics.reduce((sum, a) => sum + a.metrics.profitAcoperisuri, 0);
+  const profitGarduri = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosNetGard, 0);
+  const profitAcoperisuri = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosNetAcoperis, 0);
 
   const pieData = [
     { name: 'Garduri', value: Math.max(0, profitGarduri) },
     { name: 'Acoperișuri', value: Math.max(0, profitAcoperisuri) },
   ];
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#0088FE', '#00C49F'];
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard Financiar</h1>
-          <p className="text-muted-foreground">Privire de ansamblu asupra performanței - {selectedMonth}</p>
+          <p className="text-muted-foreground">Privire de ansamblu - {selectedMonth}</p>
         </div>
         <MonthSelector />
       </div>
@@ -80,7 +73,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit Garduri</CardTitle>
+            <CardTitle className="text-sm font-medium">Adaos Net Garduri</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Math.round(profitGarduri).toLocaleString('ro-RO')} RON</div>
@@ -88,7 +81,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit Acoperișuri</CardTitle>
+            <CardTitle className="text-sm font-medium">Adaos Net Acoperișuri</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Math.round(profitAcoperisuri).toLocaleString('ro-RO')} RON</div>
@@ -99,7 +92,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Top 10 Agenți (Profit)</CardTitle>
+            <CardTitle>Top 10 Agenți (Profit Final)</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px]">
@@ -125,7 +118,7 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={profitByShowroom} layout="vertical">
                       <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 12}} />
+                      <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 12}} />
                       <Tooltip />
                       <Bar dataKey="profit" fill="#82ca9d" radius={[0, 4, 4, 0]} />
                     </BarChart>

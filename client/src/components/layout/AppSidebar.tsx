@@ -1,14 +1,14 @@
-import { Home, Users, Building2, Factory, Wallet, Truck, Settings, UserCheck } from 'lucide-react';
+import { Home, Users, Building2, Factory, Wallet, Truck, Settings } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   { icon: Home, label: 'Dashboard', href: '/' },
-  { icon: Building2, label: 'Showroom HQ', href: '/showroom-hq' },
-  { icon: Building2, label: 'Regional Showrooms', href: '/showroom-regional' },
+  { icon: Users, label: 'Angajați HQ', href: '/showroom-hq' },
+  { icon: Building2, label: 'Showroom-uri', href: '/showroom-regional' },
   { icon: Factory, label: 'Producție', href: '/production' },
   { icon: Wallet, label: 'Indirecte Speciale', href: '/indirect-costs' },
-  { icon: UserCheck, label: 'Agenți', href: '/agents' },
+  { icon: Users, label: 'Agenți', href: '/agents' },
   { icon: Truck, label: 'Distribuitori', href: '/distributors' },
   { icon: Settings, label: 'Setări', href: '/settings' },
 ];
@@ -27,9 +27,9 @@ export function AppSidebar() {
             const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}>
-                <a
+                <div
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
                     isActive 
                       ? "bg-sidebar-primary text-sidebar-primary-foreground" 
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -37,7 +37,7 @@ export function AppSidebar() {
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </a>
+                </div>
               </Link>
             );
           })}

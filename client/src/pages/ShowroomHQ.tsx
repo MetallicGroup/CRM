@@ -25,8 +25,8 @@ export default function ShowroomHQ() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Showroom București HQ</h1>
-          <p className="text-muted-foreground">Gestionare angajați și costuri centrale</p>
+          <h1 className="text-3xl font-bold tracking-tight">Angajați Neproductivi (HQ)</h1>
+          <p className="text-muted-foreground">Salariile acestora se adaugă la Cheltuieli Indirecte</p>
         </div>
         <MonthSelector />
       </div>
@@ -123,14 +123,14 @@ export default function ShowroomHQ() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Total HQ</CardTitle>
+            <CardTitle>Total Salarii Neproductive</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-primary">
-              {totals.totalHQCosts.toLocaleString('ro-RO')} RON
+              {(totals.totalHQCostsRaw || 0).toLocaleString('ro-RO')} RON
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Acest cost se distribuie TUTUROR agenților proporțional cu venitul lor.
+              Acest cost se adaugă automat la Cheltuieli Indirecte și se distribuie tuturor agenților.
             </p>
             <div className="mt-6 space-y-2">
                <div className="flex justify-between text-sm">
