@@ -65,11 +65,15 @@ export interface IndirectCosts {
 export interface AgentMonthlyData {
   month: Month;
   
-  // Inputs
+  // Venituri - MANUAL
   venitTVA: number;
   venitGard: number; 
   venitAcoperis: number; 
-  achizitieTVA: number;
+  
+  // Achiziții - MANUAL (separate pentru Gard și Acoperiș)
+  achizitieGard: number;
+  achizitieAcoperis: number;
+  
   comisionPercent: number;
   
   // Costuri Auto & Logistica (Input per month)
@@ -107,7 +111,7 @@ export interface DistributorMonthlyData {
   comisionPercent: number;
   cheltuieliMarketing: number;
   
-  // New fields for Distributors
+  // Transport și Ambalare
   costTransport: number;
   costAmbalare: number;
 }

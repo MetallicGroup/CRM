@@ -73,7 +73,12 @@ MONTHS.forEach(month => {
   INITIAL_AGENTS.forEach(agent => {
     agent.monthlyData[month] = {
       month,
-      venitTVA: 0, venitGard: 0, venitAcoperis: 0, achizitieTVA: 0, comisionPercent: 0,
+      venitTVA: 0, 
+      venitGard: 0, 
+      venitAcoperis: 0, 
+      achizitieGard: 0,
+      achizitieAcoperis: 0,
+      comisionPercent: 0,
       amortizareAuto: 0, salariu: 0, combustibil: 0, revizii: 0, alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
       costAmbalarePropriu: 0, costCurierAmbalare: 0, costCurierTransport: 0, transportIntern: 0
     };
