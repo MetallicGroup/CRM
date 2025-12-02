@@ -13,18 +13,26 @@ const TYPE_LABELS: Record<EmployeeType, string> = {
 };
 
 export default function Settings() {
-  const { employees, showrooms, updateEmployee, resetData } = useStore();
+  const { employees = [], showrooms = [], updateEmployee, resetData } = useStore();
 
   const handleShowroomChange = (empId: string, newShowroomId: string) => {
     updateEmployee(empId, { showroomId: newShowroomId });
   };
 
   const handleTypeChange = (empId: string, newType: EmployeeType) => {
-    const newShowroomId = newType === 'AGENT' ? 'sh_constanta' : null;
+    const emp = employees.find(e => e.id === empId);
+    let newShowroomId: string | null = null;
+    
+    if (newType === 'AGENT') {
+      // Păstrează showroom-ul existent sau setează primul showroom disponibil
+      newShowroomId = emp?.showroomId || (showrooms.length > 0 ? showrooms[0].id : null);
+    }
+    // Pentru PRODUCTIE și INDIRECT, showroomId devine null
+    
     updateEmployee(empId, { type: newType, showroomId: newShowroomId });
   };
 
-  const agents = employees.filter(e => e.type === 'AGENT');
+  const agents = (employees || []).filter(e => e.type === 'AGENT');
 
   return (
     <div className="space-y-8">

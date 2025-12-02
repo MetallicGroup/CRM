@@ -4,7 +4,7 @@ import { MonthSelector } from "@/components/ui/month-selector";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Dashboard() {
-  const { selectedMonth, employees, showrooms } = useStore();
+  const { selectedMonth, employees = [], showrooms = [] } = useStore();
   const store = useStore();
   const totals = getTotalsForMonth(store, selectedMonth);
 

@@ -7,7 +7,7 @@ import { MonthSelector } from "@/components/ui/month-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ShowroomRegional() {
-  const { showrooms, employees, updateShowroom, selectedMonth } = useStore();
+  const { showrooms = [], employees = [], updateShowroom, selectedMonth } = useStore();
   const fullStore = useStore();
   const totals = getTotalsForMonth(fullStore, selectedMonth);
 

@@ -91,10 +91,11 @@ const getEmployeeMonthlyCosts = (emp: Employee, month: Month): number => {
 
 // Selectors for Calculations
 export const getTotalsForMonth = (state: StoreState, month: Month) => {
-  const agents = state.employees.filter(e => e.type === 'AGENT');
-  const productionEmployees = state.employees.filter(e => e.type === 'PRODUCTIE');
-  const indirectEmployees = state.employees.filter(e => e.type === 'INDIRECT');
-  const distributors = state.distributors;
+  const employees = state.employees || [];
+  const agents = employees.filter(e => e.type === 'AGENT');
+  const productionEmployees = employees.filter(e => e.type === 'PRODUCTIE');
+  const indirectEmployees = employees.filter(e => e.type === 'INDIRECT');
+  const distributors = state.distributors || [];
 
   // Total costuri PRODUCȚIE (de la angajații tip PRODUCTIE)
   const totalProductionCosts = productionEmployees.reduce((sum, emp) => 
@@ -105,7 +106,8 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
     sum + getEmployeeMonthlyCosts(emp, month), 0);
 
   // Cost showroom București - 80% merge la indirecte
-  const showroomBuc = state.showrooms.find(s => s.location === 'Bucuresti');
+  const showrooms = state.showrooms || [];
+  const showroomBuc = showrooms.find(s => s.location === 'Bucuresti');
   let costShowroomBucTotal = 0;
   if (showroomBuc) {
     costShowroomBucTotal = Object.values(showroomBuc.costs).reduce((a, b) => a + b, 0);
@@ -129,7 +131,7 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   const showroomTotals: Record<string, number> = {};
   const showroomRevenues: Record<string, number> = {};
   
-  state.showrooms.forEach(s => {
+  showrooms.forEach(s => {
     let cost = Object.values(s.costs).reduce((a, b) => a + b, 0);
     
     // București: doar 20% se distribuie agenților
@@ -155,15 +157,18 @@ export const getTotalsForMonth = (state: StoreState, month: Month) => {
   };
 };
 
+const emptyMonthlyData = (month: Month) => ({
+  month,
+  venitTVA: 0, venitGard: 0, venitAcoperis: 0, 
+  achizitieGard: 0, achizitieAcoperis: 0,
+  comisionPercent: 0,
+  salariu: 0, amortizareAuto: 0, combustibil: 0, revizii: 0, alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
+  costAmbalarePropriu: 0, costCurierAmbalare: 0, costCurierTransport: 0, transportIntern: 0
+});
+
 export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: ReturnType<typeof getTotalsForMonth>) => {
-  const data = emp.monthlyData[month] || {
-    month,
-    venitTVA: 0, venitGard: 0, venitAcoperis: 0, 
-    achizitieGard: 0, achizitieAcoperis: 0,
-    comisionPercent: 0,
-    salariu: 0, amortizareAuto: 0, combustibil: 0, revizii: 0, alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
-    costAmbalarePropriu: 0, costCurierAmbalare: 0, costCurierTransport: 0, transportIntern: 0
-  };
+  // Asigură inițializare date lunare pentru angajați noi
+  const data = emp.monthlyData?.[month] || emptyMonthlyData(month);
   
   const { totalProductionCosts, totalIndirectCosts, totalVenitFirma, totalVenitGardFirma, showroomTotals, showroomRevenues } = totals;
 

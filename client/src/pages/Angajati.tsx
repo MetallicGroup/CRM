@@ -24,7 +24,7 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
 };
 
 export default function Angajati() {
-  const { employees, showrooms, updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
+  const { employees = [], showrooms = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
   const fullStore = useStore();
   const totals = getTotalsForMonth(fullStore, selectedMonth);
   

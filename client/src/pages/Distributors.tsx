@@ -6,7 +6,7 @@ import { useStore, getTotalsForMonth, calculateDistributorMetrics } from "@/lib/
 import { MonthSelector } from "@/components/ui/month-selector";
 
 export default function Distributors() {
-  const { distributors, updateDistributorData, selectedMonth } = useStore();
+  const { distributors = [], updateDistributorData, selectedMonth } = useStore();
   const fullStore = useStore();
   const totals = getTotalsForMonth(fullStore, selectedMonth);
 
