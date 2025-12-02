@@ -275,22 +275,24 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
   };
   const { totalProductionCosts, totalIndirectCostsDistributors, totalVenitFirma, totalVenitGardFirma } = totals;
 
+  // Adaos cu TVA (marja brută care include TVA)
   const adaosTVA = (data.venitTVA || 0) - (data.achizitieTVA || 0);
-  const tva = adaosTVA * 0.21;  // TVA 21% din adaos, nu din venit
-  const adaosNet = adaosTVA - tva;
+  // Adaos fără TVA = împărțit la 1.21 (scoatem TVA-ul inclus)
+  const adaosFaraTVA = adaosTVA / 1.21;
+  const tva = adaosTVA - adaosFaraTVA;
   const comisionValoare = (data.venitTVA || 0) * ((data.comisionPercent || 0) / 100);
 
   const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * ((data.venitTVA || 0) / totalVenitGardFirma) : 0;
   // Pentru distribuitori: doar costurile Dana, Raluca, Iulian (fără 80% București)
   const costIndirecte = totalVenitFirma > 0 ? totalIndirectCostsDistributors * ((data.venitTVA || 0) / totalVenitFirma) : 0;
 
-  const profitNet = adaosNet - comisionValoare - costProductie - costIndirecte - (data.cheltuieliMarketing || 0) - (data.costTransport || 0) - (data.costAmbalare || 0);
+  const profitNet = adaosFaraTVA - comisionValoare - costProductie - costIndirecte - (data.cheltuieliMarketing || 0) - (data.costTransport || 0) - (data.costAmbalare || 0);
   
   return {
     ...data,
     adaosTVA,
     tva,
-    adaosNet,
+    adaosFaraTVA,
     comisionValoare,
     costProductie,
     costIndirecte,

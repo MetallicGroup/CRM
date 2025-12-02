@@ -35,7 +35,7 @@ export default function Distributors() {
                     <TableHead className="min-w-[120px]">Achiziție TVA</TableHead>
                     <TableHead className="min-w-[120px]">ADAOS TVA</TableHead>
                     <TableHead className="min-w-[100px]">TVA</TableHead>
-                    <TableHead className="min-w-[120px] font-bold">ADAOS NET</TableHead>
+                    <TableHead className="min-w-[120px] font-bold">ADAOS FĂRĂ TVA</TableHead>
                     <TableHead className="min-w-[100px]">Comision %</TableHead>
                     <TableHead className="min-w-[120px]">Valoare Comision</TableHead>
                     <TableHead className="min-w-[120px]">Cheltuieli Marketing</TableHead>
@@ -60,7 +60,7 @@ export default function Distributors() {
                         
                         <TableCell>{metrics.adaosTVA.toFixed(2)}</TableCell>
                         <TableCell>{metrics.tva.toFixed(2)}</TableCell>
-                        <TableCell className="font-bold">{metrics.adaosNet.toFixed(2)}</TableCell>
+                        <TableCell className="font-bold">{metrics.adaosFaraTVA.toFixed(2)}</TableCell>
                         
                         <TableCell><Input type="number" className="w-16 h-8" value={metrics.comisionPercent} onChange={(e) => updateDistributorData(dist.id, selectedMonth, { comisionPercent: Number(e.target.value) })} /></TableCell>
                         <TableCell>{metrics.comisionValoare.toFixed(2)}</TableCell>
