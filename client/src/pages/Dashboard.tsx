@@ -1,16 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useStore, getTotalsForMonth, calculateAgentMetrics } from "@/lib/store";
+import { useStore, getTotalsForMonth, calculateEmployeeMetrics } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Dashboard() {
-  const { selectedMonth, agents, showrooms } = useStore();
+  const { selectedMonth, employees, showrooms } = useStore();
   const store = useStore();
   const totals = getTotalsForMonth(store, selectedMonth);
 
+  const agents = employees.filter(e => e.type === 'AGENT');
+  
   const agentMetrics = agents.map(agent => ({
     ...agent,
-    metrics: calculateAgentMetrics(agent, selectedMonth, totals)
+    metrics: calculateEmployeeMetrics(agent, selectedMonth, totals)
   }));
 
   const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
@@ -56,7 +58,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Total Venit Firmă</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold" data-testid="text-total-venit">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
             <p className="text-xs text-muted-foreground">în luna {selectedMonth}</p>
           </CardContent>
         </Card>
@@ -65,7 +67,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Total Profit Firmă</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totalProfitFirma >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-2xl font-bold ${totalProfitFirma >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-total-profit">
               {totalProfitFirma.toLocaleString('ro-RO')} RON
             </div>
             <p className="text-xs text-muted-foreground">Marjă netă calculată</p>
@@ -73,18 +75,20 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Adaos Net Garduri</CardTitle>
+            <CardTitle className="text-sm font-medium">Costuri Producție</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(profitGarduri).toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-productie">{totals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Distribuit vânzătorilor de garduri</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Adaos Net Acoperișuri</CardTitle>
+            <CardTitle className="text-sm font-medium">Costuri Indirecte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(profitAcoperisuri).toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold text-purple-600" data-testid="text-cost-indirecte">{totals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Include 80% București</p>
           </CardContent>
         </Card>
       </div>

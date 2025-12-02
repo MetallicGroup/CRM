@@ -1,14 +1,11 @@
-import { Home, Users, Building2, Factory, Wallet, Truck, Settings } from 'lucide-react';
+import { Home, Users, Building2, Truck, Settings } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   { icon: Home, label: 'Dashboard', href: '/' },
-  { icon: Users, label: 'Angajați HQ', href: '/showroom-hq' },
+  { icon: Users, label: 'Angajați', href: '/angajati' },
   { icon: Building2, label: 'Showroom-uri', href: '/showroom-regional' },
-  { icon: Factory, label: 'Producție', href: '/production' },
-  { icon: Wallet, label: 'Indirecte Speciale', href: '/indirect-costs' },
-  { icon: Users, label: 'Agenți', href: '/agents' },
   { icon: Truck, label: 'Distribuitori', href: '/distributors' },
   { icon: Settings, label: 'Setări', href: '/settings' },
 ];
