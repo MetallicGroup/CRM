@@ -1,13 +1,16 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Angajati from "@/pages/Angajati";
 import ShowroomRegional from "@/pages/ShowroomRegional";
 import Distributors from "@/pages/Distributors";
 import Settings from "@/pages/Settings";
+import Login from "@/pages/Login";
+import UserManagement from "@/pages/UserManagement";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -21,26 +24,94 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Router() {
+function ProtectedRoute({ 
+  component: Component, 
+  adminOnly = false 
+}: { 
+  component: React.ComponentType; 
+  adminOnly?: boolean;
+}) {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  if (adminOnly && !isAdmin) {
+    return <Redirect to="/" />;
+  }
+
   return (
     <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/angajati" component={Angajati} />
-        <Route path="/showroom-regional" component={ShowroomRegional} />
-        <Route path="/distributors" component={Distributors} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
+      <Component />
     </Layout>
+  );
+}
+
+function PublicRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect to="/" />;
+  }
+
+  return <Component />;
+}
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/login">
+        <PublicRoute component={Login} />
+      </Route>
+      <Route path="/">
+        <ProtectedRoute component={Dashboard} />
+      </Route>
+      <Route path="/angajati">
+        <ProtectedRoute component={Angajati} adminOnly />
+      </Route>
+      <Route path="/showroom-regional">
+        <ProtectedRoute component={ShowroomRegional} adminOnly />
+      </Route>
+      <Route path="/distributori">
+        <ProtectedRoute component={Distributors} adminOnly />
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute component={Settings} adminOnly />
+      </Route>
+      <Route path="/utilizatori">
+        <ProtectedRoute component={UserManagement} adminOnly />
+      </Route>
+      <Route>
+        <ProtectedRoute component={NotFound} />
+      </Route>
+    </Switch>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
+      <AuthProvider>
+        <Toaster />
+        <Router />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
