@@ -1,10 +1,14 @@
-# CRM Financiar Intern
+# CRM Metallic Group
 
 ## Overview
 
-This is a comprehensive financial CRM application built for managing internal business operations, specifically designed for a company that deals with fences ("garduri") and roofing ("acoperișuri"). The system tracks employees, regional showrooms, distributors, and calculates complex financial metrics including commissions, costs, and profitability across multiple dimensions.
+This is a comprehensive CRM application built for Metallic Group, a Romanian company that deals with fences ("garduri") and roofing ("acoperișuri"). The system provides:
 
-The application provides a complete dashboard with data visualization, editable tables for financial data entry, and automated calculations for profit margins, VAT, and cost distributions. All data is stored client-side using Zustand with persistence, making it a fully self-contained application that can be deployed without external database dependencies.
+1. **User Authentication & Role-Based Access Control**: Multi-user system with ADMIN, AGENT, and SPECIAL roles
+2. **Financial Module**: Tracks employees, regional showrooms, distributors, and calculates complex financial metrics including commissions, costs, and profitability
+3. **User Management**: Full CRUD operations for managing user accounts (admin only)
+
+The application uses PostgreSQL for data persistence with session-based authentication.
 
 ## User Preferences
 
@@ -20,10 +24,9 @@ Preferred communication style: Simple, everyday language.
 - Wouter for lightweight client-side routing (no React Router dependency)
 
 **State Management:**
-- Zustand for global state management with persistence middleware
-- All business data (employees, showrooms, distributors, monthly financial data) stored in a single Zustand store
-- LocalStorage persistence via `zustand/persist` for data durability across sessions
-- No backend API calls required - fully client-side data management
+- Zustand for financial module data (employees, showrooms, distributors, monthly financial data)
+- React Query for server state management (authentication, users)
+- AuthContext for authentication state across the application
 
 **UI Component System:**
 - Shadcn/ui component library (New York style variant) with Radix UI primitives
@@ -50,11 +53,13 @@ Preferred communication style: Simple, everyday language.
 3. **Type Safety**: TypeScript interfaces in `client/src/lib/types.ts` define all data structures including `Employee`, `Distributor`, `Showroom`, and monthly financial data schemas. This ensures data consistency across the application.
 
 4. **Modular Page Structure**: The application is divided into distinct functional pages:
+   - Login: User authentication
    - Dashboard: Overview with charts and summary metrics
-   - Angajați (Employees): Detailed employee financial data with inline editing
-   - Showroom-uri (Showrooms): Regional showroom cost management
-   - Distribuitori (Distributors): Distributor financial tracking
-   - Settings: Employee type configuration and showroom assignments
+   - Angajați (Employees): Detailed employee financial data with inline editing (admin only)
+   - Showroom-uri (Showrooms): Regional showroom cost management (admin only)
+   - Distribuitori (Distributors): Distributor financial tracking (admin only)
+   - Settings: Employee type configuration and showroom assignments (admin only)
+   - Utilizatori (Users): User management - add, edit, activate/deactivate users (admin only)
 
 ### Backend Architecture
 
@@ -70,9 +75,15 @@ Preferred communication style: Simple, everyday language.
 
 **Database Schema:**
 - Drizzle ORM configured for PostgreSQL with schema definition in `shared/schema.ts`
-- Basic user authentication schema defined but not currently utilized
+- **Users table**: id, email, passwordHash, firstName, lastName, role (ADMIN/AGENT/SPECIAL), specialKey, active, sediuId, createdAt, lastLogin, lastActivity
+- User sessions stored in PostgreSQL via connect-pg-simple
 - Database credentials configured via `DATABASE_URL` environment variable
-- Note: The current implementation doesn't actively use the database; all data is client-side
+
+**Authentication System:**
+- Session-based authentication with express-session
+- Password hashing with bcrypt
+- Role-based access control middleware (requireAuth, requireAdmin)
+- Protected API routes for user management
 
 **Build Process:**
 - Custom build script (`script/build.ts`) using esbuild for server bundling
@@ -124,10 +135,11 @@ Preferred communication style: Simple, everyday language.
 - React Hook Form with `@hookform/resolvers` for validation
 - Zod for schema validation throughout the application
 
-**Session Management (configured but unused):**
+**Session Management:**
 - `express-session` for session handling
 - `connect-pg-simple` for PostgreSQL session store
-- Session infrastructure is set up but not actively used in current implementation
+- SESSION_SECRET configured as environment secret
+- 24-hour session expiration
 
 **Font & Asset Management:**
 - Google Fonts (Inter and JetBrains Mono) loaded via CDN
@@ -135,9 +147,31 @@ Preferred communication style: Simple, everyday language.
 - OpenGraph image support (`opengraph.png/jpg/jpeg`) for social media sharing
 
 **Notable Architectural Trade-offs:**
-- **Pro**: Fully self-contained application with no external API dependencies makes deployment trivial
-- **Con**: No multi-user support or data synchronization; each client has independent data
+- **Pro**: Multi-user support with role-based access control
+- **Pro**: PostgreSQL for reliable data persistence and session management
 - **Pro**: Type-safe calculations reduce runtime errors in complex financial logic
-- **Con**: All calculations happen on-demand which could impact performance with very large datasets
-- **Pro**: Zustand persistence provides immediate data durability
-- **Con**: LocalStorage has size limitations that could be reached with extensive historical data
+- **Con**: All financial calculations happen on-demand which could impact performance with very large datasets
+- **Pro**: Zustand persistence for financial data provides immediate durability
+- **Con**: LocalStorage has size limitations for financial data that could be reached with extensive historical data
+
+## User Roles
+
+### ADMIN
+- Full access to all functionality
+- Can manage users (create, edit, activate/deactivate, reset passwords)
+- Access to all financial data and reports
+- Can configure employee types and showroom assignments
+
+### AGENT
+- Limited access (planned for CRM client management)
+- Will only see their own clients
+- Cannot delete data directly (only request deletion)
+
+### SPECIAL (with specialKey)
+- **MADALINA**: Can view all sold clients but limited editing
+- **OANA**: Admin with toggle for "my clients" vs "all clients"
+- **RALUCA**: Access to all PDF offers
+
+## Default Admin Account
+- Email: admin@metallicgroup.ro
+- Password: admin123 (change after first login!)
