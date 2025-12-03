@@ -1,0 +1,596 @@
+# DOCUMENTAȚIE COMPLETĂ - CRM Metallic Group
+
+## DESCRIERE GENERALĂ
+
+CRM (Customer Relationship Management) pentru companie de vânzări garduri metalice, rulouri și produse similare. Sistemul gestionează clienți, vânzări, agenți, cheltuieli, stocuri și oferă rapoarte de profitabilitate.
+
+**Tehnologii folosite:**
+- Backend: Python Flask
+- Baza de date: PostgreSQL cu SQLAlchemy ORM
+- Frontend: HTML/CSS (Tailwind CSS) + JavaScript vanilla
+- Autentificare: Flask-Login cu sesiuni
+- Iconuri: Font Awesome
+- Grafice: Chart.js
+- Integrare: Google Sheets API (pentru import date)
+
+---
+
+## ROLURI UTILIZATORI
+
+### 1. ADMIN (Rol complet)
+- Acces la toate funcționalitățile
+- Poate vedea toți clienții din sistem
+- Gestionează agenți (adaugă, dezactivează)
+- Setează target-uri lunare pentru agenți
+- Acces la rapoarte profitabilitate
+- Gestionează cheltuieli (agent + sediu)
+- Gestionează stocuri produse
+- Aprobă cereri de ștergere
+- Export date CSV
+
+### 2. AGENT (Rol standard)
+- Vede DOAR clienții săi
+- Adaugă/editează clienții proprii
+- Nu poate șterge clienți (doar cerere de ștergere)
+- Vede propriul target lunar
+- Vede propriile statistici pe dashboard
+
+### 3. ROLURI SPECIALE (Permisiuni personalizate)
+- **Madalina**: Poate vedea toți clienții cu stadiu "Vandut", dar poate edita doar: valoare ofertă, PDF ofertă, stadiu comandă, dată livrare
+- **Oana**: Admin dar cu toggle pentru "clienții mei" vs "toți clienții"
+- **Raluca**: Acces complet la toate ofertele PDF
+
+---
+
+## STRUCTURA BAZEI DE DATE (MODELE)
+
+### 1. USER (Utilizatori)
+```
+- id: Integer, cheie primară
+- email: String(120), unic, obligatoriu
+- password_hash: String(256), hash parola
+- first_name: String(50)
+- last_name: String(50)
+- role: String(20) - "admin" sau "agent"
+- active: Boolean - pentru dezactivare cont
+- sediu_id: FK către Sediu (opțional)
+- created_at: DateTime
+- last_login: DateTime
+- last_activity: DateTime
+```
+
+### 2. CLIENT (Clienți)
+```
+DATE DE BAZĂ:
+- id: Integer, cheie primară
+- data_adaugare: DateTime
+- sursa: String(100) - "Facebook", "Google", "Reclame", "Recomandare"
+- nume_client: String(100), obligatoriu
+- telefon: String(50)
+- email: String(120)
+- judet: String(100)
+- localitate: String(100)
+- tara: String(50), default "România"
+
+DETALII PRODUS:
+- categorie_produs: String(100) - "Gard metalic", "Rulou", etc.
+- brand: String(100)
+- model: String(100)
+- suprafata_mp: Float
+- culoare: String(50)
+- grosime: String(50)
+- finisaj: String(100)
+- ml_rulou_prod: Float - metri liniari produs
+- smart_dripstop: Boolean
+
+OFERTĂ ȘI VÂNZARE:
+- valoare_oferta: Float - valoarea în RON
+- stadiu_oferta: String(50) - "Trimisa", "In asteptare", "Acceptata", "Vandut", "Refuzat"
+- data_ofertarii: DateTime
+- data_vanzarii: DateTime
+- stadiu_comanda: String(50) - "Noua", "In productie", "Livrata"
+- data_livrarii: DateTime
+- incasat: Boolean - dacă s-a încasat banii
+- procent_comision: Float
+- comision_oferta: Float - valoare comision
+- pret_achizitie: Float - pentru admin
+
+FOLLOW-UP-URI (3 seturi):
+- data_revenire_1: DateTime
+- comentariu_observatii_1: Text
+- follow_up_efectuat_1: Boolean
+(similar pentru _2 și _3)
+
+OBSERVAȚII:
+- observatii_client: Text
+- comentarii_dupa_contact: Text
+- contactat: Boolean
+
+FIȘIERE ATAȘATE (PDF/Excel):
+- oferta_file_content: LargeBinary - conținut fișier în DB
+- oferta_filename: String(255) - nume original fișier
+- oferta_file_2_content: LargeBinary - al doilea fișier
+- oferta_filename_2: String(255)
+
+RELAȚII:
+- agent_id: FK către User (agentul responsabil)
+- partner_id: FK către Partner (opțional)
+- is_partner_order: Boolean
+```
+
+### 3. SALE (Vânzări)
+```
+- id: Integer
+- client_id: FK către Client
+- agent_id: FK către User
+- partner_id: FK către Partner (opțional)
+- product_name: String(200)
+- value: Float
+- status: String(20) - "pending", "won", "lost"
+- probability: Integer (50 default)
+- commission_rate: Float (3.0% normal, 1.0% parteneri)
+- is_partner_sale: Boolean
+- sale_date: DateTime
+- expected_close_date: DateTime
+- actual_close_date: DateTime
+- notes: Text
+```
+
+### 4. FOLLOWUP (Programări urmărire)
+```
+- id: Integer
+- client_id: FK către Client
+- agent_id: FK către User
+- sale_id: FK către Sale (opțional)
+- title: String(200)
+- description: Text
+- follow_up_date: DateTime
+- status: String(20) - "pending", "completed", "cancelled"
+- priority: String(10) - "low", "medium", "high"
+- completed_at: DateTime
+```
+
+### 5. MONTHLY_TARGET (Target-uri lunare)
+```
+- id: Integer
+- agent_id: FK către User
+- year: Integer
+- month: Integer (1-12)
+- target_amount: Float - target în RON
+- achieved_amount: Float - realizat în RON
+Constraint unic: agent + an + lună
+```
+
+### 6. SEDIU (Locații/Birouri)
+```
+- id: Integer
+- nume: String(100)
+- adresa: String(200)
+- oras: String(50)
+- telefon: String(50)
+- email: String(120)
+```
+
+### 7. EXPENSE_CATEGORY (Categorii cheltuieli - ierarhic)
+```
+- id: Integer
+- name: String(100)
+- parent_id: FK către ExpenseCategory (auto-referință)
+- level: String(20) - "main", "sub", "detail"
+- active: Boolean
+- display_order: Integer
+
+EXEMPLU IERARHIE:
+├── Salarii + bonusuri (main)
+│   ├── Salarii (sub)
+│   ├── Bonusuri (sub)
+│   └── Contribuții (sub)
+├── Cheltuieli auto (main)
+│   ├── Combustibil (sub)
+│   ├── Întreținere (sub)
+│   └── Asigurări (sub)
+├── Cheltuieli generale (main)
+│   ├── Utilități (sub)
+│   ├── Chirie (sub)
+│   └── Cota parte showroom (sub)
+│       ├── Detaliu 1 (detail)
+│       └── Detaliu 2 (detail)
+└── Bugete de stat (main)
+```
+
+### 8. CHELTUIELI_AGENT (Cheltuieli per agent)
+```
+- id: Integer
+- agent_id: FK către User
+- category_id: FK către ExpenseCategory (main)
+- subcategory_id: FK către ExpenseCategory (sub)
+- detail_category_id: FK către ExpenseCategory (detail)
+- suma: Float
+- descriere: Text
+- data_cheltuiala: DateTime
+- luna: Integer
+- an: Integer
+```
+
+### 9. CHELTUIELI_SEDIU (Cheltuieli per sediu)
+```
+- id: Integer
+- sediu_id: FK către Sediu
+- category_id, subcategory_id, detail_category_id: FK-uri
+- suma: Float
+- descriere: Text
+- data_cheltuiala: DateTime
+- luna: Integer
+- an: Integer
+```
+
+### 10. COSTURI_COMANDA (Costuri per comandă)
+```
+- id: Integer
+- client_id: FK către Client
+- agent_id: FK către User
+- pret_vanzare: Float
+- cost_achizitie: Float
+- alte_costuri: Float
+- data_vanzare: DateTime
+- luna: Integer
+- an: Integer
+```
+
+### 11. STOC_PRODUS (Stocuri produse)
+```
+- id: Integer
+- culoare: String(100)
+- grosime: String(50)
+- finisaj: String(100)
+- cantitate_ml: Float - metri liniari în stoc
+- prag_minim: Float - alertă când scade sub acest nivel
+```
+
+### 12. MISCARE_STOC (Mișcări stoc)
+```
+- id: Integer
+- stoc_produs_id: FK către StocProdus
+- tip_miscare: String(20) - "intrare" sau "iesire"
+- cantitate_ml: Float
+- motiv: String(200)
+- client_id: FK către Client (opțional)
+- agent_id: FK către User
+- data_miscare: DateTime
+```
+
+### 13. PARTNER (Parteneri de afaceri)
+```
+- id: Integer
+- agent_id: FK către User (agentul responsabil)
+- company_name: String(200)
+- cui: String(50) - Cod Unic Identificare
+- company_address: String(300)
+- full_name: String(100) - persoană contact
+- email: String(120)
+- phone: String(50)
+- active: Boolean
+- approved: Boolean - necesită aprobare admin
+- commission_rate: Float (1% pentru parteneri)
+```
+
+### 14. DELETE_REQUEST (Cereri ștergere)
+```
+- id: Integer
+- request_type: String(20) - "client", "partner", "offer"
+- item_id: Integer - ID-ul elementului
+- agent_id: FK către User (cine a cerut)
+- reason: Text
+- status: String(20) - "pending", "approved", "rejected"
+- admin_id: FK către User (cine a aprobat/respins)
+- created_at: DateTime
+- processed_at: DateTime
+```
+
+---
+
+## PAGINI ȘI FUNCȚIONALITĂȚI
+
+### PAGINI COMUNE (Toți utilizatorii)
+
+#### 1. LOGIN (/login)
+- Formular email + parolă
+- Verificare cont activ
+- Redirect la dashboard după login
+
+#### 2. DASHBOARD (/dashboard)
+**Pentru Admin:**
+- Total vânzări (stadiu "Vandut" + încasat)
+- Valoare totală vânzări
+- Comision total
+- Număr agenți activi
+- Grafic vânzări per lună
+- Top agenți după performanță
+- Filtrare pe calendar (selectează zile/interval)
+- Filtrare pe agent specific
+- Follow-up-uri restante
+- Alertă stoc critic
+
+**Pentru Agent:**
+- Doar propriile statistici
+- Propriile vânzări din luna curentă
+- Target vs realizat
+- Urmăritorii programați
+
+#### 3. CLIENȚI (/clients)
+- Lista clienților (paginată, 100/pagină)
+- Căutare globală (nume, telefon, email, localitate)
+- Filtrare după sursă, stadiu ofertă
+- Filtrare după agent (doar admin)
+- Indicator verde pentru clienți cu ofertă PDF atașată
+- Buton adăugare client nou
+- Click pe client → pagina de editare
+
+#### 4. ADAUGĂ CLIENT (/add_client)
+**Secțiuni formular:**
+1. Informații de bază: dată, sursă, nume, telefon, email, localitate
+2. Detalii produs: categorie, brand, model, culoare, grosime, finisaj
+3. Ofertă: valoare, stadiu, dată ofertare
+4. Vânzare: dată vânzare, stadiu comandă, dată livrare
+5. Comision: procent, valoare
+6. Follow-up: 3 seturi (dată + comentariu)
+7. Observații generale
+8. Upload ofertă PDF/Excel (2 fișiere max)
+
+#### 5. EDITEAZĂ CLIENT (/edit_client/<id>)
+- Toate câmpurile din adăugare, pre-completate
+- Posibilitate de a încărca/șterge oferte PDF
+- Istoric modificări (opțional)
+
+#### 6. VIZUALIZEAZĂ CLIENT (/client/<id>)
+- Afișare read-only a tuturor datelor
+- Download ofertă dacă există
+
+#### 7. PROFIL (/profile)
+- Schimbare parolă
+- Informații cont
+
+---
+
+### PAGINI ADMIN ONLY
+
+#### 8. VÂNZĂRI (/sales)
+- Statistici vânzări cu filtrare:
+  - Perioadă: azi, ieri, săptămâna asta, luna asta, an, custom
+  - Agenți: selectare multiplă
+- Carduri statistici: total vânzări, valoare, comisioane
+- Tabel cu toate vânzările filtrate
+- Grafic evoluție vânzări
+
+#### 9. TARGET-URI (/targets)
+- Tabel cu toți agenții
+- 12 coloane pentru fiecare lună
+- Editare inline target/lună
+- Afișare automată realizat vs target
+- Procent completare
+
+#### 10. GESTIONARE UTILIZATORI (/users_management)
+- Lista tuturor utilizatorilor
+- Adaugă utilizator nou
+- Activează/dezactivează cont
+- Schimbă rol (agent ↔ admin)
+- Resetare parolă
+
+#### 11. CHELTUIELI (/cheltuieli)
+- Tab-uri: Cheltuieli Agent / Cheltuieli Sediu
+- Filtrare după agent, lună, an
+- Dropdown-uri cascadă pentru categorii (3 nivele)
+- Adaugă/editează/șterge cheltuială
+
+#### 12. PROFITABILITATE (/profitabilitate)
+- Raport profitabilitate per agent
+- Filtrare lună/an
+- Calcul: Vânzări - Costuri achiziție - Cheltuieli = Profit
+- Procent marjă
+
+#### 13. PROFITABILITATE AVANSATĂ (/profitabilitate-avansata)
+- Detalii pe fiecare tranzacție
+- Breakdown cheltuieli pe categorii
+- Export date
+
+#### 14. STOCURI (/stoc)
+- Lista produse în stoc
+- Cantitate curentă (metri liniari)
+- Prag minim pentru alertă
+- Adaugă stoc nou
+- Ajustare stoc (+/-)
+- Istoric mișcări
+
+#### 15. PARTENERI (/partners)
+- Lista partenerilor de afaceri
+- Adaugă partener (necesită aprobare)
+- Editează detalii partener
+- Import parteneri din CSV
+
+#### 16. ADMIN DASHBOARD (/admin_dashboard)
+- Dashboard complet cu toate metricile
+- Statistici în timp real
+- Grafice interactive
+
+#### 17. RAPOARTE (/reports)
+- Rapoarte predefinite
+- Export CSV
+
+#### 18. HARTĂ VÂNZĂRI (/harta_vanzari)
+- Vizualizare geografică vânzări pe județe
+- Hartă interactivă România
+
+#### 19. ANALYTICS (/analytics, /sales_analytics)
+- Analiză detaliată vânzări
+- Tendințe, predicții
+
+---
+
+## FUNCȚIONALITĂȚI SPECIALE
+
+### 1. Sincronizare Google Sheets
+- Conectare cont Google prin service account
+- Mapping coloane Google Sheets → câmpuri CRM
+- Import automat clienți din sheets
+- Sincronizare periodică (manual sau automat)
+
+### 2. Upload Fișiere Permanent
+- Fișierele PDF/Excel se salvează în baza de date (BYTEA)
+- NU pe disk (se pierdeau la redeploy)
+- Max 2 fișiere per client
+- Download funcțional permanent
+
+### 3. Sistem Follow-up
+- 3 follow-up-uri per client
+- Notificări pentru follow-up-uri restante
+- Marcare ca efectuat
+
+### 4. Sistem Comisioane
+- Procent comision configurabil per client
+- 3% standard, 1% pentru parteneri
+- Calcul automat din valoare ofertă
+
+### 5. Alerte Stoc
+- Notificare când stocul scade sub prag
+- Scădere automată stoc la vânzare
+
+### 6. Cereri de Ștergere
+- Agenții NU pot șterge direct
+- Trimit cerere de ștergere
+- Admin aprobă/respinge
+
+### 7. Export CSV
+- Export clienți per agent
+- Export toate datele
+- Format CSV compatibil Excel
+
+---
+
+## FLUXURI DE LUCRU PRINCIPALE
+
+### Flux 1: Adăugare Client Nou
+1. Agent accesează /add_client
+2. Completează formular
+3. Încarcă ofertă PDF (opțional)
+4. Submit → client salvat cu agent_id = current_user
+5. Redirect la lista clienți
+
+### Flux 2: Urmărire Vânzare
+1. Client creat cu stadiu "Trimisa"
+2. Agent setează follow-up
+3. La revenire, actualizează stadiu → "In asteptare"
+4. Client acceptă → stadiu "Acceptata"
+5. Se livrează → stadiu "Livrata" + data_livrarii
+6. Se încasează → incasat = True + stadiu "Vandut"
+7. Comision calculat automat
+
+### Flux 3: Raport Profitabilitate Lunar
+1. Admin accesează /profitabilitate
+2. Selectează luna și anul
+3. Sistemul calculează:
+   - Total vânzări per agent
+   - Total costuri achiziție
+   - Total cheltuieli agent
+   - Profit = Vânzări - Costuri - Cheltuieli
+4. Afișare tabel + grafice
+
+---
+
+## API ENDPOINTS (pentru funcționalități AJAX)
+
+```
+GET  /api/expense-categories/main - categorii principale
+GET  /api/expense-categories/sub/<parent_id> - subcategorii
+GET  /api/expense-categories/detail/<parent_id> - detalii
+
+GET  /api/dashboard-stats - statistici dashboard
+GET  /api/sales-stats - statistici vânzări cu filtre
+GET  /api/all_clients - toți clienții (JSON)
+GET  /api/stock/alerts - alerte stoc critic
+
+POST /api/transfer_client - transfer client la alt agent
+POST /api/update_target - actualizare target
+```
+
+---
+
+## DESIGN UI
+
+### Culori principale:
+- Primary: Blue (#3B82F6)
+- Success: Green (#10B981)
+- Warning: Orange (#F59E0B)
+- Danger: Red (#EF4444)
+- Background: Gray (#F3F4F6)
+
+### Layout:
+- Sidebar stânga cu meniu
+- Header cu logo + user info
+- Content area centrală
+- Footer cu copyright
+
+### Responsive:
+- Desktop: sidebar vizibil
+- Mobile: sidebar colapsabil (hamburger menu)
+
+---
+
+## SECURITATE
+
+1. **Autentificare**
+   - Hash parole cu Werkzeug
+   - Sesiuni Flask-Login
+   - Timeout sesiune
+
+2. **Autorizare**
+   - Verificare rol la fiecare rută
+   - Agenții văd doar proprii clienți
+   - Admin vede tot
+
+3. **Validare Date**
+   - Verificare tipuri la input
+   - Escape HTML pentru XSS
+   - Parametri SQL prin ORM
+
+---
+
+## INSTRUCȚIUNI SETUP NOU CRM
+
+### Pachete Python necesare:
+```
+flask
+flask-sqlalchemy
+flask-login
+psycopg2-binary
+gunicorn
+werkzeug
+gspread
+oauth2client
+google-auth
+pandas
+```
+
+### Variabile de mediu:
+```
+DATABASE_URL=postgresql://...
+SESSION_SECRET=random_secret_key
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+```
+
+### Comandă pornire:
+```
+gunicorn --bind 0.0.0.0:5000 --reload main:app
+```
+
+---
+
+## STATISTICI CURENTE SISTEM
+
+- **Total clienți:** ~4000
+- **Total agenți activi:** 16
+- **Total vânzări:** ~500 (stadiu Vandut)
+- **Dimensiune DB:** ~50MB
+
+---
+
+Acest document conține toată structura și funcționalitatea CRM-ului Metallic Group pentru a putea fi replicat sau îmbunătățit.
