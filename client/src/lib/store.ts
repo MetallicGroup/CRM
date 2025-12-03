@@ -219,8 +219,10 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   // ADAOS TOTAL CU TVA (suma marjelor brute)
   const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
   
-  // ADAOS FĂRĂ TVA (împărțit la 1.21 pentru a scoate TVA-ul de 21%)
-  const adaosFaraTVA = adaosTotalCuTVA / 1.21;
+  // TVA = 21% din adaos cu TVA
+  const tvaTotal = adaosTotalCuTVA * 0.21;
+  // ADAOS FĂRĂ TVA = Adaos cu TVA - TVA (79% din adaos cu TVA)
+  const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
 
   const venitTVA = data.venitTVA || 0;
   const valoareComision = venitTVA * ((data.comisionPercent || 0) / 100);
@@ -277,9 +279,10 @@ export const calculateDistributorMetrics = (dist: Distributor, month: Month, tot
 
   // Adaos cu TVA (marja brută care include TVA)
   const adaosTVA = (data.venitTVA || 0) - (data.achizitieTVA || 0);
-  // Adaos fără TVA = împărțit la 1.21 (scoatem TVA-ul inclus)
-  const adaosFaraTVA = adaosTVA / 1.21;
-  const tva = adaosTVA - adaosFaraTVA;
+  // TVA = 21% din adaos cu TVA
+  const tva = adaosTVA * 0.21;
+  // Adaos fără TVA = Adaos cu TVA - TVA (79% din adaos cu TVA)
+  const adaosFaraTVA = adaosTVA - tva;
   const comisionValoare = (data.venitTVA || 0) * ((data.comisionPercent || 0) / 100);
 
   const costProductie = totalVenitGardFirma > 0 ? totalProductionCosts * ((data.venitTVA || 0) / totalVenitGardFirma) : 0;
