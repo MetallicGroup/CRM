@@ -39,6 +39,8 @@ interface DashboardStats {
     total: number;
     byStatus: Record<string, number>;
     totalValue: number;
+    wonValue: number;
+    pipelineValue: number;
   };
   activeAgents: number;
 }
@@ -88,7 +90,7 @@ export default function CRMDashboard() {
     },
   });
 
-  const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0 };
+  const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0, wonValue: 0, pipelineValue: 0 };
   const activeAgents = stats?.activeAgents || 0;
 
   const offersSent = clientStats.byStatus["OFERTA_TRIMISA"] || 0;
@@ -121,8 +123,8 @@ export default function CRMDashboard() {
       bgColor: "bg-green-100",
     },
     {
-      title: "Valoare Totală",
-      value: `${clientStats.totalValue.toLocaleString("ro-RO")} RON`,
+      title: "Valoare Câștigată",
+      value: `${clientStats.wonValue.toLocaleString("ro-RO")} RON`,
       icon: TrendingUp,
       color: "text-purple-600",
       bgColor: "bg-purple-100",

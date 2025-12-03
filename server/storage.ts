@@ -32,7 +32,7 @@ export interface IStorage {
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
-  getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number }>;
+  getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
   
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
@@ -244,7 +244,13 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number }> {
+  async getClientStats(agentId?: string): Promise<{ 
+    total: number; 
+    byStatus: Record<string, number>; 
+    totalValue: number;
+    wonValue: number;
+    pipelineValue: number;
+  }> {
     let query = db.select().from(clients);
     
     if (agentId) {
@@ -255,10 +261,17 @@ export class DatabaseStorage implements IStorage {
     
     const byStatus: Record<string, number> = {};
     let totalValue = 0;
+    let wonValue = 0;
+    let pipelineValue = 0;
     
     for (const client of allClients) {
       byStatus[client.status] = (byStatus[client.status] || 0) + 1;
-      if (client.valoareEstimata) {
+      
+      if (client.status === "CASTIGAT" && client.valoareFinala) {
+        wonValue += parseFloat(client.valoareFinala);
+        totalValue += parseFloat(client.valoareFinala);
+      } else if (client.valoareEstimata) {
+        pipelineValue += parseFloat(client.valoareEstimata);
         totalValue += parseFloat(client.valoareEstimata);
       }
     }
@@ -266,7 +279,9 @@ export class DatabaseStorage implements IStorage {
     return {
       total: allClients.length,
       byStatus,
-      totalValue
+      totalValue,
+      wonValue,
+      pipelineValue
     };
   }
 
