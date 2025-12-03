@@ -14,6 +14,7 @@ import Login from "@/pages/Login";
 import UserManagement from "@/pages/UserManagement";
 import ComingSoon from "@/pages/ComingSoon";
 import Profitabilitate from "@/pages/Profitabilitate";
+import Clienti from "@/pages/Clienti";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -90,7 +91,7 @@ function Router() {
         <ProtectedRoute component={CRMDashboard} />
       </Route>
       <Route path="/clienti">
-        <ProtectedRoute component={ComingSoon} />
+        <ProtectedRoute component={Clienti} />
       </Route>
       <Route path="/targeturi">
         <ProtectedRoute component={ComingSoon} />
