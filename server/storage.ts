@@ -155,6 +155,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClient(data: CreateClient): Promise<Client> {
+    // Parse numeric and date values properly
+    const parseDecimal = (val: string | undefined): string | null => {
+      if (!val || val === "") return null;
+      const num = parseFloat(val);
+      return isNaN(num) ? null : num.toString();
+    };
+
+    const parseDate = (val: string | undefined): Date | null => {
+      if (!val || val === "") return null;
+      const date = new Date(val);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
     const clientData: any = {
       nume: data.nume,
       prenume: data.prenume || null,
@@ -167,11 +180,11 @@ export class DatabaseStorage implements IStorage {
       status: data.status || "NOU",
       sursa: data.sursa || "TELEFON",
       categorie: data.categorie || "GARD",
-      valoareEstimata: data.valoareEstimata || null,
-      valoareFinala: data.valoareFinala || null,
+      valoareEstimata: parseDecimal(data.valoareEstimata),
+      valoareFinala: parseDecimal(data.valoareFinala),
       note: data.note || null,
-      dataContact: data.dataContact ? new Date(data.dataContact) : null,
-      dataUrmarire: data.dataUrmarire ? new Date(data.dataUrmarire) : null,
+      dataContact: parseDate(data.dataContact),
+      dataUrmarire: parseDate(data.dataUrmarire),
       agentId: data.agentId || null,
     };
 
@@ -180,6 +193,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateClient(id: string, data: UpdateClient): Promise<Client | undefined> {
+    // Parse numeric and date values properly
+    const parseDecimal = (val: string | undefined): string | null => {
+      if (!val || val === "") return null;
+      const num = parseFloat(val);
+      return isNaN(num) ? null : num.toString();
+    };
+
+    const parseDate = (val: string | undefined): Date | null => {
+      if (!val || val === "") return null;
+      const date = new Date(val);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
     const updateData: any = { updatedAt: new Date() };
     
     if (data.nume !== undefined) updateData.nume = data.nume;
@@ -193,11 +219,11 @@ export class DatabaseStorage implements IStorage {
     if (data.status !== undefined) updateData.status = data.status;
     if (data.sursa !== undefined) updateData.sursa = data.sursa;
     if (data.categorie !== undefined) updateData.categorie = data.categorie;
-    if (data.valoareEstimata !== undefined) updateData.valoareEstimata = data.valoareEstimata || null;
-    if (data.valoareFinala !== undefined) updateData.valoareFinala = data.valoareFinala || null;
+    if (data.valoareEstimata !== undefined) updateData.valoareEstimata = parseDecimal(data.valoareEstimata);
+    if (data.valoareFinala !== undefined) updateData.valoareFinala = parseDecimal(data.valoareFinala);
     if (data.note !== undefined) updateData.note = data.note || null;
-    if (data.dataContact !== undefined) updateData.dataContact = data.dataContact ? new Date(data.dataContact) : null;
-    if (data.dataUrmarire !== undefined) updateData.dataUrmarire = data.dataUrmarire ? new Date(data.dataUrmarire) : null;
+    if (data.dataContact !== undefined) updateData.dataContact = parseDate(data.dataContact);
+    if (data.dataUrmarire !== undefined) updateData.dataUrmarire = parseDate(data.dataUrmarire);
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
 
     const [client] = await db

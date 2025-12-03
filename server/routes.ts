@@ -299,9 +299,12 @@ export async function registerRoutes(
     try {
       const data = createClientSchema.parse(req.body);
       
-      // Assign to current user if no agent specified and user is not admin
-      if (!data.agentId && req.userRole !== "ADMIN") {
+      // RBAC: Non-admins can only create clients assigned to themselves
+      if (req.userRole !== "ADMIN") {
         data.agentId = req.userId;
+      } else if (!data.agentId) {
+        // Admin creates without agent - leave unassigned
+        data.agentId = undefined;
       }
 
       const client = await storage.createClient(data);
@@ -330,6 +333,12 @@ export async function registerRoutes(
       }
 
       const data = updateClientSchema.parse(req.body);
+      
+      // RBAC: Non-admins cannot change the agent assignment
+      if (req.userRole !== "ADMIN") {
+        delete data.agentId;
+      }
+
       const client = await storage.updateClient(req.params.id, data);
       
       res.json(client);

@@ -146,15 +146,20 @@ export default function Clienti() {
     },
   });
 
-  // Fetch agents for assignment
+  // Fetch agents for assignment (admin only)
   const { data: agents = [] } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const res = await fetch("/api/users");
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        const res = await fetch("/api/users");
+        if (!res.ok) return [];
+        return res.json();
+      } catch {
+        return [];
+      }
     },
     enabled: isAdmin,
+    retry: false,
   });
 
   // Create client mutation
