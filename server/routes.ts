@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, createUserSchema, updateUserSchema } from "@shared/schema";
+import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema } from "@shared/schema";
 import { z } from "zod";
 
 interface AuthRequest extends Request {
@@ -232,6 +232,129 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Change password error:", error);
       res.status(500).json({ message: "Eroare la schimbarea parolei" });
+    }
+  });
+
+  // ============ CLIENT ROUTES ============
+
+  // Get all clients
+  app.get("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, status, search } = req.query;
+      
+      // Non-admins can only see their own clients
+      let filterAgentId = agentId as string | undefined;
+      if (req.userRole !== "ADMIN") {
+        filterAgentId = req.userId;
+      }
+
+      const clients = await storage.getAllClients({
+        agentId: filterAgentId,
+        status: status as string | undefined,
+        search: search as string | undefined,
+      });
+      
+      res.json(clients);
+    } catch (error) {
+      console.error("Get clients error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea clienților" });
+    }
+  });
+
+  // Get client stats
+  app.get("/api/clients/stats", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const stats = await storage.getClientStats(agentId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Get client stats error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea statisticilor" });
+    }
+  });
+
+  // Get single client
+  app.get("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const client = await storage.getClient(req.params.id);
+      
+      if (!client) {
+        return res.status(404).json({ message: "Client negăsit" });
+      }
+
+      // Non-admins can only see their own clients
+      if (req.userRole !== "ADMIN" && client.agentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți acces la acest client" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      console.error("Get client error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea clientului" });
+    }
+  });
+
+  // Create client
+  app.post("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createClientSchema.parse(req.body);
+      
+      // Assign to current user if no agent specified and user is not admin
+      if (!data.agentId && req.userRole !== "ADMIN") {
+        data.agentId = req.userId;
+      }
+
+      const client = await storage.createClient(data);
+      res.status(201).json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create client error:", error);
+      res.status(500).json({ message: "Eroare la crearea clientului" });
+    }
+  });
+
+  // Update client
+  app.patch("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const existingClient = await storage.getClient(req.params.id);
+      
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client negăsit" });
+      }
+
+      // Non-admins can only update their own clients
+      if (req.userRole !== "ADMIN" && existingClient.agentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest client" });
+      }
+
+      const data = updateClientSchema.parse(req.body);
+      const client = await storage.updateClient(req.params.id, data);
+      
+      res.json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update client error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea clientului" });
+    }
+  });
+
+  // Delete client (admin only)
+  app.delete("/api/clients/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteClient(req.params.id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Client negăsit" });
+      }
+
+      res.json({ message: "Client șters cu succes" });
+    } catch (error) {
+      console.error("Delete client error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea clientului" });
     }
   });
 
