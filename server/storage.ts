@@ -32,7 +32,11 @@ export interface IStorage {
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
-  getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number> }>;
+  getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number }>;
+  
+  // Dashboard methods
+  getActiveAgentsCount(): Promise<number>;
+  getAgents(): Promise<SafeUser[]>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -240,7 +244,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number> }> {
+  async getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number }> {
     let query = db.select().from(clients);
     
     if (agentId) {
@@ -250,14 +254,46 @@ export class DatabaseStorage implements IStorage {
     const allClients = await query;
     
     const byStatus: Record<string, number> = {};
+    let totalValue = 0;
+    
     for (const client of allClients) {
       byStatus[client.status] = (byStatus[client.status] || 0) + 1;
+      if (client.valoareEstimata) {
+        totalValue += parseFloat(client.valoareEstimata);
+      }
     }
     
     return {
       total: allClients.length,
-      byStatus
+      byStatus,
+      totalValue
     };
+  }
+
+  async getActiveAgentsCount(): Promise<number> {
+    const activeAgents = await db.select().from(users).where(
+      and(
+        eq(users.active, true),
+        eq(users.role, "AGENT")
+      )
+    );
+    return activeAgents.length;
+  }
+
+  async getAgents(): Promise<SafeUser[]> {
+    const agents = await db.select().from(users).where(
+      and(
+        eq(users.active, true),
+        or(
+          eq(users.role, "AGENT"),
+          eq(users.role, "ADMIN")
+        )
+      )
+    );
+    return agents.map(u => {
+      const { passwordHash, ...safe } = u;
+      return safe;
+    });
   }
 }
 

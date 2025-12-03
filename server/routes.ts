@@ -235,6 +235,48 @@ export async function registerRoutes(
     }
   });
 
+  // ============ DASHBOARD ROUTES ============
+
+  // Get dashboard stats
+  app.get("/api/dashboard/stats", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const [clientStats, activeAgentsCount] = await Promise.all([
+        storage.getClientStats(agentId),
+        storage.getActiveAgentsCount()
+      ]);
+      
+      res.json({
+        clients: clientStats,
+        activeAgents: activeAgentsCount
+      });
+    } catch (error) {
+      console.error("Get dashboard stats error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea statisticilor" });
+    }
+  });
+
+  // Get agents list (for filters)
+  app.get("/api/dashboard/agents", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      // Non-admins can only see themselves
+      if (req.userRole !== "ADMIN") {
+        const user = await storage.getUser(req.userId!);
+        if (user) {
+          const { passwordHash, ...safeUser } = user;
+          return res.json([safeUser]);
+        }
+        return res.json([]);
+      }
+      
+      const agents = await storage.getAgents();
+      res.json(agents);
+    } catch (error) {
+      console.error("Get agents error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea agenților" });
+    }
+  });
+
   // ============ CLIENT ROUTES ============
 
   // Get all clients

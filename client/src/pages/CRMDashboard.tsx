@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -33,41 +34,95 @@ import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
+interface DashboardStats {
+  clients: {
+    total: number;
+    byStatus: Record<string, number>;
+    totalValue: number;
+  };
+  activeAgents: number;
+}
+
+interface Agent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
 export default function CRMDashboard() {
   const { user, isAdmin } = useAuth();
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [period, setPeriod] = useState<string>("luna");
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  const now = new Date();
-  const formattedDate = format(now, "EEEE, d MMMM yyyy", { locale: ro });
-  const formattedTime = format(now, "HH:mm:ss");
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  const stats = [
+  const formattedDate = format(currentTime, "EEEE, d MMMM yyyy", { locale: ro });
+  const formattedTime = format(currentTime, "HH:mm:ss");
+
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats", selectedAgent],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedAgent && selectedAgent !== "all") {
+        params.set("agentId", selectedAgent);
+      }
+      const res = await fetch(`/api/dashboard/stats?${params}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea statisticilor");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const { data: agents = [] } = useQuery<Agent[]>({
+    queryKey: ["dashboard-agents"],
+    queryFn: async () => {
+      const res = await fetch("/api/dashboard/agents");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0 };
+  const activeAgents = stats?.activeAgents || 0;
+
+  const offersSent = clientStats.byStatus["OFERTA_TRIMISA"] || 0;
+  const inNegotiation = clientStats.byStatus["NEGOCIERE"] || 0;
+  const won = clientStats.byStatus["CASTIGAT"] || 0;
+  const lost = clientStats.byStatus["PIERDUT"] || 0;
+  const newClients = clientStats.byStatus["NOU"] || 0;
+  const contacted = clientStats.byStatus["CONTACTAT"] || 0;
+
+  const statsCards = [
     {
       title: "Total Clienți",
-      value: "0",
+      value: clientStats.total.toString(),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
     {
       title: "Oferte Trimise",
-      value: "0",
+      value: (offersSent + inNegotiation).toString(),
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
     },
     {
       title: "Vânzări",
-      value: "0",
+      value: won.toString(),
       icon: ShoppingCart,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
     {
       title: "Valoare Totală",
-      value: "0 RON",
+      value: `${clientStats.totalValue.toLocaleString("ro-RO")} RON`,
       icon: TrendingUp,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
@@ -75,10 +130,16 @@ export default function CRMDashboard() {
   ];
 
   const offerStatuses = [
-    { label: "Acceptate", value: 0, icon: CheckCircle, color: "text-green-600" },
-    { label: "În Așteptare", value: 0, icon: Clock, color: "text-orange-600" },
-    { label: "Refuzate", value: 0, icon: XCircle, color: "text-red-600" },
+    { label: "Câștigate", value: won, icon: CheckCircle, color: "text-green-600" },
+    { label: "În Așteptare", value: newClients + contacted + offersSent + inNegotiation, icon: Clock, color: "text-orange-600" },
+    { label: "Pierdute", value: lost, icon: XCircle, color: "text-red-600" },
   ];
+
+  const resetFilters = () => {
+    setDate(undefined);
+    setSelectedAgent("all");
+    setPeriod("luna");
+  };
 
   return (
     <div className="space-y-6">
@@ -89,12 +150,12 @@ export default function CRMDashboard() {
             <Crown className="h-8 w-8 text-yellow-600" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">
+            <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-welcome">
               Bună ziua, {user?.firstName}!
             </h1>
             <p className="text-muted-foreground">
               {isAdmin 
-                ? "Gestionezi întregul sistem CRM" 
+                ? `Gestionezi întregul sistem CRM cu ${activeAgents} agenți activi`
                 : "Bine ai venit în sistemul CRM"}
             </p>
           </div>
@@ -126,7 +187,7 @@ export default function CRMDashboard() {
                 </CardDescription>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={resetFilters}>
               <RefreshCw className="h-4 w-4" />
               Resetează filtrul
             </Button>
@@ -148,6 +209,7 @@ export default function CRMDashboard() {
                       "w-full justify-start text-left font-normal",
                       !date && "text-muted-foreground"
                     )}
+                    data-testid="button-date-picker"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "PPP", { locale: ro }) : "Click pentru a selecta date..."}
@@ -174,11 +236,16 @@ export default function CRMDashboard() {
                 Selectează agent
               </label>
               <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger>
+                <SelectTrigger data-testid="select-agent-filter">
                   <SelectValue placeholder="Selectează agent" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.firstName} {agent.lastName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
@@ -193,9 +260,15 @@ export default function CRMDashboard() {
                 Date selectate
               </label>
               <div className="p-3 bg-gray-50 rounded-lg min-h-[40px]">
-                <p className="text-sm text-muted-foreground italic">
-                  Nicio dată selectată - se afișează toate vânzările
-                </p>
+                {date ? (
+                  <p className="text-sm font-medium">
+                    {format(date, "d MMMM yyyy", { locale: ro })}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    Nicio dată selectată - se afișează toate vânzările
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -229,6 +302,11 @@ export default function CRMDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.firstName} {agent.lastName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -236,13 +314,15 @@ export default function CRMDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, index) => (
+          {statsCards.map((stat, index) => (
             <Card key={index}>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">{stat.title}</p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-2xl font-bold" data-testid={`stat-${stat.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {statsLoading ? "..." : stat.value}
+                    </p>
                   </div>
                   <div className={cn("p-3 rounded-lg", stat.bgColor)}>
                     <stat.icon className={cn("h-6 w-6", stat.color)} />
@@ -262,7 +342,9 @@ export default function CRMDashboard() {
               <div className="flex items-center gap-4">
                 <status.icon className={cn("h-8 w-8", status.color)} />
                 <div>
-                  <p className="text-2xl font-bold">{status.value}</p>
+                  <p className="text-2xl font-bold" data-testid={`status-${status.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                    {statsLoading ? "..." : status.value}
+                  </p>
                   <p className="text-sm text-muted-foreground">{status.label}</p>
                 </div>
               </div>
@@ -271,23 +353,31 @@ export default function CRMDashboard() {
         ))}
       </div>
 
-      {/* Info Card */}
+      {/* Info Card - Updated to reflect completed features */}
       {isAdmin && (
         <Card className="border-dashed border-blue-300 bg-blue-50/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
               <AlertCircle className="h-5 w-5" />
-              Modul CRM în Dezvoltare
+              Funcționalități CRM
             </CardTitle>
             <CardDescription>
-              Următoarele funcționalități vor fi adăugate:
+              Progresul dezvoltării:
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
+                <div className="h-2 w-2 rounded-full bg-green-500" />
                 Gestionare Clienți (CRUD complet)
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                Dashboard cu statistici live
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                Filtrare după agent
               </li>
               <li className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-orange-500" />
@@ -296,14 +386,6 @@ export default function CRMDashboard() {
               <li className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-orange-500" />
                 Target-uri lunare pentru agenți
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                Follow-up-uri și notificări
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                Gestionare Parteneri
               </li>
               <li className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-orange-500" />
