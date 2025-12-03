@@ -4,20 +4,23 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/Dashboard";
+import CRMDashboard from "@/pages/CRMDashboard";
+import FinancialDashboard from "@/pages/Dashboard";
 import Angajati from "@/pages/Angajati";
 import ShowroomRegional from "@/pages/ShowroomRegional";
 import Distributors from "@/pages/Distributors";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import UserManagement from "@/pages/UserManagement";
-import { AppSidebar } from "@/components/layout/AppSidebar";
+import ComingSoon from "@/pages/ComingSoon";
+import Profitabilitate from "@/pages/Profitabilitate";
+import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <AppSidebar />
-      <main className="flex-1 overflow-y-auto p-8">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main className="container mx-auto px-4 py-6">
         {children}
       </main>
     </div>
@@ -77,27 +80,54 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 function Router() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/login">
         <PublicRoute component={Login} />
       </Route>
+
+      {/* CRM Routes */}
       <Route path="/">
-        <ProtectedRoute component={Dashboard} />
+        <ProtectedRoute component={CRMDashboard} />
       </Route>
-      <Route path="/angajati">
+      <Route path="/clienti">
+        <ProtectedRoute component={ComingSoon} />
+      </Route>
+      <Route path="/targeturi">
+        <ProtectedRoute component={ComingSoon} />
+      </Route>
+      <Route path="/vanzari">
+        <ProtectedRoute component={ComingSoon} />
+      </Route>
+      <Route path="/parteneri">
+        <ProtectedRoute component={ComingSoon} />
+      </Route>
+
+      {/* Profitabilitate - Financial Module */}
+      <Route path="/profitabilitate">
+        <ProtectedRoute component={Profitabilitate} adminOnly />
+      </Route>
+      <Route path="/profitabilitate/raport">
+        <ProtectedRoute component={FinancialDashboard} adminOnly />
+      </Route>
+      <Route path="/profitabilitate/angajati">
         <ProtectedRoute component={Angajati} adminOnly />
       </Route>
-      <Route path="/showroom-regional">
+      <Route path="/profitabilitate/showroom-uri">
         <ProtectedRoute component={ShowroomRegional} adminOnly />
       </Route>
-      <Route path="/distributori">
+      <Route path="/profitabilitate/distribuitori">
         <ProtectedRoute component={Distributors} adminOnly />
       </Route>
-      <Route path="/settings">
+      <Route path="/profitabilitate/setari">
         <ProtectedRoute component={Settings} adminOnly />
       </Route>
+
+      {/* Admin Routes */}
       <Route path="/utilizatori">
         <ProtectedRoute component={UserManagement} adminOnly />
       </Route>
+
+      {/* 404 */}
       <Route>
         <ProtectedRoute component={NotFound} />
       </Route>
