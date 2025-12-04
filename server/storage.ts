@@ -3,6 +3,10 @@ import {
   clients,
   targets,
   partners,
+  sedii,
+  expenseCategories,
+  cheltuieliAgent,
+  cheltuieliSediu,
   type User, 
   type InsertUser, 
   type SafeUser, 
@@ -16,7 +20,19 @@ import {
   type UpdateTarget,
   type Partner,
   type CreatePartner,
-  type UpdatePartner
+  type UpdatePartner,
+  type Sediu,
+  type CreateSediu,
+  type UpdateSediu,
+  type ExpenseCategory,
+  type CreateExpenseCategory,
+  type UpdateExpenseCategory,
+  type CheltuialaAgent,
+  type CreateCheltuialaAgent,
+  type UpdateCheltuialaAgent,
+  type CheltuialaSediu,
+  type CreateCheltuialaSediu,
+  type UpdateCheltuialaSediu
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -61,6 +77,50 @@ export interface IStorage {
   createPartner(data: CreatePartner): Promise<Partner>;
   updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined>;
   deletePartner(id: string): Promise<boolean>;
+  
+  // Sedii methods
+  getSediu(id: string): Promise<Sediu | undefined>;
+  getAllSedii(activ?: boolean): Promise<Sediu[]>;
+  createSediu(data: CreateSediu): Promise<Sediu>;
+  updateSediu(id: string, data: UpdateSediu): Promise<Sediu | undefined>;
+  deleteSediu(id: string): Promise<boolean>;
+  
+  // Expense Category methods
+  getExpenseCategory(id: string): Promise<ExpenseCategory | undefined>;
+  getExpenseCategoriesByLevel(level: string): Promise<ExpenseCategory[]>;
+  getExpenseCategoriesByParent(parentId: string): Promise<ExpenseCategory[]>;
+  createExpenseCategory(data: CreateExpenseCategory): Promise<ExpenseCategory>;
+  updateExpenseCategory(id: string, data: UpdateExpenseCategory): Promise<ExpenseCategory | undefined>;
+  deleteExpenseCategory(id: string): Promise<boolean>;
+  
+  // Cheltuieli Agent methods
+  getCheltuialaAgent(id: string): Promise<CheltuialaAgent | undefined>;
+  getAllCheltuieliAgent(filters?: { 
+    agentId?: string; 
+    luna?: number; 
+    an?: number; 
+    categoryId?: string;
+    sediuId?: string;
+    firma?: string;
+  }): Promise<CheltuialaAgent[]>;
+  createCheltuialaAgent(data: CreateCheltuialaAgent): Promise<CheltuialaAgent>;
+  updateCheltuialaAgent(id: string, data: UpdateCheltuialaAgent): Promise<CheltuialaAgent | undefined>;
+  deleteCheltuialaAgent(id: string): Promise<boolean>;
+  getCheltuieliAgentStats(filters?: { agentId?: string; luna?: number; an?: number }): Promise<{ total: number; byCategory: Record<string, number> }>;
+  
+  // Cheltuieli Sediu methods
+  getCheltuialaSediu(id: string): Promise<CheltuialaSediu | undefined>;
+  getAllCheltuieliSediu(filters?: { 
+    sediuId?: string; 
+    luna?: number; 
+    an?: number; 
+    categoryId?: string;
+    firma?: string;
+  }): Promise<CheltuialaSediu[]>;
+  createCheltuialaSediu(data: CreateCheltuialaSediu): Promise<CheltuialaSediu>;
+  updateCheltuialaSediu(id: string, data: UpdateCheltuialaSediu): Promise<CheltuialaSediu | undefined>;
+  deleteCheltuialaSediu(id: string): Promise<boolean>;
+  getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{ total: number; byCategory: Record<string, number> }>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -621,6 +681,387 @@ export class DatabaseStorage implements IStorage {
   async deletePartner(id: string): Promise<boolean> {
     const result = await db.delete(partners).where(eq(partners.id, id)).returning();
     return result.length > 0;
+  }
+
+  // ============ SEDII METHODS ============
+
+  async getSediu(id: string): Promise<Sediu | undefined> {
+    const [sediu] = await db.select().from(sedii).where(eq(sedii.id, id));
+    return sediu || undefined;
+  }
+
+  async getAllSedii(activ?: boolean): Promise<Sediu[]> {
+    if (activ !== undefined) {
+      return await db.select().from(sedii).where(eq(sedii.activ, activ)).orderBy(sedii.nume);
+    }
+    return await db.select().from(sedii).orderBy(sedii.nume);
+  }
+
+  async createSediu(data: CreateSediu): Promise<Sediu> {
+    const [sediu] = await db.insert(sedii).values({
+      nume: data.nume,
+      adresa: data.adresa || null,
+      oras: data.oras || null,
+      judet: data.judet || null,
+      telefon: data.telefon || null,
+      email: data.email || null,
+      activ: data.activ !== undefined ? data.activ : true,
+    }).returning();
+    return sediu;
+  }
+
+  async updateSediu(id: string, data: UpdateSediu): Promise<Sediu | undefined> {
+    const updateData: any = {};
+    
+    if (data.nume !== undefined) updateData.nume = data.nume;
+    if (data.adresa !== undefined) updateData.adresa = data.adresa || null;
+    if (data.oras !== undefined) updateData.oras = data.oras || null;
+    if (data.judet !== undefined) updateData.judet = data.judet || null;
+    if (data.telefon !== undefined) updateData.telefon = data.telefon || null;
+    if (data.email !== undefined) updateData.email = data.email || null;
+    if (data.activ !== undefined) updateData.activ = data.activ;
+
+    const [sediu] = await db
+      .update(sedii)
+      .set(updateData)
+      .where(eq(sedii.id, id))
+      .returning();
+    
+    return sediu || undefined;
+  }
+
+  async deleteSediu(id: string): Promise<boolean> {
+    const result = await db.delete(sedii).where(eq(sedii.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // ============ EXPENSE CATEGORY METHODS ============
+
+  async getExpenseCategory(id: string): Promise<ExpenseCategory | undefined> {
+    const [category] = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
+    return category || undefined;
+  }
+
+  async getExpenseCategoriesByLevel(level: string): Promise<ExpenseCategory[]> {
+    return await db.select().from(expenseCategories)
+      .where(and(
+        eq(expenseCategories.level, level as any),
+        eq(expenseCategories.active, true)
+      ))
+      .orderBy(expenseCategories.displayOrder);
+  }
+
+  async getExpenseCategoriesByParent(parentId: string): Promise<ExpenseCategory[]> {
+    return await db.select().from(expenseCategories)
+      .where(and(
+        eq(expenseCategories.parentId, parentId),
+        eq(expenseCategories.active, true)
+      ))
+      .orderBy(expenseCategories.displayOrder);
+  }
+
+  async createExpenseCategory(data: CreateExpenseCategory): Promise<ExpenseCategory> {
+    const [category] = await db.insert(expenseCategories).values({
+      name: data.name,
+      parentId: data.parentId || null,
+      level: data.level as any,
+      active: data.active !== undefined ? data.active : true,
+      displayOrder: data.displayOrder || 0,
+    }).returning();
+    return category;
+  }
+
+  async updateExpenseCategory(id: string, data: UpdateExpenseCategory): Promise<ExpenseCategory | undefined> {
+    const updateData: any = {};
+    
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.parentId !== undefined) updateData.parentId = data.parentId || null;
+    if (data.level !== undefined) updateData.level = data.level;
+    if (data.active !== undefined) updateData.active = data.active;
+    if (data.displayOrder !== undefined) updateData.displayOrder = data.displayOrder;
+
+    const [category] = await db
+      .update(expenseCategories)
+      .set(updateData)
+      .where(eq(expenseCategories.id, id))
+      .returning();
+    
+    return category || undefined;
+  }
+
+  async deleteExpenseCategory(id: string): Promise<boolean> {
+    const result = await db.delete(expenseCategories).where(eq(expenseCategories.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // ============ CHELTUIELI AGENT METHODS ============
+
+  async getCheltuialaAgent(id: string): Promise<CheltuialaAgent | undefined> {
+    const [cheltuiala] = await db.select().from(cheltuieliAgent).where(eq(cheltuieliAgent.id, id));
+    return cheltuiala || undefined;
+  }
+
+  async getAllCheltuieliAgent(filters?: { 
+    agentId?: string; 
+    luna?: number; 
+    an?: number; 
+    categoryId?: string;
+    sediuId?: string;
+    firma?: string;
+  }): Promise<CheltuialaAgent[]> {
+    const conditions = [];
+    
+    if (filters?.agentId) {
+      conditions.push(eq(cheltuieliAgent.agentId, filters.agentId));
+    }
+    if (filters?.luna) {
+      conditions.push(eq(cheltuieliAgent.luna, filters.luna));
+    }
+    if (filters?.an) {
+      conditions.push(eq(cheltuieliAgent.an, filters.an));
+    }
+    if (filters?.categoryId) {
+      conditions.push(eq(cheltuieliAgent.categoryId, filters.categoryId));
+    }
+    if (filters?.sediuId) {
+      conditions.push(eq(cheltuieliAgent.sediuId, filters.sediuId));
+    }
+    if (filters?.firma) {
+      conditions.push(eq(cheltuieliAgent.firma, filters.firma));
+    }
+
+    let query = db.select().from(cheltuieliAgent);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    return await query.orderBy(desc(cheltuieliAgent.dataCheltuiala));
+  }
+
+  async createCheltuialaAgent(data: CreateCheltuialaAgent): Promise<CheltuialaAgent> {
+    const dataCheltuiala = new Date(data.dataCheltuiala);
+    
+    const [cheltuiala] = await db.insert(cheltuieliAgent).values({
+      agentId: data.agentId || null,
+      categoryId: data.categoryId,
+      subcategoryId: data.subcategoryId,
+      detailCategoryId: data.detailCategoryId || null,
+      suma: data.suma,
+      descriere: data.descriere || null,
+      dataCheltuiala: dataCheltuiala,
+      luna: data.luna,
+      an: data.an,
+      judet: data.judet || null,
+      sediuId: data.sediuId || null,
+      firma: data.firma,
+      autoNr: data.autoNr || null,
+      facturaFilename: data.facturaFilename || null,
+      tipCheltuiala: data.tipCheltuiala || null,
+    }).returning();
+    return cheltuiala;
+  }
+
+  async updateCheltuialaAgent(id: string, data: UpdateCheltuialaAgent): Promise<CheltuialaAgent | undefined> {
+    const updateData: any = {};
+    
+    if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
+    if (data.detailCategoryId !== undefined) updateData.detailCategoryId = data.detailCategoryId || null;
+    if (data.suma !== undefined) updateData.suma = data.suma;
+    if (data.descriere !== undefined) updateData.descriere = data.descriere || null;
+    if (data.dataCheltuiala !== undefined) {
+      updateData.dataCheltuiala = new Date(data.dataCheltuiala);
+    }
+    if (data.luna !== undefined) updateData.luna = data.luna;
+    if (data.an !== undefined) updateData.an = data.an;
+    if (data.judet !== undefined) updateData.judet = data.judet || null;
+    if (data.sediuId !== undefined) updateData.sediuId = data.sediuId || null;
+    if (data.firma !== undefined) updateData.firma = data.firma;
+    if (data.autoNr !== undefined) updateData.autoNr = data.autoNr || null;
+    if (data.facturaFilename !== undefined) updateData.facturaFilename = data.facturaFilename || null;
+    if (data.tipCheltuiala !== undefined) updateData.tipCheltuiala = data.tipCheltuiala || null;
+
+    const [cheltuiala] = await db
+      .update(cheltuieliAgent)
+      .set(updateData)
+      .where(eq(cheltuieliAgent.id, id))
+      .returning();
+    
+    return cheltuiala || undefined;
+  }
+
+  async deleteCheltuialaAgent(id: string): Promise<boolean> {
+    const result = await db.delete(cheltuieliAgent).where(eq(cheltuieliAgent.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getCheltuieliAgentStats(filters?: { agentId?: string; luna?: number; an?: number }): Promise<{ 
+    total: number; 
+    byCategory: Record<string, number>;
+  }> {
+    const conditions = [];
+    
+    if (filters?.agentId) {
+      conditions.push(eq(cheltuieliAgent.agentId, filters.agentId));
+    }
+    if (filters?.luna) {
+      conditions.push(eq(cheltuieliAgent.luna, filters.luna));
+    }
+    if (filters?.an) {
+      conditions.push(eq(cheltuieliAgent.an, filters.an));
+    }
+
+    let query = db.select().from(cheltuieliAgent);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const allCheltuieli = await query;
+    
+    let total = 0;
+    const byCategory: Record<string, number> = {};
+    
+    for (const c of allCheltuieli) {
+      const suma = parseFloat(c.suma || "0");
+      total += suma;
+      
+      if (c.categoryId) {
+        byCategory[c.categoryId] = (byCategory[c.categoryId] || 0) + suma;
+      }
+    }
+    
+    return { total, byCategory };
+  }
+
+  // ============ CHELTUIELI SEDIU METHODS ============
+
+  async getCheltuialaSediu(id: string): Promise<CheltuialaSediu | undefined> {
+    const [cheltuiala] = await db.select().from(cheltuieliSediu).where(eq(cheltuieliSediu.id, id));
+    return cheltuiala || undefined;
+  }
+
+  async getAllCheltuieliSediu(filters?: { 
+    sediuId?: string; 
+    luna?: number; 
+    an?: number; 
+    categoryId?: string;
+    firma?: string;
+  }): Promise<CheltuialaSediu[]> {
+    const conditions = [];
+    
+    if (filters?.sediuId) {
+      conditions.push(eq(cheltuieliSediu.sediuId, filters.sediuId));
+    }
+    if (filters?.luna) {
+      conditions.push(eq(cheltuieliSediu.luna, filters.luna));
+    }
+    if (filters?.an) {
+      conditions.push(eq(cheltuieliSediu.an, filters.an));
+    }
+    if (filters?.categoryId) {
+      conditions.push(eq(cheltuieliSediu.categoryId, filters.categoryId));
+    }
+    if (filters?.firma) {
+      conditions.push(eq(cheltuieliSediu.firma, filters.firma));
+    }
+
+    let query = db.select().from(cheltuieliSediu);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    return await query.orderBy(desc(cheltuieliSediu.dataCheltuiala));
+  }
+
+  async createCheltuialaSediu(data: CreateCheltuialaSediu): Promise<CheltuialaSediu> {
+    const dataCheltuiala = new Date(data.dataCheltuiala);
+    
+    const [cheltuiala] = await db.insert(cheltuieliSediu).values({
+      sediuId: data.sediuId,
+      categoryId: data.categoryId,
+      subcategoryId: data.subcategoryId,
+      detailCategoryId: data.detailCategoryId || null,
+      suma: data.suma,
+      descriere: data.descriere || null,
+      dataCheltuiala: dataCheltuiala,
+      luna: data.luna,
+      an: data.an,
+      firma: data.firma,
+      facturaFilename: data.facturaFilename || null,
+      tipCheltuiala: data.tipCheltuiala || null,
+    }).returning();
+    return cheltuiala;
+  }
+
+  async updateCheltuialaSediu(id: string, data: UpdateCheltuialaSediu): Promise<CheltuialaSediu | undefined> {
+    const updateData: any = {};
+    
+    if (data.sediuId !== undefined) updateData.sediuId = data.sediuId;
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
+    if (data.detailCategoryId !== undefined) updateData.detailCategoryId = data.detailCategoryId || null;
+    if (data.suma !== undefined) updateData.suma = data.suma;
+    if (data.descriere !== undefined) updateData.descriere = data.descriere || null;
+    if (data.dataCheltuiala !== undefined) {
+      updateData.dataCheltuiala = new Date(data.dataCheltuiala);
+    }
+    if (data.luna !== undefined) updateData.luna = data.luna;
+    if (data.an !== undefined) updateData.an = data.an;
+    if (data.firma !== undefined) updateData.firma = data.firma;
+    if (data.facturaFilename !== undefined) updateData.facturaFilename = data.facturaFilename || null;
+    if (data.tipCheltuiala !== undefined) updateData.tipCheltuiala = data.tipCheltuiala || null;
+
+    const [cheltuiala] = await db
+      .update(cheltuieliSediu)
+      .set(updateData)
+      .where(eq(cheltuieliSediu.id, id))
+      .returning();
+    
+    return cheltuiala || undefined;
+  }
+
+  async deleteCheltuialaSediu(id: string): Promise<boolean> {
+    const result = await db.delete(cheltuieliSediu).where(eq(cheltuieliSediu.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{ 
+    total: number; 
+    byCategory: Record<string, number>;
+  }> {
+    const conditions = [];
+    
+    if (filters?.sediuId) {
+      conditions.push(eq(cheltuieliSediu.sediuId, filters.sediuId));
+    }
+    if (filters?.luna) {
+      conditions.push(eq(cheltuieliSediu.luna, filters.luna));
+    }
+    if (filters?.an) {
+      conditions.push(eq(cheltuieliSediu.an, filters.an));
+    }
+
+    let query = db.select().from(cheltuieliSediu);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const allCheltuieli = await query;
+    
+    let total = 0;
+    const byCategory: Record<string, number> = {};
+    
+    for (const c of allCheltuieli) {
+      const suma = parseFloat(c.suma || "0");
+      total += suma;
+      
+      if (c.categoryId) {
+        byCategory[c.categoryId] = (byCategory[c.categoryId] || 0) + suma;
+      }
+    }
+    
+    return { total, byCategory };
   }
 }
 

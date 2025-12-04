@@ -17,6 +17,7 @@ import Clienti from "@/pages/Clienti";
 import Targeturi from "@/pages/Targeturi";
 import Vanzari from "@/pages/Vanzari";
 import Parteneri from "@/pages/Parteneri";
+import Cheltuieli from "@/pages/Cheltuieli";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -103,6 +104,9 @@ function Router() {
       </Route>
       <Route path="/parteneri">
         <ProtectedRoute component={Parteneri} />
+      </Route>
+      <Route path="/cheltuieli">
+        <ProtectedRoute component={Cheltuieli} adminOnly />
       </Route>
 
       {/* Profitabilitate - Financial Module */}

@@ -29,6 +29,7 @@ import {
   TrendingUp, 
   Handshake, 
   Calculator,
+  Receipt,
   LogOut,
   User,
   Settings,
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { icon: Target, label: 'Target-uri', href: '/targeturi' },
   { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
   { icon: Handshake, label: 'Parteneri', href: '/parteneri' },
+  { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli', adminOnly: true },
   { icon: Calculator, label: 'Profitabilitate', href: '/profitabilitate', adminOnly: true },
 ];
 

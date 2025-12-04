@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema } from "@shared/schema";
+import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -647,6 +647,369 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete partner error:", error);
       res.status(500).json({ message: "Eroare la ștergerea partenerului" });
+    }
+  });
+
+  // ============ SEDII ROUTES ============
+
+  // Get all sedii
+  app.get("/api/sedii", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { activ } = req.query;
+      const activFilter = activ === "true" ? true : activ === "false" ? false : undefined;
+      const sediuList = await storage.getAllSedii(activFilter);
+      res.json(sediuList);
+    } catch (error) {
+      console.error("Get sedii error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea sediilor" });
+    }
+  });
+
+  // Get single sediu
+  app.get("/api/sedii/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const sediu = await storage.getSediu(req.params.id);
+      if (!sediu) {
+        return res.status(404).json({ message: "Sediu negăsit" });
+      }
+      res.json(sediu);
+    } catch (error) {
+      console.error("Get sediu error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea sediului" });
+    }
+  });
+
+  // Create sediu (admin only)
+  app.post("/api/sedii", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createSediuSchema.parse(req.body);
+      const sediu = await storage.createSediu(data);
+      res.status(201).json(sediu);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create sediu error:", error);
+      res.status(500).json({ message: "Eroare la crearea sediului" });
+    }
+  });
+
+  // Update sediu (admin only)
+  app.patch("/api/sedii/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updateSediuSchema.parse(req.body);
+      const sediu = await storage.updateSediu(req.params.id, data);
+      if (!sediu) {
+        return res.status(404).json({ message: "Sediu negăsit" });
+      }
+      res.json(sediu);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update sediu error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea sediului" });
+    }
+  });
+
+  // Delete sediu (admin only)
+  app.delete("/api/sedii/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteSediu(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Sediu negăsit" });
+      }
+      res.json({ message: "Sediu șters cu succes" });
+    } catch (error) {
+      console.error("Delete sediu error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea sediului" });
+    }
+  });
+
+  // ============ EXPENSE CATEGORIES ROUTES (Cascading dropdowns) ============
+
+  // Get main categories (level 1)
+  app.get("/api/expense-categories/main", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const categories = await storage.getExpenseCategoriesByLevel("main");
+      res.json(categories);
+    } catch (error) {
+      console.error("Get main categories error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea categoriilor" });
+    }
+  });
+
+  // Get subcategories by parent (level 2)
+  app.get("/api/expense-categories/sub/:parentId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const categories = await storage.getExpenseCategoriesByParent(req.params.parentId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Get subcategories error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea subcategoriilor" });
+    }
+  });
+
+  // Get detail categories by parent (level 3)
+  app.get("/api/expense-categories/detail/:parentId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const categories = await storage.getExpenseCategoriesByParent(req.params.parentId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Get detail categories error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea detaliilor" });
+    }
+  });
+
+  // Create expense category (admin only)
+  app.post("/api/expense-categories", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createExpenseCategorySchema.parse(req.body);
+      const category = await storage.createExpenseCategory(data);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create expense category error:", error);
+      res.status(500).json({ message: "Eroare la crearea categoriei" });
+    }
+  });
+
+  // Update expense category (admin only)
+  app.patch("/api/expense-categories/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updateExpenseCategorySchema.parse(req.body);
+      const category = await storage.updateExpenseCategory(req.params.id, data);
+      if (!category) {
+        return res.status(404).json({ message: "Categorie negăsită" });
+      }
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update expense category error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea categoriei" });
+    }
+  });
+
+  // ============ CHELTUIELI AGENT ROUTES ============
+
+  // Get all cheltuieli agent
+  app.get("/api/cheltuieli-agent", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an, categoryId, sediuId, firma } = req.query;
+      
+      // Non-admins can only see their own expenses
+      const filters: any = {};
+      if (req.userRole !== "ADMIN") {
+        filters.agentId = req.userId;
+      } else if (agentId) {
+        filters.agentId = agentId as string;
+      }
+      
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+      if (categoryId) filters.categoryId = categoryId as string;
+      if (sediuId) filters.sediuId = sediuId as string;
+      if (firma) filters.firma = firma as string;
+      
+      const cheltuieli = await storage.getAllCheltuieliAgent(filters);
+      res.json(cheltuieli);
+    } catch (error) {
+      console.error("Get cheltuieli agent error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea cheltuielilor" });
+    }
+  });
+
+  // Get cheltuieli agent stats
+  app.get("/api/cheltuieli-agent/stats", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an } = req.query;
+      
+      const filters: any = {};
+      if (req.userRole !== "ADMIN") {
+        filters.agentId = req.userId;
+      } else if (agentId) {
+        filters.agentId = agentId as string;
+      }
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+      
+      const stats = await storage.getCheltuieliAgentStats(filters);
+      res.json(stats);
+    } catch (error) {
+      console.error("Get cheltuieli agent stats error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea statisticilor" });
+    }
+  });
+
+  // Get single cheltuiala agent
+  app.get("/api/cheltuieli-agent/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const cheltuiala = await storage.getCheltuialaAgent(req.params.id);
+      if (!cheltuiala) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      
+      // Non-admins can only see their own expenses
+      if (req.userRole !== "ADMIN" && cheltuiala.agentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți acces la această cheltuială" });
+      }
+      
+      res.json(cheltuiala);
+    } catch (error) {
+      console.error("Get cheltuiala agent error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea cheltuielii" });
+    }
+  });
+
+  // Create cheltuiala agent (admin only)
+  app.post("/api/cheltuieli-agent", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createCheltuialaAgentSchema.parse(req.body);
+      const cheltuiala = await storage.createCheltuialaAgent(data);
+      res.status(201).json(cheltuiala);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create cheltuiala agent error:", error);
+      res.status(500).json({ message: "Eroare la crearea cheltuielii" });
+    }
+  });
+
+  // Update cheltuiala agent (admin only)
+  app.patch("/api/cheltuieli-agent/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updateCheltuialaAgentSchema.parse(req.body);
+      const cheltuiala = await storage.updateCheltuialaAgent(req.params.id, data);
+      if (!cheltuiala) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      res.json(cheltuiala);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update cheltuiala agent error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea cheltuielii" });
+    }
+  });
+
+  // Delete cheltuiala agent (admin only)
+  app.delete("/api/cheltuieli-agent/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteCheltuialaAgent(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      res.json({ message: "Cheltuială ștearsă cu succes" });
+    } catch (error) {
+      console.error("Delete cheltuiala agent error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea cheltuielii" });
+    }
+  });
+
+  // ============ CHELTUIELI SEDIU ROUTES (Admin only) ============
+
+  // Get all cheltuieli sediu (admin only)
+  app.get("/api/cheltuieli-sediu", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { sediuId, luna, an, categoryId, firma } = req.query;
+      
+      const filters: any = {};
+      if (sediuId) filters.sediuId = sediuId as string;
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+      if (categoryId) filters.categoryId = categoryId as string;
+      if (firma) filters.firma = firma as string;
+      
+      const cheltuieli = await storage.getAllCheltuieliSediu(filters);
+      res.json(cheltuieli);
+    } catch (error) {
+      console.error("Get cheltuieli sediu error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea cheltuielilor" });
+    }
+  });
+
+  // Get cheltuieli sediu stats (admin only)
+  app.get("/api/cheltuieli-sediu/stats", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { sediuId, luna, an } = req.query;
+      
+      const filters: any = {};
+      if (sediuId) filters.sediuId = sediuId as string;
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+      
+      const stats = await storage.getCheltuieliSediuStats(filters);
+      res.json(stats);
+    } catch (error) {
+      console.error("Get cheltuieli sediu stats error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea statisticilor" });
+    }
+  });
+
+  // Get single cheltuiala sediu (admin only)
+  app.get("/api/cheltuieli-sediu/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const cheltuiala = await storage.getCheltuialaSediu(req.params.id);
+      if (!cheltuiala) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      res.json(cheltuiala);
+    } catch (error) {
+      console.error("Get cheltuiala sediu error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea cheltuielii" });
+    }
+  });
+
+  // Create cheltuiala sediu (admin only)
+  app.post("/api/cheltuieli-sediu", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createCheltuialaSediuSchema.parse(req.body);
+      const cheltuiala = await storage.createCheltuialaSediu(data);
+      res.status(201).json(cheltuiala);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create cheltuiala sediu error:", error);
+      res.status(500).json({ message: "Eroare la crearea cheltuielii" });
+    }
+  });
+
+  // Update cheltuiala sediu (admin only)
+  app.patch("/api/cheltuieli-sediu/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updateCheltuialaSediuSchema.parse(req.body);
+      const cheltuiala = await storage.updateCheltuialaSediu(req.params.id, data);
+      if (!cheltuiala) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      res.json(cheltuiala);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update cheltuiala sediu error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea cheltuielii" });
+    }
+  });
+
+  // Delete cheltuiala sediu (admin only)
+  app.delete("/api/cheltuieli-sediu/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteCheltuialaSediu(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Cheltuială negăsită" });
+      }
+      res.json({ message: "Cheltuială ștearsă cu succes" });
+    } catch (error) {
+      console.error("Delete cheltuiala sediu error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea cheltuielii" });
     }
   });
 
