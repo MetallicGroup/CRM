@@ -283,7 +283,7 @@ export async function registerRoutes(
   // Get all clients
   app.get("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const { agentId, status, search } = req.query;
+      const { agentId, stadiuOferta, search } = req.query;
       
       // Non-admins can only see their own clients
       let filterAgentId = agentId as string | undefined;
@@ -293,7 +293,7 @@ export async function registerRoutes(
 
       const clients = await storage.getAllClients({
         agentId: filterAgentId,
-        status: status as string | undefined,
+        stadiuOferta: stadiuOferta as string | undefined,
         search: search as string | undefined,
       });
       

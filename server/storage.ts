@@ -36,7 +36,7 @@ export interface IStorage {
   
   // Client methods
   getClient(id: string): Promise<Client | undefined>;
-  getAllClients(filters?: { agentId?: string; status?: string; search?: string }): Promise<Client[]>;
+  getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]>;
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
@@ -149,7 +149,7 @@ export class DatabaseStorage implements IStorage {
     return client || undefined;
   }
 
-  async getAllClients(filters?: { agentId?: string; status?: string; search?: string }): Promise<Client[]> {
+  async getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]> {
     let query = db.select().from(clients);
     
     const conditions = [];
@@ -158,8 +158,8 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(clients.agentId, filters.agentId));
     }
     
-    if (filters?.status) {
-      conditions.push(eq(clients.status, filters.status as any));
+    if (filters?.stadiuOferta) {
+      conditions.push(eq(clients.stadiuOferta, filters.stadiuOferta as any));
     }
     
     if (filters?.search) {
@@ -167,7 +167,6 @@ export class DatabaseStorage implements IStorage {
       conditions.push(
         or(
           ilike(clients.nume, searchTerm),
-          ilike(clients.prenume, searchTerm),
           ilike(clients.telefon, searchTerm),
           ilike(clients.email, searchTerm),
           ilike(clients.localitate, searchTerm)
@@ -183,7 +182,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClient(data: CreateClient): Promise<Client> {
-    // Parse numeric and date values properly
     const parseDecimal = (val: string | undefined): string | null => {
       if (!val || val === "") return null;
       const num = parseFloat(val);
@@ -198,21 +196,47 @@ export class DatabaseStorage implements IStorage {
 
     const clientData: any = {
       nume: data.nume,
-      prenume: data.prenume || null,
       telefon: data.telefon,
-      telefonSecundar: data.telefonSecundar || null,
       email: data.email || null,
       judet: data.judet || null,
       localitate: data.localitate || null,
-      adresa: data.adresa || null,
-      status: data.status || "NOU",
-      sursa: data.sursa || "TELEFON",
-      categorie: data.categorie || "GARD",
-      valoareEstimata: parseDecimal(data.valoareEstimata),
-      valoareFinala: parseDecimal(data.valoareFinala),
-      note: data.note || null,
-      dataContact: parseDate(data.dataContact),
-      dataUrmarire: parseDate(data.dataUrmarire),
+      sursa: data.sursa || "ALTELE",
+      dataAdaugare: parseDate(data.dataAdaugare) || new Date(),
+      isPartnerOrder: data.isPartnerOrder || false,
+      partnerId: data.partnerId || null,
+      categorieProdus: data.categorieProdus || "GARD_METALIC",
+      brand: data.brand || null,
+      model: data.model || null,
+      suprafataMp: parseDecimal(data.suprafataMp),
+      culoare: data.culoare || null,
+      grosime: data.grosime || null,
+      finisaj: data.finisaj || null,
+      mlRulouProd: parseDecimal(data.mlRulouProd),
+      smartDripstop: data.smartDripstop || false,
+      valoareOferta: parseDecimal(data.valoareOferta),
+      stadiuOferta: data.stadiuOferta || "NOUA",
+      dataOfertarii: parseDate(data.dataOfertarii),
+      stadiuComanda: data.stadiuComanda || null,
+      dataVanzarii: parseDate(data.dataVanzarii),
+      dataLivrarii: parseDate(data.dataLivrarii),
+      procentComision: parseDecimal(data.procentComision),
+      comisionOferta: parseDecimal(data.comisionOferta),
+      incasat: data.incasat || false,
+      pretAchizitie: parseDecimal(data.pretAchizitie),
+      ofertaFilename: data.ofertaFilename || null,
+      ofertaFilename2: data.ofertaFilename2 || null,
+      dataRevenire1: parseDate(data.dataRevenire1),
+      comentariuObservatii1: data.comentariuObservatii1 || null,
+      followUpEfectuat1: data.followUpEfectuat1 || false,
+      dataRevenire2: parseDate(data.dataRevenire2),
+      comentariuObservatii2: data.comentariuObservatii2 || null,
+      followUpEfectuat2: data.followUpEfectuat2 || false,
+      dataRevenire3: parseDate(data.dataRevenire3),
+      comentariuObservatii3: data.comentariuObservatii3 || null,
+      followUpEfectuat3: data.followUpEfectuat3 || false,
+      observatiiClient: data.observatiiClient || null,
+      comentariiDupaContact: data.comentariiDupaContact || null,
+      contactat: data.contactat || false,
       agentId: data.agentId || null,
     };
 
@@ -221,7 +245,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateClient(id: string, data: UpdateClient): Promise<Client | undefined> {
-    // Parse numeric and date values properly
     const parseDecimal = (val: string | undefined): string | null => {
       if (!val || val === "") return null;
       const num = parseFloat(val);
@@ -237,21 +260,47 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = { updatedAt: new Date() };
     
     if (data.nume !== undefined) updateData.nume = data.nume;
-    if (data.prenume !== undefined) updateData.prenume = data.prenume || null;
     if (data.telefon !== undefined) updateData.telefon = data.telefon;
-    if (data.telefonSecundar !== undefined) updateData.telefonSecundar = data.telefonSecundar || null;
     if (data.email !== undefined) updateData.email = data.email || null;
     if (data.judet !== undefined) updateData.judet = data.judet || null;
     if (data.localitate !== undefined) updateData.localitate = data.localitate || null;
-    if (data.adresa !== undefined) updateData.adresa = data.adresa || null;
-    if (data.status !== undefined) updateData.status = data.status;
     if (data.sursa !== undefined) updateData.sursa = data.sursa;
-    if (data.categorie !== undefined) updateData.categorie = data.categorie;
-    if (data.valoareEstimata !== undefined) updateData.valoareEstimata = parseDecimal(data.valoareEstimata);
-    if (data.valoareFinala !== undefined) updateData.valoareFinala = parseDecimal(data.valoareFinala);
-    if (data.note !== undefined) updateData.note = data.note || null;
-    if (data.dataContact !== undefined) updateData.dataContact = parseDate(data.dataContact);
-    if (data.dataUrmarire !== undefined) updateData.dataUrmarire = parseDate(data.dataUrmarire);
+    if (data.dataAdaugare !== undefined) updateData.dataAdaugare = parseDate(data.dataAdaugare);
+    if (data.isPartnerOrder !== undefined) updateData.isPartnerOrder = data.isPartnerOrder;
+    if (data.partnerId !== undefined) updateData.partnerId = data.partnerId || null;
+    if (data.categorieProdus !== undefined) updateData.categorieProdus = data.categorieProdus;
+    if (data.brand !== undefined) updateData.brand = data.brand || null;
+    if (data.model !== undefined) updateData.model = data.model || null;
+    if (data.suprafataMp !== undefined) updateData.suprafataMp = parseDecimal(data.suprafataMp);
+    if (data.culoare !== undefined) updateData.culoare = data.culoare || null;
+    if (data.grosime !== undefined) updateData.grosime = data.grosime || null;
+    if (data.finisaj !== undefined) updateData.finisaj = data.finisaj || null;
+    if (data.mlRulouProd !== undefined) updateData.mlRulouProd = parseDecimal(data.mlRulouProd);
+    if (data.smartDripstop !== undefined) updateData.smartDripstop = data.smartDripstop;
+    if (data.valoareOferta !== undefined) updateData.valoareOferta = parseDecimal(data.valoareOferta);
+    if (data.stadiuOferta !== undefined) updateData.stadiuOferta = data.stadiuOferta;
+    if (data.dataOfertarii !== undefined) updateData.dataOfertarii = parseDate(data.dataOfertarii);
+    if (data.stadiuComanda !== undefined) updateData.stadiuComanda = data.stadiuComanda || null;
+    if (data.dataVanzarii !== undefined) updateData.dataVanzarii = parseDate(data.dataVanzarii);
+    if (data.dataLivrarii !== undefined) updateData.dataLivrarii = parseDate(data.dataLivrarii);
+    if (data.procentComision !== undefined) updateData.procentComision = parseDecimal(data.procentComision);
+    if (data.comisionOferta !== undefined) updateData.comisionOferta = parseDecimal(data.comisionOferta);
+    if (data.incasat !== undefined) updateData.incasat = data.incasat;
+    if (data.pretAchizitie !== undefined) updateData.pretAchizitie = parseDecimal(data.pretAchizitie);
+    if (data.ofertaFilename !== undefined) updateData.ofertaFilename = data.ofertaFilename || null;
+    if (data.ofertaFilename2 !== undefined) updateData.ofertaFilename2 = data.ofertaFilename2 || null;
+    if (data.dataRevenire1 !== undefined) updateData.dataRevenire1 = parseDate(data.dataRevenire1);
+    if (data.comentariuObservatii1 !== undefined) updateData.comentariuObservatii1 = data.comentariuObservatii1 || null;
+    if (data.followUpEfectuat1 !== undefined) updateData.followUpEfectuat1 = data.followUpEfectuat1;
+    if (data.dataRevenire2 !== undefined) updateData.dataRevenire2 = parseDate(data.dataRevenire2);
+    if (data.comentariuObservatii2 !== undefined) updateData.comentariuObservatii2 = data.comentariuObservatii2 || null;
+    if (data.followUpEfectuat2 !== undefined) updateData.followUpEfectuat2 = data.followUpEfectuat2;
+    if (data.dataRevenire3 !== undefined) updateData.dataRevenire3 = parseDate(data.dataRevenire3);
+    if (data.comentariuObservatii3 !== undefined) updateData.comentariuObservatii3 = data.comentariuObservatii3 || null;
+    if (data.followUpEfectuat3 !== undefined) updateData.followUpEfectuat3 = data.followUpEfectuat3;
+    if (data.observatiiClient !== undefined) updateData.observatiiClient = data.observatiiClient || null;
+    if (data.comentariiDupaContact !== undefined) updateData.comentariiDupaContact = data.comentariiDupaContact || null;
+    if (data.contactat !== undefined) updateData.contactat = data.contactat;
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
 
     const [client] = await db
@@ -289,14 +338,15 @@ export class DatabaseStorage implements IStorage {
     let pipelineValue = 0;
     
     for (const client of allClients) {
-      byStatus[client.status] = (byStatus[client.status] || 0) + 1;
+      const status = client.stadiuOferta || "NOUA";
+      byStatus[status] = (byStatus[status] || 0) + 1;
       
-      if (client.status === "CASTIGAT" && client.valoareFinala) {
-        wonValue += parseFloat(client.valoareFinala);
-        totalValue += parseFloat(client.valoareFinala);
-      } else if (client.valoareEstimata) {
-        pipelineValue += parseFloat(client.valoareEstimata);
-        totalValue += parseFloat(client.valoareEstimata);
+      if (status === "VANDUT" && client.valoareOferta) {
+        wonValue += parseFloat(client.valoareOferta);
+        totalValue += parseFloat(client.valoareOferta);
+      } else if (client.valoareOferta) {
+        pipelineValue += parseFloat(client.valoareOferta);
+        totalValue += parseFloat(client.valoareOferta);
       }
     }
     
@@ -369,14 +419,15 @@ export class DatabaseStorage implements IStorage {
     let pipelineValue = 0;
     
     for (const client of allClients) {
-      byStatus[client.status] = (byStatus[client.status] || 0) + 1;
+      const status = client.stadiuOferta || "NOUA";
+      byStatus[status] = (byStatus[status] || 0) + 1;
       
-      if (client.status === "CASTIGAT" && client.valoareFinala) {
-        wonValue += parseFloat(client.valoareFinala);
-        totalValue += parseFloat(client.valoareFinala);
-      } else if (client.valoareEstimata) {
-        pipelineValue += parseFloat(client.valoareEstimata);
-        totalValue += parseFloat(client.valoareEstimata);
+      if (status === "VANDUT" && client.valoareOferta) {
+        wonValue += parseFloat(client.valoareOferta);
+        totalValue += parseFloat(client.valoareOferta);
+      } else if (client.valoareOferta) {
+        pipelineValue += parseFloat(client.valoareOferta);
+        totalValue += parseFloat(client.valoareOferta);
       }
     }
     
@@ -472,7 +523,7 @@ export class DatabaseStorage implements IStorage {
     const wonClients = await db.select().from(clients).where(
       and(
         eq(clients.agentId, agentId),
-        eq(clients.status, "CASTIGAT"),
+        eq(clients.stadiuOferta, "VANDUT"),
         gte(clients.updatedAt, startDate),
         lte(clients.updatedAt, endDate)
       )
@@ -480,8 +531,8 @@ export class DatabaseStorage implements IStorage {
 
     let realizedValue = 0;
     for (const client of wonClients) {
-      if (client.valoareFinala) {
-        realizedValue += parseFloat(client.valoareFinala);
+      if (client.valoareOferta) {
+        realizedValue += parseFloat(client.valoareOferta);
       }
     }
 

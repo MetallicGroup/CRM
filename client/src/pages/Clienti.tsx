@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -52,39 +54,95 @@ import {
   Users,
   Filter,
   RefreshCw,
-  Eye
+  Eye,
+  Package,
+  FileText,
+  Calendar,
+  MessageSquare,
+  Handshake
 } from "lucide-react";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { Client, CreateClient, ClientStatus, ClientSource, ProductCategory } from "@shared/schema";
+import type { 
+  Client, 
+  CreateClient, 
+  OfferStatus, 
+  OrderStatus,
+  ClientSource, 
+  ProductCategory,
+  ColorRAL,
+  Thickness,
+  FinishType
+} from "@shared/schema";
 
-const STATUS_OPTIONS: { value: ClientStatus; label: string; color: string }[] = [
-  { value: "NOU", label: "Nou", color: "bg-blue-100 text-blue-800" },
-  { value: "CONTACTAT", label: "Contactat", color: "bg-yellow-100 text-yellow-800" },
-  { value: "OFERTA_TRIMISA", label: "Ofertă trimisă", color: "bg-purple-100 text-purple-800" },
-  { value: "NEGOCIERE", label: "Negociere", color: "bg-orange-100 text-orange-800" },
-  { value: "CASTIGAT", label: "Câștigat", color: "bg-green-100 text-green-800" },
-  { value: "PIERDUT", label: "Pierdut", color: "bg-red-100 text-red-800" },
-  { value: "ANULAT", label: "Anulat", color: "bg-gray-100 text-gray-800" },
+const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
+  { value: "NOUA", label: "Nouă", color: "bg-blue-100 text-blue-800" },
+  { value: "TRIMISA", label: "Trimisă", color: "bg-yellow-100 text-yellow-800" },
+  { value: "IN_ASTEPTARE", label: "În așteptare", color: "bg-purple-100 text-purple-800" },
+  { value: "ACCEPTATA", label: "Acceptată", color: "bg-orange-100 text-orange-800" },
+  { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
+  { value: "REFUZAT", label: "Refuzat", color: "bg-red-100 text-red-800" },
+  { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
+];
+
+const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
+  { value: "CUSTODIE", label: "Custodie" },
+  { value: "COMANDAT", label: "Comandat" },
+  { value: "LISTAT", label: "Listat" },
+  { value: "IN_PRODUCTIE", label: "În producție" },
+  { value: "PRODUS", label: "Produs" },
+  { value: "LIVRAT", label: "Livrat" },
 ];
 
 const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
-  { value: "TELEFON", label: "Telefon" },
-  { value: "EMAIL", label: "Email" },
-  { value: "WEBSITE", label: "Website" },
   { value: "FACEBOOK", label: "Facebook" },
-  { value: "INSTAGRAM", label: "Instagram" },
-  { value: "GOOGLE_ADS", label: "Google Ads" },
+  { value: "GOOGLE", label: "Google" },
+  { value: "RECLAME", label: "Reclame" },
+  { value: "SITE", label: "Site" },
   { value: "RECOMANDARE", label: "Recomandare" },
-  { value: "SHOWROOM", label: "Showroom" },
+  { value: "TARG", label: "Târg" },
   { value: "ALTELE", label: "Altele" },
 ];
 
 const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
-  { value: "GARD", label: "Gard" },
-  { value: "ACOPERIS", label: "Acoperiș" },
-  { value: "AMBELE", label: "Ambele" },
+  { value: "GARD_METALIC", label: "Gard Metalic" },
+  { value: "RULOU", label: "Rulou" },
+  { value: "PANOU_SANDWICH", label: "Panou Sandwich" },
+  { value: "TABLA_CUTATA", label: "Tablă Cutată" },
+  { value: "JGHEABURI", label: "Jgheaburi" },
+  { value: "ACCESORII", label: "Accesorii" },
+  { value: "COAMA", label: "Coamă" },
+  { value: "ALTELE", label: "Altele" },
+];
+
+const COLOR_OPTIONS: { value: ColorRAL; label: string }[] = [
+  { value: "RAL_8017", label: "RAL 8017 (Maro închis)" },
+  { value: "RAL_7016", label: "RAL 7016 (Gri antracit)" },
+  { value: "RAL_9005", label: "RAL 9005 (Negru)" },
+  { value: "RAL_3011", label: "RAL 3011 (Roșu închis)" },
+  { value: "RAL_6005", label: "RAL 6005 (Verde)" },
+  { value: "RAL_9002", label: "RAL 9002 (Alb gri)" },
+  { value: "RAL_1015", label: "RAL 1015 (Crem)" },
+  { value: "MARO", label: "Maro" },
+  { value: "ANTRACIT", label: "Antracit" },
+  { value: "ALB", label: "Alb" },
+];
+
+const THICKNESS_OPTIONS: { value: Thickness; label: string }[] = [
+  { value: "0.35", label: "0.35 mm" },
+  { value: "0.40", label: "0.40 mm" },
+  { value: "0.45", label: "0.45 mm" },
+  { value: "0.50", label: "0.50 mm" },
+  { value: "0.60", label: "0.60 mm" },
+];
+
+const FINISH_OPTIONS: { value: FinishType; label: string }[] = [
+  { value: "MAT", label: "Mat" },
+  { value: "LUCIOS", label: "Lucios" },
+  { value: "STRUCTURAT", label: "Structurat" },
+  { value: "PURAL", label: "Pural" },
+  { value: "PVDF", label: "PVDF" },
 ];
 
 const JUDETE = [
@@ -96,8 +154,9 @@ const JUDETE = [
   "Sibiu", "Suceava", "Teleorman", "Timiș", "Tulcea", "Vaslui", "Vâlcea", "Vrancea"
 ];
 
-function getStatusBadge(status: ClientStatus) {
-  const option = STATUS_OPTIONS.find(s => s.value === status);
+function getOfferStatusBadge(status: OfferStatus | null) {
+  if (!status) return <Badge className="bg-gray-100 text-gray-800">-</Badge>;
+  const option = OFFER_STATUS_OPTIONS.find(s => s.value === status);
   return (
     <Badge className={cn("font-medium", option?.color)}>
       {option?.label || status}
@@ -105,40 +164,68 @@ function getStatusBadge(status: ClientStatus) {
   );
 }
 
+const defaultFormData: Partial<CreateClient> = {
+  nume: "",
+  telefon: "",
+  email: "",
+  judet: "",
+  localitate: "",
+  sursa: "ALTELE",
+  isPartnerOrder: false,
+  partnerId: "",
+  categorieProdus: "GARD_METALIC",
+  brand: "",
+  model: "",
+  suprafataMp: "",
+  grosime: undefined,
+  finisaj: undefined,
+  culoare: undefined,
+  mlRulouProd: "",
+  smartDripstop: false,
+  valoareOferta: "",
+  stadiuOferta: "NOUA",
+  dataOfertarii: "",
+  stadiuComanda: undefined,
+  dataVanzarii: "",
+  dataLivrarii: "",
+  procentComision: "",
+  comisionOferta: "",
+  incasat: false,
+  pretAchizitie: "",
+  ofertaFilename: "",
+  ofertaFilename2: "",
+  dataRevenire1: "",
+  comentariuObservatii1: "",
+  followUpEfectuat1: false,
+  dataRevenire2: "",
+  comentariuObservatii2: "",
+  followUpEfectuat2: false,
+  dataRevenire3: "",
+  comentariuObservatii3: "",
+  followUpEfectuat3: false,
+  observatiiClient: "",
+  comentariiDupaContact: "",
+  contactat: false,
+  agentId: "",
+};
+
 export default function Clienti() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stadiuFilter, setStadiuFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
+  const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
 
-  // Form state
-  const [formData, setFormData] = useState<Partial<CreateClient>>({
-    nume: "",
-    prenume: "",
-    telefon: "",
-    telefonSecundar: "",
-    email: "",
-    judet: "",
-    localitate: "",
-    adresa: "",
-    status: "NOU",
-    sursa: "TELEFON",
-    categorie: "GARD",
-    valoareEstimata: "",
-    note: "",
-  });
-
-  // Fetch clients
   const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["clients", search, statusFilter],
+    queryKey: ["clients", search, stadiuFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
-      if (statusFilter && statusFilter !== "all") params.set("status", statusFilter);
+      if (stadiuFilter && stadiuFilter !== "all") params.set("stadiuOferta", stadiuFilter);
       
       const res = await fetch(`/api/clients?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea clienților");
@@ -146,7 +233,6 @@ export default function Clienti() {
     },
   });
 
-  // Fetch agents for assignment (admin only)
   const { data: agents = [] } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
@@ -162,7 +248,20 @@ export default function Clienti() {
     retry: false,
   });
 
-  // Create client mutation
+  const { data: partners = [] } = useQuery({
+    queryKey: ["partners"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/partners");
+        if (!res.ok) return [];
+        return res.json();
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: CreateClient) => {
       const res = await fetch("/api/clients", {
@@ -186,7 +285,6 @@ export default function Clienti() {
     },
   });
 
-  // Update client mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateClient> }) => {
       const res = await fetch(`/api/clients/${id}`, {
@@ -210,7 +308,6 @@ export default function Clienti() {
     },
   });
 
-  // Delete client mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/clients/${id}`, {
@@ -234,21 +331,7 @@ export default function Clienti() {
 
   const openCreateDialog = () => {
     setEditingClient(null);
-    setFormData({
-      nume: "",
-      prenume: "",
-      telefon: "",
-      telefonSecundar: "",
-      email: "",
-      judet: "",
-      localitate: "",
-      adresa: "",
-      status: "NOU",
-      sursa: "TELEFON",
-      categorie: "GARD",
-      valoareEstimata: "",
-      note: "",
-    });
+    setFormData(defaultFormData);
     setIsDialogOpen(true);
   };
 
@@ -256,18 +339,46 @@ export default function Clienti() {
     setEditingClient(client);
     setFormData({
       nume: client.nume,
-      prenume: client.prenume || "",
       telefon: client.telefon,
-      telefonSecundar: client.telefonSecundar || "",
       email: client.email || "",
       judet: client.judet || "",
       localitate: client.localitate || "",
-      adresa: client.adresa || "",
-      status: client.status,
-      sursa: client.sursa,
-      categorie: client.categorie,
-      valoareEstimata: client.valoareEstimata || "",
-      note: client.note || "",
+      sursa: client.sursa || "ALTELE",
+      isPartnerOrder: client.isPartnerOrder || false,
+      partnerId: client.partnerId || "",
+      categorieProdus: client.categorieProdus || "GARD_METALIC",
+      brand: client.brand || "",
+      model: client.model || "",
+      suprafataMp: client.suprafataMp || "",
+      grosime: client.grosime || undefined,
+      finisaj: client.finisaj || undefined,
+      culoare: client.culoare || undefined,
+      mlRulouProd: client.mlRulouProd || "",
+      smartDripstop: client.smartDripstop || false,
+      valoareOferta: client.valoareOferta || "",
+      stadiuOferta: client.stadiuOferta || "NOUA",
+      dataOfertarii: client.dataOfertarii ? format(new Date(client.dataOfertarii), "yyyy-MM-dd") : "",
+      stadiuComanda: client.stadiuComanda || undefined,
+      dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
+      dataLivrarii: client.dataLivrarii ? format(new Date(client.dataLivrarii), "yyyy-MM-dd") : "",
+      procentComision: client.procentComision || "",
+      comisionOferta: client.comisionOferta || "",
+      incasat: client.incasat || false,
+      pretAchizitie: client.pretAchizitie || "",
+      ofertaFilename: client.ofertaFilename || "",
+      ofertaFilename2: client.ofertaFilename2 || "",
+      dataRevenire1: client.dataRevenire1 ? format(new Date(client.dataRevenire1), "yyyy-MM-dd") : "",
+      comentariuObservatii1: client.comentariuObservatii1 || "",
+      followUpEfectuat1: client.followUpEfectuat1 || false,
+      dataRevenire2: client.dataRevenire2 ? format(new Date(client.dataRevenire2), "yyyy-MM-dd") : "",
+      comentariuObservatii2: client.comentariuObservatii2 || "",
+      followUpEfectuat2: client.followUpEfectuat2 || false,
+      dataRevenire3: client.dataRevenire3 ? format(new Date(client.dataRevenire3), "yyyy-MM-dd") : "",
+      comentariuObservatii3: client.comentariuObservatii3 || "",
+      followUpEfectuat3: client.followUpEfectuat3 || false,
+      observatiiClient: client.observatiiClient || "",
+      comentariiDupaContact: client.comentariiDupaContact || "",
+      contactat: client.contactat || false,
       agentId: client.agentId || "",
     });
     setIsDialogOpen(true);
@@ -295,12 +406,11 @@ export default function Clienti() {
 
   const resetFilters = () => {
     setSearch("");
-    setStatusFilter("all");
+    setStadiuFilter("all");
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-blue-100 rounded-lg">
@@ -309,7 +419,7 @@ export default function Clienti() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Clienți</h1>
             <p className="text-muted-foreground">
-              Gestionează baza de date cu clienți
+              Gestionează baza de date cu clienți și oferte
             </p>
           </div>
         </div>
@@ -319,7 +429,6 @@ export default function Clienti() {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -347,13 +456,13 @@ export default function Clienti() {
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]" data-testid="select-status-filter">
-                <SelectValue placeholder="Toate statusurile" />
+            <Select value={stadiuFilter} onValueChange={setStadiuFilter}>
+              <SelectTrigger className="w-full md:w-[200px]" data-testid="select-stadiu-filter">
+                <SelectValue placeholder="Toate stadiile" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toate statusurile</SelectItem>
-                {STATUS_OPTIONS.map((status) => (
+                <SelectItem value="all">Toate stadiile</SelectItem>
+                {OFFER_STATUS_OPTIONS.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
                   </SelectItem>
@@ -364,7 +473,6 @@ export default function Clienti() {
         </CardContent>
       </Card>
 
-      {/* Clients Table */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -376,11 +484,11 @@ export default function Clienti() {
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">Niciun client găsit</h3>
               <p className="text-muted-foreground mb-4">
-                {search || statusFilter !== "all" 
+                {search || stadiuFilter !== "all" 
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
               </p>
-              {!search && statusFilter === "all" && (
+              {!search && stadiuFilter === "all" && (
                 <Button onClick={openCreateDialog} className="gap-2">
                   <Plus className="h-4 w-4" />
                   Adaugă Client
@@ -394,7 +502,7 @@ export default function Clienti() {
                   <TableHead>Nume</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Locație</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Stadiu Ofertă</TableHead>
                   <TableHead>Categorie</TableHead>
                   <TableHead>Valoare</TableHead>
                   <TableHead className="text-right">Acțiuni</TableHead>
@@ -405,9 +513,7 @@ export default function Clienti() {
                   <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">
-                          {client.nume} {client.prenume}
-                        </div>
+                        <div className="font-medium">{client.nume}</div>
                         <div className="text-sm text-muted-foreground">
                           {SOURCE_OPTIONS.find(s => s.value === client.sursa)?.label}
                         </div>
@@ -437,16 +543,16 @@ export default function Clienti() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell>{getStatusBadge(client.status)}</TableCell>
+                    <TableCell>{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {CATEGORY_OPTIONS.find(c => c.value === client.categorie)?.label}
+                        {CATEGORY_OPTIONS.find(c => c.value === client.categorieProdus)?.label || "-"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {client.valoareEstimata ? (
+                      {client.valoareOferta ? (
                         <span className="font-medium">
-                          {Number(client.valoareEstimata).toLocaleString("ro-RO")} RON
+                          {Number(client.valoareOferta).toLocaleString("ro-RO")} RON
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
@@ -491,9 +597,8 @@ export default function Clienti() {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? "Editează Client" : "Adaugă Client Nou"}
@@ -503,220 +608,599 @@ export default function Clienti() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Contact Info */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Informații Contact
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nume">Nume *</Label>
-                  <Input
-                    id="nume"
-                    value={formData.nume}
-                    onChange={(e) => setFormData({ ...formData, nume: e.target.value })}
-                    required
-                    data-testid="input-nume"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="prenume">Prenume</Label>
-                  <Input
-                    id="prenume"
-                    value={formData.prenume}
-                    onChange={(e) => setFormData({ ...formData, prenume: e.target.value })}
-                    data-testid="input-prenume"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="telefon">Telefon *</Label>
-                  <Input
-                    id="telefon"
-                    value={formData.telefon}
-                    onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
-                    required
-                    data-testid="input-telefon"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="telefonSecundar">Telefon Secundar</Label>
-                  <Input
-                    id="telefonSecundar"
-                    value={formData.telefonSecundar}
-                    onChange={(e) => setFormData({ ...formData, telefonSecundar: e.target.value })}
-                    data-testid="input-telefon-secundar"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  data-testid="input-email"
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit}>
+            <Tabs defaultValue="contact" className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="contact" className="gap-2">
+                  <Phone className="h-4 w-4" />
+                  Contact
+                </TabsTrigger>
+                <TabsTrigger value="product" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  Produs
+                </TabsTrigger>
+                <TabsTrigger value="offer" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Ofertă
+                </TabsTrigger>
+                <TabsTrigger value="followup" className="gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Follow-up
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Observații
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Location */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Locație
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="judet">Județ</Label>
-                  <Select
-                    value={formData.judet}
-                    onValueChange={(value) => setFormData({ ...formData, judet: value })}
-                  >
-                    <SelectTrigger data-testid="select-judet">
-                      <SelectValue placeholder="Selectează județul" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {JUDETE.map((judet) => (
-                        <SelectItem key={judet} value={judet}>
-                          {judet}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="localitate">Localitate</Label>
-                  <Input
-                    id="localitate"
-                    value={formData.localitate}
-                    onChange={(e) => setFormData({ ...formData, localitate: e.target.value })}
-                    data-testid="input-localitate"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adresa">Adresă</Label>
-                <Input
-                  id="adresa"
-                  value={formData.adresa}
-                  onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
-                  data-testid="input-adresa"
-                />
-              </div>
-            </div>
-
-            {/* Business Info */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Informații Afacere
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value as ClientStatus })}
-                  >
-                    <SelectTrigger data-testid="select-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sursa">Sursă</Label>
-                  <Select
-                    value={formData.sursa}
-                    onValueChange={(value) => setFormData({ ...formData, sursa: value as ClientSource })}
-                  >
-                    <SelectTrigger data-testid="select-sursa">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SOURCE_OPTIONS.map((source) => (
-                        <SelectItem key={source.value} value={source.value}>
-                          {source.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categorie">Categorie</Label>
-                  <Select
-                    value={formData.categorie}
-                    onValueChange={(value) => setFormData({ ...formData, categorie: value as ProductCategory })}
-                  >
-                    <SelectTrigger data-testid="select-categorie">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORY_OPTIONS.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valoareEstimata">Valoare Estimată (RON)</Label>
-                  <Input
-                    id="valoareEstimata"
-                    type="number"
-                    value={formData.valoareEstimata}
-                    onChange={(e) => setFormData({ ...formData, valoareEstimata: e.target.value })}
-                    data-testid="input-valoare"
-                  />
-                </div>
-                {isAdmin && (
+              <TabsContent value="contact" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="agentId">Agent Responsabil</Label>
+                    <Label htmlFor="nume">Nume *</Label>
+                    <Input
+                      id="nume"
+                      value={formData.nume}
+                      onChange={(e) => setFormData({ ...formData, nume: e.target.value })}
+                      required
+                      data-testid="input-nume"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telefon">Telefon *</Label>
+                    <Input
+                      id="telefon"
+                      value={formData.telefon}
+                      onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
+                      required
+                      data-testid="input-telefon"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    data-testid="input-email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="judet">Județ</Label>
                     <Select
-                      value={formData.agentId || "unassigned"}
-                      onValueChange={(value) => setFormData({ ...formData, agentId: value === "unassigned" ? undefined : value })}
+                      value={formData.judet || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, judet: value === "none" ? "" : value })}
                     >
-                      <SelectTrigger data-testid="select-agent">
-                        <SelectValue placeholder="Selectează agent" />
+                      <SelectTrigger data-testid="select-judet">
+                        <SelectValue placeholder="Selectează județul" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="unassigned">Neasignat</SelectItem>
-                        {agents.filter((a: any) => a.active && a.id).map((agent: any) => (
-                          <SelectItem key={agent.id} value={agent.id}>
-                            {agent.firstName} {agent.lastName}
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {JUDETE.map((judet) => (
+                          <SelectItem key={judet} value={judet}>
+                            {judet}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="localitate">Localitate</Label>
+                    <Input
+                      id="localitate"
+                      value={formData.localitate}
+                      onChange={(e) => setFormData({ ...formData, localitate: e.target.value })}
+                      data-testid="input-localitate"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sursa">Sursă</Label>
+                    <Select
+                      value={formData.sursa || "ALTELE"}
+                      onValueChange={(value) => setFormData({ ...formData, sursa: value as ClientSource })}
+                    >
+                      <SelectTrigger data-testid="select-sursa">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOURCE_OPTIONS.map((source) => (
+                          <SelectItem key={source.value} value={source.value}>
+                            {source.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isAdmin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="agentId">Agent</Label>
+                      <Select
+                        value={formData.agentId || "none"}
+                        onValueChange={(value) => setFormData({ ...formData, agentId: value === "none" ? "" : value })}
+                      >
+                        <SelectTrigger data-testid="select-agent">
+                          <SelectValue placeholder="Selectează agentul" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Neasignat</SelectItem>
+                          {agents.map((agent: any) => (
+                            <SelectItem key={agent.id} value={agent.id}>
+                              {agent.firstName} {agent.lastName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isPartnerOrder"
+                    checked={formData.isPartnerOrder}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isPartnerOrder: !!checked })}
+                    data-testid="checkbox-partner-order"
+                  />
+                  <Label htmlFor="isPartnerOrder" className="flex items-center gap-2">
+                    <Handshake className="h-4 w-4" />
+                    Comandă de la partener
+                  </Label>
+                </div>
+                {formData.isPartnerOrder && (
+                  <div className="space-y-2">
+                    <Label htmlFor="partnerId">Partener</Label>
+                    <Select
+                      value={formData.partnerId || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, partnerId: value === "none" ? "" : value })}
+                    >
+                      <SelectTrigger data-testid="select-partner">
+                        <SelectValue placeholder="Selectează partenerul" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {partners.map((partner: any) => (
+                          <SelectItem key={partner.id} value={partner.id}>
+                            {partner.nume}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 )}
-              </div>
-            </div>
+              </TabsContent>
 
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="note">Note</Label>
-              <Textarea
-                id="note"
-                value={formData.note}
-                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                rows={3}
-                data-testid="input-note"
-              />
-            </div>
+              <TabsContent value="product" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="categorieProdus">Categorie Produs</Label>
+                    <Select
+                      value={formData.categorieProdus || "GARD_METALIC"}
+                      onValueChange={(value) => setFormData({ ...formData, categorieProdus: value as ProductCategory })}
+                    >
+                      <SelectTrigger data-testid="select-categorie">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="brand">Brand</Label>
+                    <Input
+                      id="brand"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      data-testid="input-brand"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Model</Label>
+                    <Input
+                      id="model"
+                      value={formData.model}
+                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                      data-testid="input-model"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="suprafataMp">Suprafață (mp)</Label>
+                    <Input
+                      id="suprafataMp"
+                      type="number"
+                      step="0.01"
+                      value={formData.suprafataMp}
+                      onChange={(e) => setFormData({ ...formData, suprafataMp: e.target.value })}
+                      data-testid="input-suprafata"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="culoare">Culoare</Label>
+                    <Select
+                      value={formData.culoare || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, culoare: value === "none" ? undefined : value as ColorRAL })}
+                    >
+                      <SelectTrigger data-testid="select-culoare">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {COLOR_OPTIONS.map((color) => (
+                          <SelectItem key={color.value} value={color.value}>
+                            {color.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="grosime">Grosime</Label>
+                    <Select
+                      value={formData.grosime || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, grosime: value === "none" ? undefined : value as Thickness })}
+                    >
+                      <SelectTrigger data-testid="select-grosime">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {THICKNESS_OPTIONS.map((thickness) => (
+                          <SelectItem key={thickness.value} value={thickness.value}>
+                            {thickness.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="finisaj">Finisaj</Label>
+                    <Select
+                      value={formData.finisaj || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, finisaj: value === "none" ? undefined : value as FinishType })}
+                    >
+                      <SelectTrigger data-testid="select-finisaj">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {FINISH_OPTIONS.map((finish) => (
+                          <SelectItem key={finish.value} value={finish.value}>
+                            {finish.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mlRulouProd">ML Rulou Producție</Label>
+                    <Input
+                      id="mlRulouProd"
+                      type="number"
+                      step="0.01"
+                      value={formData.mlRulouProd}
+                      onChange={(e) => setFormData({ ...formData, mlRulouProd: e.target.value })}
+                      data-testid="input-ml-rulou"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-8">
+                    <Checkbox
+                      id="smartDripstop"
+                      checked={formData.smartDripstop}
+                      onCheckedChange={(checked) => setFormData({ ...formData, smartDripstop: !!checked })}
+                      data-testid="checkbox-dripstop"
+                    />
+                    <Label htmlFor="smartDripstop">Smart Dripstop</Label>
+                  </div>
+                </div>
+              </TabsContent>
 
-            <DialogFooter>
+              <TabsContent value="offer" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stadiuOferta">Stadiu Ofertă</Label>
+                    <Select
+                      value={formData.stadiuOferta || "NOUA"}
+                      onValueChange={(value) => setFormData({ ...formData, stadiuOferta: value as OfferStatus })}
+                    >
+                      <SelectTrigger data-testid="select-stadiu-oferta">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OFFER_STATUS_OPTIONS.map((status) => (
+                          <SelectItem key={status.value} value={status.value}>
+                            {status.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="valoareOferta">Valoare Ofertă (RON)</Label>
+                    <Input
+                      id="valoareOferta"
+                      type="number"
+                      step="0.01"
+                      value={formData.valoareOferta}
+                      onChange={(e) => setFormData({ ...formData, valoareOferta: e.target.value })}
+                      data-testid="input-valoare-oferta"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dataOfertarii">Data Ofertării</Label>
+                    <Input
+                      id="dataOfertarii"
+                      type="date"
+                      value={formData.dataOfertarii}
+                      onChange={(e) => setFormData({ ...formData, dataOfertarii: e.target.value })}
+                      data-testid="input-data-ofertare"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stadiuComanda">Stadiu Comandă</Label>
+                    <Select
+                      value={formData.stadiuComanda || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, stadiuComanda: value === "none" ? undefined : value as OrderStatus })}
+                    >
+                      <SelectTrigger data-testid="select-stadiu-comanda">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {ORDER_STATUS_OPTIONS.map((status) => (
+                          <SelectItem key={status.value} value={status.value}>
+                            {status.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dataVanzarii">Data Vânzării</Label>
+                    <Input
+                      id="dataVanzarii"
+                      type="date"
+                      value={formData.dataVanzarii}
+                      onChange={(e) => setFormData({ ...formData, dataVanzarii: e.target.value })}
+                      data-testid="input-data-vanzare"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dataLivrarii">Data Livrării</Label>
+                    <Input
+                      id="dataLivrarii"
+                      type="date"
+                      value={formData.dataLivrarii}
+                      onChange={(e) => setFormData({ ...formData, dataLivrarii: e.target.value })}
+                      data-testid="input-data-livrare"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="procentComision">Procent Comision (%)</Label>
+                    <Input
+                      id="procentComision"
+                      type="number"
+                      step="0.01"
+                      value={formData.procentComision}
+                      onChange={(e) => setFormData({ ...formData, procentComision: e.target.value })}
+                      data-testid="input-procent-comision"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comisionOferta">Comision Ofertă (RON)</Label>
+                    <Input
+                      id="comisionOferta"
+                      type="number"
+                      step="0.01"
+                      value={formData.comisionOferta}
+                      onChange={(e) => setFormData({ ...formData, comisionOferta: e.target.value })}
+                      data-testid="input-comision-oferta"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pretAchizitie">Preț Achiziție (RON)</Label>
+                    <Input
+                      id="pretAchizitie"
+                      type="number"
+                      step="0.01"
+                      value={formData.pretAchizitie}
+                      onChange={(e) => setFormData({ ...formData, pretAchizitie: e.target.value })}
+                      data-testid="input-pret-achizitie"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="incasat"
+                    checked={formData.incasat}
+                    onCheckedChange={(checked) => setFormData({ ...formData, incasat: !!checked })}
+                    data-testid="checkbox-incasat"
+                  />
+                  <Label htmlFor="incasat">Încasat</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ofertaFilename">Fișier Ofertă 1</Label>
+                    <Input
+                      id="ofertaFilename"
+                      value={formData.ofertaFilename}
+                      onChange={(e) => setFormData({ ...formData, ofertaFilename: e.target.value })}
+                      placeholder="Nume fișier..."
+                      data-testid="input-oferta-filename"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ofertaFilename2">Fișier Ofertă 2</Label>
+                    <Input
+                      id="ofertaFilename2"
+                      value={formData.ofertaFilename2}
+                      onChange={(e) => setFormData({ ...formData, ofertaFilename2: e.target.value })}
+                      placeholder="Nume fișier..."
+                      data-testid="input-oferta-filename-2"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="followup" className="space-y-6 mt-4">
+                <div className="p-4 border rounded-lg space-y-4">
+                  <h4 className="font-medium">Follow-up 1</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dataRevenire1">Data Revenire</Label>
+                      <Input
+                        id="dataRevenire1"
+                        type="date"
+                        value={formData.dataRevenire1}
+                        onChange={(e) => setFormData({ ...formData, dataRevenire1: e.target.value })}
+                        data-testid="input-data-revenire-1"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                      <Checkbox
+                        id="followUpEfectuat1"
+                        checked={formData.followUpEfectuat1}
+                        onCheckedChange={(checked) => setFormData({ ...formData, followUpEfectuat1: !!checked })}
+                        data-testid="checkbox-followup-1"
+                      />
+                      <Label htmlFor="followUpEfectuat1">Efectuat</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comentariuObservatii1">Comentariu</Label>
+                    <Textarea
+                      id="comentariuObservatii1"
+                      value={formData.comentariuObservatii1}
+                      onChange={(e) => setFormData({ ...formData, comentariuObservatii1: e.target.value })}
+                      rows={2}
+                      data-testid="textarea-comentariu-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 border rounded-lg space-y-4">
+                  <h4 className="font-medium">Follow-up 2</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dataRevenire2">Data Revenire</Label>
+                      <Input
+                        id="dataRevenire2"
+                        type="date"
+                        value={formData.dataRevenire2}
+                        onChange={(e) => setFormData({ ...formData, dataRevenire2: e.target.value })}
+                        data-testid="input-data-revenire-2"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                      <Checkbox
+                        id="followUpEfectuat2"
+                        checked={formData.followUpEfectuat2}
+                        onCheckedChange={(checked) => setFormData({ ...formData, followUpEfectuat2: !!checked })}
+                        data-testid="checkbox-followup-2"
+                      />
+                      <Label htmlFor="followUpEfectuat2">Efectuat</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comentariuObservatii2">Comentariu</Label>
+                    <Textarea
+                      id="comentariuObservatii2"
+                      value={formData.comentariuObservatii2}
+                      onChange={(e) => setFormData({ ...formData, comentariuObservatii2: e.target.value })}
+                      rows={2}
+                      data-testid="textarea-comentariu-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 border rounded-lg space-y-4">
+                  <h4 className="font-medium">Follow-up 3</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dataRevenire3">Data Revenire</Label>
+                      <Input
+                        id="dataRevenire3"
+                        type="date"
+                        value={formData.dataRevenire3}
+                        onChange={(e) => setFormData({ ...formData, dataRevenire3: e.target.value })}
+                        data-testid="input-data-revenire-3"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                      <Checkbox
+                        id="followUpEfectuat3"
+                        checked={formData.followUpEfectuat3}
+                        onCheckedChange={(checked) => setFormData({ ...formData, followUpEfectuat3: !!checked })}
+                        data-testid="checkbox-followup-3"
+                      />
+                      <Label htmlFor="followUpEfectuat3">Efectuat</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comentariuObservatii3">Comentariu</Label>
+                    <Textarea
+                      id="comentariuObservatii3"
+                      value={formData.comentariuObservatii3}
+                      onChange={(e) => setFormData({ ...formData, comentariuObservatii3: e.target.value })}
+                      rows={2}
+                      data-testid="textarea-comentariu-3"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="contactat"
+                    checked={formData.contactat}
+                    onCheckedChange={(checked) => setFormData({ ...formData, contactat: !!checked })}
+                    data-testid="checkbox-contactat"
+                  />
+                  <Label htmlFor="contactat">Contactat</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="observatiiClient">Observații Client</Label>
+                  <Textarea
+                    id="observatiiClient"
+                    value={formData.observatiiClient}
+                    onChange={(e) => setFormData({ ...formData, observatiiClient: e.target.value })}
+                    rows={3}
+                    data-testid="textarea-observatii-client"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="comentariiDupaContact">Comentarii după Contact</Label>
+                  <Textarea
+                    id="comentariiDupaContact"
+                    value={formData.comentariiDupaContact}
+                    onChange={(e) => setFormData({ ...formData, comentariiDupaContact: e.target.value })}
+                    rows={3}
+                    data-testid="textarea-comentarii-contact"
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={closeDialog}>
                 Anulează
               </Button>
@@ -725,89 +1209,115 @@ export default function Clienti() {
                 disabled={createMutation.isPending || updateMutation.isPending}
                 data-testid="button-submit-client"
               >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Se salvează..."
-                  : editingClient
-                  ? "Salvează"
-                  : "Adaugă"}
+                {createMutation.isPending || updateMutation.isPending 
+                  ? "Se salvează..." 
+                  : editingClient ? "Salvează" : "Adaugă"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* View Dialog */}
       <Dialog open={!!viewClient} onOpenChange={() => setViewClient(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalii Client</DialogTitle>
+            <DialogDescription>
+              {viewClient?.nume}
+            </DialogDescription>
           </DialogHeader>
+          
           {viewClient && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold">
-                    {viewClient.nume} {viewClient.prenume}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Adăugat {format(new Date(viewClient.createdAt), "d MMMM yyyy", { locale: ro })}
-                  </p>
-                </div>
-                {getStatusBadge(viewClient.status)}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Telefon</p>
+                  <p className="text-sm text-muted-foreground">Telefon</p>
                   <p className="font-medium">{viewClient.telefon}</p>
                 </div>
-                {viewClient.telefonSecundar && (
-                  <div>
-                    <p className="text-muted-foreground">Telefon Secundar</p>
-                    <p className="font-medium">{viewClient.telefonSecundar}</p>
-                  </div>
-                )}
-                {viewClient.email && (
-                  <div>
-                    <p className="text-muted-foreground">Email</p>
-                    <p className="font-medium">{viewClient.email}</p>
-                  </div>
-                )}
                 <div>
-                  <p className="text-muted-foreground">Sursă</p>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{viewClient.email || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Locație</p>
                   <p className="font-medium">
-                    {SOURCE_OPTIONS.find(s => s.value === viewClient.sursa)?.label}
+                    {[viewClient.localitate, viewClient.judet].filter(Boolean).join(", ") || "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Categorie</p>
+                  <p className="text-sm text-muted-foreground">Sursă</p>
                   <p className="font-medium">
-                    {CATEGORY_OPTIONS.find(c => c.value === viewClient.categorie)?.label}
+                    {SOURCE_OPTIONS.find(s => s.value === viewClient.sursa)?.label || "-"}
                   </p>
                 </div>
-                {viewClient.valoareEstimata && (
-                  <div>
-                    <p className="text-muted-foreground">Valoare Estimată</p>
-                    <p className="font-medium">
-                      {Number(viewClient.valoareEstimata).toLocaleString("ro-RO")} RON
-                    </p>
-                  </div>
-                )}
               </div>
 
-              {(viewClient.judet || viewClient.localitate || viewClient.adresa) && (
-                <div>
-                  <p className="text-muted-foreground text-sm">Locație</p>
-                  <p className="font-medium">
-                    {[viewClient.adresa, viewClient.localitate, viewClient.judet].filter(Boolean).join(", ")}
-                  </p>
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Detalii Produs</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Categorie</p>
+                    <p className="font-medium">
+                      {CATEGORY_OPTIONS.find(c => c.value === viewClient.categorieProdus)?.label || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Brand</p>
+                    <p className="font-medium">{viewClient.brand || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Model</p>
+                    <p className="font-medium">{viewClient.model || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Suprafață</p>
+                    <p className="font-medium">{viewClient.suprafataMp ? `${viewClient.suprafataMp} mp` : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Culoare</p>
+                    <p className="font-medium">
+                      {COLOR_OPTIONS.find(c => c.value === viewClient.culoare)?.label || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Grosime</p>
+                    <p className="font-medium">
+                      {THICKNESS_OPTIONS.find(t => t.value === viewClient.grosime)?.label || "-"}
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
 
-              {viewClient.note && (
-                <div>
-                  <p className="text-muted-foreground text-sm">Note</p>
-                  <p className="text-sm whitespace-pre-wrap">{viewClient.note}</p>
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Ofertă</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Stadiu Ofertă</p>
+                    {getOfferStatusBadge(viewClient.stadiuOferta)}
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valoare</p>
+                    <p className="font-medium">
+                      {viewClient.valoareOferta 
+                        ? `${Number(viewClient.valoareOferta).toLocaleString("ro-RO")} RON` 
+                        : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Data Ofertării</p>
+                    <p className="font-medium">
+                      {viewClient.dataOfertarii 
+                        ? format(new Date(viewClient.dataOfertarii), "dd MMM yyyy", { locale: ro }) 
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {viewClient.observatiiClient && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Observații</h4>
+                  <p className="text-sm">{viewClient.observatiiClient}</p>
                 </div>
               )}
             </div>
@@ -815,13 +1325,12 @@ export default function Clienti() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteClient} onOpenChange={() => setDeleteClient(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Șterge Client</AlertDialogTitle>
+            <AlertDialogTitle>Confirmare Ștergere</AlertDialogTitle>
             <AlertDialogDescription>
-              Ești sigur că vrei să ștergi clientul "{deleteClient?.nume} {deleteClient?.prenume}"? 
+              Ești sigur că vrei să ștergi clientul {deleteClient?.nume}?
               Această acțiune nu poate fi anulată.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -830,8 +1339,9 @@ export default function Clienti() {
             <AlertDialogAction
               onClick={() => deleteClient && deleteMutation.mutate(deleteClient.id)}
               className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
             >
-              Șterge
+              {deleteMutation.isPending ? "Se șterge..." : "Șterge"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

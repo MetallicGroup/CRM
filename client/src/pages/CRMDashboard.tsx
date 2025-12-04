@@ -93,12 +93,13 @@ export default function CRMDashboard() {
   const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0, wonValue: 0, pipelineValue: 0 };
   const activeAgents = stats?.activeAgents || 0;
 
-  const offersSent = clientStats.byStatus["OFERTA_TRIMISA"] || 0;
-  const inNegotiation = clientStats.byStatus["NEGOCIERE"] || 0;
-  const won = clientStats.byStatus["CASTIGAT"] || 0;
-  const lost = clientStats.byStatus["PIERDUT"] || 0;
-  const newClients = clientStats.byStatus["NOU"] || 0;
-  const contacted = clientStats.byStatus["CONTACTAT"] || 0;
+  const newOffers = clientStats.byStatus["NOUA"] || 0;
+  const offersSent = clientStats.byStatus["TRIMISA"] || 0;
+  const waiting = clientStats.byStatus["IN_ASTEPTARE"] || 0;
+  const accepted = clientStats.byStatus["ACCEPTATA"] || 0;
+  const won = clientStats.byStatus["VANDUT"] || 0;
+  const lost = clientStats.byStatus["REFUZAT"] || 0;
+  const cancelled = clientStats.byStatus["ANULATA"] || 0;
 
   const statsCards = [
     {
@@ -110,7 +111,7 @@ export default function CRMDashboard() {
     },
     {
       title: "Oferte Trimise",
-      value: (offersSent + inNegotiation).toString(),
+      value: (offersSent + waiting + accepted).toString(),
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
@@ -132,9 +133,9 @@ export default function CRMDashboard() {
   ];
 
   const offerStatuses = [
-    { label: "Câștigate", value: won, icon: CheckCircle, color: "text-green-600" },
-    { label: "În Așteptare", value: newClients + contacted + offersSent + inNegotiation, icon: Clock, color: "text-orange-600" },
-    { label: "Pierdute", value: lost, icon: XCircle, color: "text-red-600" },
+    { label: "Vândute", value: won, icon: CheckCircle, color: "text-green-600" },
+    { label: "În Așteptare", value: newOffers + offersSent + waiting + accepted, icon: Clock, color: "text-orange-600" },
+    { label: "Refuzate/Anulate", value: lost + cancelled, icon: XCircle, color: "text-red-600" },
   ];
 
   const resetFilters = () => {

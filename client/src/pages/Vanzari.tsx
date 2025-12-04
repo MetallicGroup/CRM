@@ -39,14 +39,13 @@ import { Link } from "wouter";
 interface Client {
   id: string;
   nume: string;
-  prenume: string | null;
   telefon: string;
   email: string | null;
   judet: string | null;
   localitate: string | null;
-  status: string;
-  categorie: string;
-  valoareFinala: string | null;
+  stadiuOferta: string | null;
+  categorieProdus: string | null;
+  valoareOferta: string | null;
   agentId: string | null;
   updatedAt: string;
 }
@@ -58,9 +57,14 @@ interface Agent {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  GARD: "Gard",
-  ACOPERIS: "Acoperiș",
-  AMBELE: "Ambele",
+  GARD_METALIC: "Gard Metalic",
+  RULOU: "Rulou",
+  PANOU_SANDWICH: "Panou Sandwich",
+  TABLA_CUTATA: "Tablă Cutată",
+  JGHEABURI: "Jgheaburi",
+  ACCESORII: "Accesorii",
+  COAMA: "Coamă",
+  ALTELE: "Altele",
 };
 
 export default function Vanzari() {
@@ -72,7 +76,7 @@ export default function Vanzari() {
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["clients", "won"],
     queryFn: async () => {
-      const res = await fetch("/api/clients?status=CASTIGAT");
+      const res = await fetch("/api/clients?stadiuOferta=VANDUT");
       if (!res.ok) throw new Error("Eroare la încărcarea vânzărilor");
       return res.json();
     },
@@ -90,17 +94,16 @@ export default function Vanzari() {
   const filteredClients = clients.filter((client) => {
     const matchesSearch = search === "" || 
       client.nume.toLowerCase().includes(search.toLowerCase()) ||
-      client.prenume?.toLowerCase().includes(search.toLowerCase()) ||
       client.telefon.includes(search);
     
     const matchesAgent = selectedAgent === "all" || client.agentId === selectedAgent;
-    const matchesCategory = selectedCategory === "all" || client.categorie === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || client.categorieProdus === selectedCategory;
     
     return matchesSearch && matchesAgent && matchesCategory;
   });
 
   const totalValue = filteredClients.reduce((sum, client) => {
-    return sum + (client.valoareFinala ? parseFloat(client.valoareFinala) : 0);
+    return sum + (client.valoareOferta ? parseFloat(client.valoareOferta) : 0);
   }, 0);
 
   const getAgentName = (agentId: string | null) => {
@@ -269,7 +272,7 @@ export default function Vanzari() {
                 {filteredClients.map((client) => (
                   <TableRow key={client.id} data-testid={`row-sale-${client.id}`}>
                     <TableCell className="font-medium">
-                      {client.nume} {client.prenume}
+                      {client.nume}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 text-sm">
@@ -293,12 +296,12 @@ export default function Vanzari() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {CATEGORY_LABELS[client.categorie] || client.categorie}
+                        {client.categorieProdus ? (CATEGORY_LABELS[client.categorieProdus] || client.categorieProdus) : "-"}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold text-green-600">
-                      {client.valoareFinala 
-                        ? `${parseFloat(client.valoareFinala).toLocaleString("ro-RO")} RON`
+                      {client.valoareOferta 
+                        ? `${parseFloat(client.valoareOferta).toLocaleString("ro-RO")} RON`
                         : "-"}
                     </TableCell>
                     {isAdmin && (
