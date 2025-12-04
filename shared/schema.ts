@@ -5,32 +5,73 @@ import { z } from "zod";
 
 export const userRoleEnum = pgEnum("user_role", ["ADMIN", "AGENT", "SPECIAL"]);
 
-export const clientStatusEnum = pgEnum("client_status", [
-  "NOU",
-  "CONTACTAT",
-  "OFERTA_TRIMISA",
-  "NEGOCIERE",
-  "CASTIGAT",
-  "PIERDUT",
-  "ANULAT"
-]);
-
 export const clientSourceEnum = pgEnum("client_source", [
-  "TELEFON",
-  "EMAIL",
-  "WEBSITE",
   "FACEBOOK",
-  "INSTAGRAM",
-  "GOOGLE_ADS",
+  "GOOGLE",
+  "RECLAME",
+  "SITE",
   "RECOMANDARE",
-  "SHOWROOM",
+  "TARG",
   "ALTELE"
 ]);
 
 export const productCategoryEnum = pgEnum("product_category", [
-  "GARD",
-  "ACOPERIS",
-  "AMBELE"
+  "GARD_METALIC",
+  "RULOU",
+  "PANOU_SANDWICH",
+  "TABLA_CUTATA",
+  "JGHEABURI",
+  "ACCESORII",
+  "COAMA",
+  "ALTELE"
+]);
+
+export const offerStatusEnum = pgEnum("offer_status", [
+  "NOUA",
+  "TRIMISA",
+  "IN_ASTEPTARE",
+  "ACCEPTATA",
+  "VANDUT",
+  "REFUZAT",
+  "ANULATA"
+]);
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "CUSTODIE",
+  "COMANDAT",
+  "LISTAT",
+  "IN_PRODUCTIE",
+  "PRODUS",
+  "LIVRAT"
+]);
+
+export const colorEnum = pgEnum("color_ral", [
+  "RAL_8017",
+  "RAL_7016",
+  "RAL_9005",
+  "RAL_3011",
+  "RAL_6005",
+  "RAL_9002",
+  "RAL_1015",
+  "MARO",
+  "ANTRACIT",
+  "ALB"
+]);
+
+export const thicknessEnum = pgEnum("thickness", [
+  "0.35",
+  "0.40",
+  "0.45",
+  "0.50",
+  "0.60"
+]);
+
+export const finishEnum = pgEnum("finish_type", [
+  "MAT",
+  "LUCIOS",
+  "STRUCTURAT",
+  "PURAL",
+  "PVDF"
 ]);
 
 export const users = pgTable("users", {
@@ -93,33 +134,67 @@ export type SafeUser = Omit<User, "passwordHash">;
 export const clients = pgTable("clients", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   
-  // Contact info
+  // SECȚIUNEA 1: Informații de bază
+  dataAdaugare: timestamp("data_adaugare").defaultNow(),
+  sursa: clientSourceEnum("sursa").default("ALTELE"),
   nume: varchar("nume", { length: 100 }).notNull(),
-  prenume: varchar("prenume", { length: 100 }),
-  telefon: varchar("telefon", { length: 20 }).notNull(),
-  telefonSecundar: varchar("telefon_secundar", { length: 20 }),
+  telefon: varchar("telefon", { length: 50 }).notNull(),
   email: varchar("email", { length: 120 }),
-  
-  // Location
-  judet: varchar("judet", { length: 50 }),
   localitate: varchar("localitate", { length: 100 }),
-  adresa: text("adresa"),
+  judet: varchar("judet", { length: 100 }),
   
-  // Business info
-  status: clientStatusEnum("status").notNull().default("NOU"),
-  sursa: clientSourceEnum("sursa").notNull().default("TELEFON"),
-  categorie: productCategoryEnum("categorie").notNull().default("GARD"),
+  // SECȚIUNEA 2: Informații partener
+  isPartnerOrder: boolean("is_partner_order").default(false),
+  partnerId: varchar("partner_id", { length: 36 }).references(() => partners.id),
   
-  // Financial
-  valoareEstimata: decimal("valoare_estimata", { precision: 12, scale: 2 }),
-  valoareFinala: decimal("valoare_finala", { precision: 12, scale: 2 }),
+  // SECȚIUNEA 3: Detalii produs
+  categorieProdus: productCategoryEnum("categorie_produs").default("GARD_METALIC"),
+  brand: varchar("brand", { length: 100 }),
+  model: varchar("model", { length: 100 }),
+  suprafataMp: decimal("suprafata_mp", { precision: 10, scale: 2 }),
+  culoare: colorEnum("culoare"),
+  grosime: thicknessEnum("grosime"),
+  finisaj: finishEnum("finisaj"),
+  mlRulouProd: decimal("ml_rulou_prod", { precision: 10, scale: 2 }),
+  smartDripstop: boolean("smart_dripstop").default(false),
   
-  // Notes and dates
-  note: text("note"),
-  dataContact: timestamp("data_contact"),
-  dataUrmarire: timestamp("data_urmarire"),
+  // SECȚIUNEA 4: Ofertă și vânzare
+  valoareOferta: decimal("valoare_oferta", { precision: 12, scale: 2 }),
+  stadiuOferta: offerStatusEnum("stadiu_oferta").default("NOUA"),
+  dataOfertarii: timestamp("data_ofertarii"),
+  stadiuComanda: orderStatusEnum("stadiu_comanda"),
+  dataVanzarii: timestamp("data_vanzarii"),
+  dataLivrarii: timestamp("data_livrarii"),
+  procentComision: decimal("procent_comision", { precision: 4, scale: 2 }),
+  comisionOferta: decimal("comision_oferta", { precision: 12, scale: 2 }),
+  incasat: boolean("incasat").default(false),
+  pretAchizitie: decimal("pret_achizitie", { precision: 12, scale: 2 }),
   
-  // Relationships
+  // SECȚIUNEA 5: Fișiere (salvăm doar numele, fișierele vor fi în storage separat)
+  ofertaFilename: varchar("oferta_filename", { length: 255 }),
+  ofertaFilename2: varchar("oferta_filename_2", { length: 255 }),
+  
+  // SECȚIUNEA 6: Follow-up 1
+  dataRevenire1: timestamp("data_revenire_1"),
+  comentariuObservatii1: text("comentariu_observatii_1"),
+  followUpEfectuat1: boolean("follow_up_efectuat_1").default(false),
+  
+  // Follow-up 2
+  dataRevenire2: timestamp("data_revenire_2"),
+  comentariuObservatii2: text("comentariu_observatii_2"),
+  followUpEfectuat2: boolean("follow_up_efectuat_2").default(false),
+  
+  // Follow-up 3
+  dataRevenire3: timestamp("data_revenire_3"),
+  comentariuObservatii3: text("comentariu_observatii_3"),
+  followUpEfectuat3: boolean("follow_up_efectuat_3").default(false),
+  
+  // SECȚIUNEA 7: Observații generale
+  observatiiClient: text("observatii_client"),
+  comentariiDupaContact: text("comentarii_dupa_contact"),
+  contactat: boolean("contactat").default(false),
+  
+  // Relații
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
   
   // Metadata
@@ -134,22 +209,63 @@ export const insertClientSchema = createInsertSchema(clients).omit({
 });
 
 export const createClientSchema = z.object({
+  // Secțiunea 1: Informații de bază
+  dataAdaugare: z.string().optional(),
+  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "ALTELE"]).default("ALTELE"),
   nume: z.string().min(1, "Numele este obligatoriu"),
-  prenume: z.string().optional(),
   telefon: z.string().min(1, "Telefonul este obligatoriu"),
-  telefonSecundar: z.string().optional(),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
-  judet: z.string().optional(),
   localitate: z.string().optional(),
-  adresa: z.string().optional(),
-  status: z.enum(["NOU", "CONTACTAT", "OFERTA_TRIMISA", "NEGOCIERE", "CASTIGAT", "PIERDUT", "ANULAT"]).default("NOU"),
-  sursa: z.enum(["TELEFON", "EMAIL", "WEBSITE", "FACEBOOK", "INSTAGRAM", "GOOGLE_ADS", "RECOMANDARE", "SHOWROOM", "ALTELE"]).default("TELEFON"),
-  categorie: z.enum(["GARD", "ACOPERIS", "AMBELE"]).default("GARD"),
-  valoareEstimata: z.string().optional(),
-  valoareFinala: z.string().optional(),
-  note: z.string().optional(),
-  dataContact: z.string().optional(),
-  dataUrmarire: z.string().optional(),
+  judet: z.string().optional(),
+  
+  // Secțiunea 2: Informații partener
+  isPartnerOrder: z.boolean().optional().default(false),
+  partnerId: z.string().optional(),
+  
+  // Secțiunea 3: Detalii produs
+  categorieProdus: z.enum(["GARD_METALIC", "RULOU", "PANOU_SANDWICH", "TABLA_CUTATA", "JGHEABURI", "ACCESORII", "COAMA", "ALTELE"]).optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  suprafataMp: z.string().optional(),
+  culoare: z.enum(["RAL_8017", "RAL_7016", "RAL_9005", "RAL_3011", "RAL_6005", "RAL_9002", "RAL_1015", "MARO", "ANTRACIT", "ALB"]).optional(),
+  grosime: z.enum(["0.35", "0.40", "0.45", "0.50", "0.60"]).optional(),
+  finisaj: z.enum(["MAT", "LUCIOS", "STRUCTURAT", "PURAL", "PVDF"]).optional(),
+  mlRulouProd: z.string().optional(),
+  smartDripstop: z.boolean().optional().default(false),
+  
+  // Secțiunea 4: Ofertă și vânzare
+  valoareOferta: z.string().optional(),
+  stadiuOferta: z.enum(["NOUA", "TRIMISA", "IN_ASTEPTARE", "ACCEPTATA", "VANDUT", "REFUZAT", "ANULATA"]).optional(),
+  dataOfertarii: z.string().optional(),
+  stadiuComanda: z.enum(["CUSTODIE", "COMANDAT", "LISTAT", "IN_PRODUCTIE", "PRODUS", "LIVRAT"]).optional(),
+  dataVanzarii: z.string().optional(),
+  dataLivrarii: z.string().optional(),
+  procentComision: z.string().optional(),
+  comisionOferta: z.string().optional(),
+  incasat: z.boolean().optional().default(false),
+  pretAchizitie: z.string().optional(),
+  
+  // Secțiunea 5: Fișiere
+  ofertaFilename: z.string().optional(),
+  ofertaFilename2: z.string().optional(),
+  
+  // Secțiunea 6: Follow-up
+  dataRevenire1: z.string().optional(),
+  comentariuObservatii1: z.string().optional(),
+  followUpEfectuat1: z.boolean().optional().default(false),
+  dataRevenire2: z.string().optional(),
+  comentariuObservatii2: z.string().optional(),
+  followUpEfectuat2: z.boolean().optional().default(false),
+  dataRevenire3: z.string().optional(),
+  comentariuObservatii3: z.string().optional(),
+  followUpEfectuat3: z.boolean().optional().default(false),
+  
+  // Secțiunea 7: Observații
+  observatiiClient: z.string().optional(),
+  comentariiDupaContact: z.string().optional(),
+  contactat: z.boolean().optional().default(false),
+  
+  // Relații
   agentId: z.string().optional(),
 });
 
@@ -159,9 +275,13 @@ export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
-export type ClientStatus = "NOU" | "CONTACTAT" | "OFERTA_TRIMISA" | "NEGOCIERE" | "CASTIGAT" | "PIERDUT" | "ANULAT";
-export type ClientSource = "TELEFON" | "EMAIL" | "WEBSITE" | "FACEBOOK" | "INSTAGRAM" | "GOOGLE_ADS" | "RECOMANDARE" | "SHOWROOM" | "ALTELE";
-export type ProductCategory = "GARD" | "ACOPERIS" | "AMBELE";
+export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "ALTELE";
+export type ProductCategory = "GARD_METALIC" | "RULOU" | "PANOU_SANDWICH" | "TABLA_CUTATA" | "JGHEABURI" | "ACCESORII" | "COAMA" | "ALTELE";
+export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA";
+export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
+export type ColorRAL = "RAL_8017" | "RAL_7016" | "RAL_9005" | "RAL_3011" | "RAL_6005" | "RAL_9002" | "RAL_1015" | "MARO" | "ANTRACIT" | "ALB";
+export type Thickness = "0.35" | "0.40" | "0.45" | "0.50" | "0.60";
+export type FinishType = "MAT" | "LUCIOS" | "STRUCTURAT" | "PURAL" | "PVDF";
 
 // ============ TARGETS (Target-uri) ============
 

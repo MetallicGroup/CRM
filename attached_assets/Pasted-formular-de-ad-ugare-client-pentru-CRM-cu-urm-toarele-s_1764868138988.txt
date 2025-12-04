@@ -1,0 +1,261 @@
+formular de adăugare client pentru CRM cu următoarele secțiuni și câmpuri:
+
+## SECȚIUNEA 1: INFORMAȚII DE BAZĂ
+- Data Adăugării (date picker, default: data curentă)
+- Sursă (dropdown cu opțiuni: Facebook, Google, Reclame, Site, Recomandare, Târg, Altele)
+- Nume Client (text, OBLIGATORIU)
+- Telefon (tel, OBLIGATORIU)
+- Email (email, opțional)
+- Localitate/Oraș (text)
+- Județ (dropdown cu toate județele României + București)
+
+## SECȚIUNEA 2: INFORMAȚII PARTENER (opțional)
+- Checkbox: "Acest client vine prin intermediul unui partener"
+- Dacă e bifat, arată dropdown cu lista partenerilor din baza de date
+- Afișează informații partener: telefon, email, firmă
+- Notă: Comision 1% pentru vânzări prin parteneri
+
+## SECȚIUNEA 3: DETALII PRODUS
+- Categorie Produs (dropdown: Gard metalic, Rulou, Panou sandwich, Tablă cutată, Jgheaburi, Accesorii, Altele)
+- Brand (dropdown cu branduri din baza de date)
+- Model (dropdown cu modele din baza de date)
+- Suprafață mp (number cu 2 decimale)
+- Culoare (dropdown: RAL 8017, RAL 7016, RAL 9005, RAL 3011, RAL 6005, Alb, Maro, Antracit, etc.)
+- Grosime (dropdown: 0.35mm, 0.40mm, 0.45mm, 0.50mm, 0.60mm)
+- Finisaj (dropdown: Mat, Lucios, Structurat, PURAL, PVDF)
+- ML Rulou Produs (number cu 2 decimale - metri liniari)
+- Smart Dripstop (checkbox boolean)
+
+## SECȚIUNEA 4: OFERTĂ ȘI VÂNZARE
+- Valoare Ofertă în LEI (number cu 2 decimale)
+- Stadiu Ofertă (dropdown: Noua, Trimisa, In asteptare, Acceptata, Vandut, Refuzat, Anulata)
+- Data Ofertării (date picker)
+- Stadiu Comandă (dropdown: Custodie, Comandat, Listat, In productie, Produs, Livrat)
+- Data Vânzării (date picker)
+- Data Livrării (date picker)
+- Procent Comision % (dropdown: 0, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+- Comision Ofertă în LEI (calculat automat = Valoare Ofertă × Procent Comision / 100, readonly)
+- Încasat (checkbox boolean)
+
+## SECȚIUNEA 5: ÎNCĂRCARE FIȘIERE
+- Permite upload 2 fișiere pentru oferte
+- Formate acceptate: PDF, DOC, DOCX, XLS, XLSX
+- Dimensiune maximă: 10MB per fișier
+- IMPORTANT: Salvează conținutul fișierului direct în baza de date (coloană BYTEA/LargeBinary) pentru persistență permanentă
+- Salvează și numele original al fișierului
+
+## SECȚIUNEA 6: FOLLOW-UP (3 seturi identice)
+Pentru Follow-up 1, 2 și 3:
+- Data Revenire (date picker)
+- Follow-up Efectuat (checkbox boolean)
+- Comentariu/Observații (textarea)
+
+## SECȚIUNEA 7: OBSERVAȚII GENERALE
+- Observații Client (textarea mare, multiline)
+- Comentarii după Contact (textarea mare, multiline)
+- Contactat (checkbox boolean)
+
+## CÂMPURI ASCUNSE/AUTOMATE:
+- agent_id = ID-ul utilizatorului curent (cel care adaugă clientul)
+- created_at = timestamp la momentul creării
+- is_partner_order = true/false bazat pe checkbox partener
+- partner_id = ID partener selectat (dacă e cazul)
+
+## FUNCȚIONALITĂȚI SPECIALE:
+1. Calcul automat comision când se completează valoare ofertă și procent
+2. Dropdown-uri cascadă pentru categorii-branduri-modele
+3. Validare telefon format românesc
+4. Afișare informații partener la selectare
+5. Preview nume fișier la upload
+6. Buton "Salvează" și "Anulează"
+
+## DESIGN:
+- Formular organizat pe carduri/secțiuni
+- Câmpuri obligatorii marcate cu *
+- Culori: albastru pentru butoane principale, gri pentru secundare
+- Responsive pentru mobile
+- Iconuri Font Awesome pentru fiecare secțiune
+```
+
+---
+
+## STRUCTURA BAZEI DE DATE PENTRU CLIENT:
+
+```sql
+CREATE TABLE clients (
+    id SERIAL PRIMARY KEY,
+    
+    -- Informații de bază
+    data_adaugare TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sursa VARCHAR(100),
+    nume_client VARCHAR(100) NOT NULL,
+    telefon VARCHAR(50),
+    email VARCHAR(120),
+    localitate VARCHAR(100),
+    judet VARCHAR(100),
+    tara VARCHAR(50) DEFAULT 'România',
+    
+    -- Detalii produs
+    categorie_produs VARCHAR(100),
+    brand VARCHAR(100),
+    model VARCHAR(100),
+    suprafata_mp FLOAT,
+    culoare VARCHAR(50),
+    grosime VARCHAR(50),
+    finisaj VARCHAR(100),
+    ml_rulou_prod FLOAT,
+    smart_dripstop BOOLEAN DEFAULT FALSE,
+    
+    -- Ofertă și vânzare
+    valoare_oferta FLOAT,
+    stadiu_oferta VARCHAR(50),
+    data_ofertarii TIMESTAMP,
+    stadiu_comanda VARCHAR(50),
+    data_vanzarii TIMESTAMP,
+    data_livrarii TIMESTAMP,
+    procent_comision FLOAT,
+    comision_oferta FLOAT,
+    incasat BOOLEAN DEFAULT FALSE,
+    pret_achizitie FLOAT,  -- doar admin
+    
+    -- Fișiere atașate (SALVATE ÎN DB!)
+    oferta_file_content BYTEA,
+    oferta_filename VARCHAR(255),
+    oferta_file_2_content BYTEA,
+    oferta_filename_2 VARCHAR(255),
+    
+    -- Follow-up 1
+    data_revenire_1 TIMESTAMP,
+    comentariu_observatii_1 TEXT,
+    follow_up_efectuat_1 BOOLEAN DEFAULT FALSE,
+    
+    -- Follow-up 2
+    data_revenire_2 TIMESTAMP,
+    comentariu_observatii_2 TEXT,
+    follow_up_efectuat_2 BOOLEAN DEFAULT FALSE,
+    
+    -- Follow-up 3
+    data_revenire_3 TIMESTAMP,
+    comentariu_observatii_3 TEXT,
+    follow_up_efectuat_3 BOOLEAN DEFAULT FALSE,
+    
+    -- Observații
+    observatii_client TEXT,
+    comentarii_dupa_contact TEXT,
+    contactat BOOLEAN DEFAULT FALSE,
+    
+    -- Relații
+    agent_id INTEGER NOT NULL REFERENCES users(id),
+    partner_id INTEGER REFERENCES partners(id),
+    is_partner_order BOOLEAN DEFAULT FALSE,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## OPȚIUNI DROPDOWN PREDEFINITE:
+
+### Surse:
+- Facebook
+- Google
+- Reclame
+- Site
+- Recomandare
+- Târg
+- Altele
+
+### Categorii Produs:
+- Gard metalic
+- Rulou
+- Panou sandwich
+- Tablă cutată
+- Jgheaburi și burlane
+- Accesorii
+- Coamă
+- Altele
+
+### Culori (RAL):
+- RAL 8017 (Maro ciocolată)
+- RAL 7016 (Gri antracit)
+- RAL 9005 (Negru)
+- RAL 3011 (Roșu)
+- RAL 6005 (Verde)
+- RAL 9002 (Alb gri)
+- RAL 1015 (Bej)
+- Maro
+- Antracit
+- Alb
+
+### Grosimi:
+- 0.35 mm
+- 0.40 mm
+- 0.45 mm
+- 0.50 mm
+- 0.60 mm
+
+### Finisaje:
+- Mat
+- Lucios
+- Structurat
+- PURAL
+- PVDF
+
+### Stadiu Ofertă:
+- Noua
+- Trimisa
+- In asteptare
+- Acceptata
+- Vandut
+- Refuzat
+- Anulata
+
+### Stadiu Comandă:
+- Custodie
+- Comandat
+- Listat
+- In productie
+- Produs
+- Livrat
+
+### Procent Comision:
+- 0%
+- 1%
+- 1.5%
+- 2%
+- 2.5%
+- 3%
+- 3.5%
+- 4%
+- 4.5%
+- 5%
+
+### Județe România:
+Alba, Arad, Argeș, Bacău, Bihor, Bistrița-Năsăud, Botoșani, Brăila, Brașov, București, Buzău, Călărași, Caraș-Severin, Cluj, Constanța, Covasna, Dâmbovița, Dolj, Galați, Giurgiu, Gorj, Harghita, Hunedoara, Ialomița, Iași, Ilfov, Maramureș, Mehedinți, Mureș, Neamț, Olt, Prahova, Sălaj, Satu Mare, Sibiu, Suceava, Teleorman, Timiș, Tulcea, Vaslui, Vâlcea, Vrancea
+
+---
+
+## JAVASCRIPT PENTRU CALCUL AUTOMAT COMISION:
+
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const valoareInput = document.querySelector('input[name="valoare_oferta"]');
+    const procentSelect = document.querySelector('select[name="procent_comision"]');
+    const comisionInput = document.querySelector('input[name="comision_oferta"]');
+    
+    function calculeazaComision() {
+        const valoare = parseFloat(valoareInput.value) || 0;
+        const procent = parseFloat(procentSelect.value) || 0;
+        const comision = (valoare * procent / 100).toFixed(2);
+        comisionInput.value = comision;
+    }
+    
+    valoareInput.addEventListener('input', calculeazaComision);
+    procentSelect.addEventListener('change', calculeazaComision);
+});
+```
+
+---
