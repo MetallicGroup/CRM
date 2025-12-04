@@ -1,0 +1,489 @@
+Creează un modul de gestionare cheltuieli pentru CRM cu următoarele funcționalități:
+
+## TIPURI DE CHELTUIELI (2 categorii principale):
+1. Cheltuieli Agent - cheltuieli individuale per agent (combustibil, echipament, etc.)
+2. Cheltuieli Sediu - cheltuieli comune per locație/showroom (chirie, utilități, etc.)
+
+## SISTEM CATEGORII IERARHIC (3 nivele):
+Creează un sistem de categorii cu dropdown-uri în cascadă:
+- Nivel 1: Categorie principală (main)
+- Nivel 2: Subcategorie (sub)
+- Nivel 3: Detaliu (detail) - opțional, doar pentru anumite subcategorii
+
+### Categorii predefinite:
+
+#### 1. SALARII + BONUSURI (main)
+   - Salariu brut (sub)
+   - Comision (sub)
+   - Bonuri de masă (sub)
+
+#### 2. CHELTUIELI AUTO (main)
+   - Combustibil (sub)
+   - Revizii (sub)
+   - Asigurări (sub)
+   - Leasing (sub)
+   - Rovinieta (sub)
+
+#### 3. CHELTUIELI GENERALE (main)
+   - Echipament (sub)
+   - Cota parte showroom (sub)
+   - Cota parte generale (sub)
+   - Marketing (sub)
+   - Investiții / amenajări showroom (sub)
+   - Protecția medicina muncii (sub)
+   - Contabil / jurist (sub)
+   - Angajații neproductivi (sub)
+   - Credite / bănci (sub)
+
+#### 4. BUGETE DE STAT (main)
+   - (fără subcategorii detaliate)
+
+## FORMULAR ADĂUGARE CHELTUIALĂ:
+
+### Câmpuri obligatorii:
+- Suma (LEI) - number cu 2 decimale, OBLIGATORIU
+- Județ/Locație - dropdown cu sediile companiei, OBLIGATORIU
+- Data Cheltuielii - date picker, OBLIGATORIU
+- Tip Cheltuială - dropdown cascadă nivel 1 (main), OBLIGATORIU
+- Subcategorie - dropdown cascadă nivel 2 (sub), OBLIGATORIU
+- Firma - dropdown cu firmele companiei, OBLIGATORIU
+
+### Câmpuri opționale:
+- Agent - dropdown cu agenții activi (pentru cheltuieli individuale)
+- Număr Auto - text (pentru cheltuieli auto)
+- Descriere - textarea
+- Factură/Bon - upload fișier (PDF, JPG, PNG)
+
+### Dropdown-uri cascadă:
+1. Când selectezi "Tip Cheltuială" (ex: Cheltuieli auto)
+2. Se încarcă automat subcategoriile aferente (Combustibil, Revizii, etc.)
+3. Pentru anumite subcategorii, se poate încărca și nivelul 3 (detalii)
+
+## FUNCȚIONALITĂȚI API PENTRU CASCADĂ:
+
+GET /api/expense-categories/main
+- Returnează toate categoriile de nivel 1
+
+GET /api/expense-categories/sub/{parent_id}
+- Returnează subcategoriile pentru o categorie principală
+
+GET /api/expense-categories/detail/{parent_id}
+- Returnează detaliile pentru o subcategorie (dacă există)
+
+## LISTĂ CHELTUIELI (TABEL):
+
+Coloane în tabel:
+1. Suma (LEI) - format cu 2 decimale
+2. Județ/Locație
+3. Data - format DD/MM/YYYY
+4. Agent - nume complet sau "-" dacă e cheltuială comună
+5. Tip - badge colorat cu categoria principală
+6. Subcategorie
+7. Showroom - pentru cheltuieli sediu
+8. Auto - pentru cheltuieli auto
+9. Nr. Auto - număr înmatriculare
+10. Factură - link download dacă există
+11. Firma
+12. Acțiuni - butoane Editare și Ștergere
+
+## FILTRARE ȘI CĂUTARE:
+
+Filtre disponibile:
+- După lună/an
+- După agent
+- După tip cheltuială (categorie)
+- După județ/sediu
+- După firmă
+
+## RAPOARTE CHELTUIELI:
+
+1. Total cheltuieli per lună
+2. Total cheltuieli per agent
+3. Total cheltuieli per categorie
+4. Breakdown pe subcategorii
+5. Comparație lună anterioară
+
+## PERMISIUNI:
+
+- ADMIN: poate vedea/adăuga/edita/șterge toate cheltuielile
+- AGENT: poate vedea doar propriile cheltuieli (nu poate edita/șterge)
+
+## INTEGRARE CU PROFITABILITATE:
+
+Cheltuielile se folosesc în calculul profitabilității:
+- Profit = Vânzări - Cost Achiziție - Cheltuieli Agent - Cheltuieli Sediu (proporțional)
+```
+
+---
+
+## STRUCTURA BAZEI DE DATE:
+
+### Tabel: expense_categories (Categorii cheltuieli)
+```sql
+CREATE TABLE expense_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    parent_id INTEGER REFERENCES expense_categories(id),
+    level VARCHAR(20) NOT NULL,  -- 'main', 'sub', 'detail'
+    active BOOLEAN DEFAULT TRUE,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(parent_id, name)
+);
+
+-- Inserare categorii predefinite
+INSERT INTO expense_categories (name, parent_id, level, display_order) VALUES
+-- Nivel 1 (main)
+('Salarii + bonusuri', NULL, 'main', 1),
+('Cheltuieli auto', NULL, 'main', 2),
+('Cheltuieli generale', NULL, 'main', 3),
+('Bugete de stat', NULL, 'main', 4);
+
+-- Nivel 2 (sub) - pentru Salarii
+INSERT INTO expense_categories (name, parent_id, level, display_order) VALUES
+('Salariu brut', 1, 'sub', 1),
+('Comision', 1, 'sub', 2),
+('Bonuri de masa', 1, 'sub', 3);
+
+-- Nivel 2 (sub) - pentru Cheltuieli auto
+INSERT INTO expense_categories (name, parent_id, level, display_order) VALUES
+('Combustibil', 2, 'sub', 1),
+('Revizii', 2, 'sub', 2),
+('Asigurări', 2, 'sub', 3),
+('Leasing', 2, 'sub', 4),
+('Rovinieta', 2, 'sub', 5);
+
+-- Nivel 2 (sub) - pentru Cheltuieli generale
+INSERT INTO expense_categories (name, parent_id, level, display_order) VALUES
+('Echipament', 3, 'sub', 1),
+('Cota parte showroom', 3, 'sub', 2),
+('Cota parte generale', 3, 'sub', 3),
+('Marketing', 3, 'sub', 4),
+('Investiții / amenajări showroom', 3, 'sub', 5),
+('Protecția medicina muncii', 3, 'sub', 6),
+('Contabil / jurist', 3, 'sub', 7),
+('Angajații neproductivi', 3, 'sub', 8),
+('Credite / bănci', 3, 'sub', 9);
+```
+
+### Tabel: cheltuieli_agent (Cheltuieli per agent)
+```sql
+CREATE TABLE cheltuieli_agent (
+    id SERIAL PRIMARY KEY,
+    agent_id INTEGER NOT NULL REFERENCES users(id),
+    
+    -- Categorii ierarhice
+    category_id INTEGER REFERENCES expense_categories(id),
+    subcategory_id INTEGER REFERENCES expense_categories(id),
+    detail_category_id INTEGER REFERENCES expense_categories(id),
+    
+    -- Date cheltuială
+    suma FLOAT NOT NULL,
+    descriere TEXT,
+    data_cheltuiala TIMESTAMP NOT NULL,
+    luna INTEGER NOT NULL,
+    an INTEGER NOT NULL,
+    
+    -- Detalii suplimentare
+    judet VARCHAR(100),
+    firma VARCHAR(100),
+    auto_nr VARCHAR(50),  -- număr înmatriculare
+    
+    -- Fișier factură/bon (salvat în DB)
+    factura_content BYTEA,
+    factura_filename VARCHAR(255),
+    
+    -- Legacy (pentru compatibilitate)
+    tip_cheltuiala VARCHAR(50),
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Tabel: cheltuieli_sediu (Cheltuieli per sediu/showroom)
+```sql
+CREATE TABLE cheltuieli_sediu (
+    id SERIAL PRIMARY KEY,
+    sediu_id INTEGER NOT NULL REFERENCES sedii(id),
+    
+    -- Categorii ierarhice
+    category_id INTEGER REFERENCES expense_categories(id),
+    subcategory_id INTEGER REFERENCES expense_categories(id),
+    detail_category_id INTEGER REFERENCES expense_categories(id),
+    
+    -- Date cheltuială
+    suma FLOAT NOT NULL,
+    descriere TEXT,
+    data_cheltuiala TIMESTAMP NOT NULL,
+    luna INTEGER NOT NULL,
+    an INTEGER NOT NULL,
+    
+    -- Detalii suplimentare
+    firma VARCHAR(100),
+    
+    -- Fișier factură/bon (salvat în DB)
+    factura_content BYTEA,
+    factura_filename VARCHAR(255),
+    
+    -- Legacy (pentru compatibilitate)
+    tip_cheltuiala VARCHAR(50),
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Tabel: sedii (Locații/Showroom-uri)
+```sql
+CREATE TABLE sedii (
+    id SERIAL PRIMARY KEY,
+    nume VARCHAR(100) NOT NULL,
+    adresa VARCHAR(200),
+    oras VARCHAR(50),
+    judet VARCHAR(50),
+    telefon VARCHAR(50),
+    email VARCHAR(120),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inserare sedii predefinite
+INSERT INTO sedii (nume, oras, judet) VALUES
+('Showroom București', 'București', 'București'),
+('Showroom Constanța', 'Constanța', 'Constanța'),
+('Showroom Teleorman', 'Alexandria', 'Teleorman'),
+('Showroom Giurgiu', 'Giurgiu', 'Giurgiu'),
+('Showroom Brăgădiru', 'Brăgădiru', 'Ilfov'),
+('Showroom Bârlad', 'Bârlad', 'Vaslui');
+```
+
+---
+
+## OPȚIUNI DROPDOWN PREDEFINITE:
+
+### Județe/Locații:
+- București
+- Constanța
+- Teleorman
+- Giurgiu
+- Brăgădiru
+- Bârlad
+- Cheltuieli comune (pentru cheltuieli generale)
+
+### Firme:
+- MM ROOF INTERMED SRL
+- METALLIC GROUP SRL
+- ROOFERS RO
+
+---
+
+## JAVASCRIPT PENTRU DROPDOWN CASCADĂ:
+
+```javascript
+// Încarcă categoriile principale când se deschide formularul
+async function loadMainCategories() {
+    try {
+        const response = await fetch('/api/expense-categories/main');
+        const categories = await response.json();
+        
+        const select = document.getElementById('category_main');
+        select.innerHTML = '<option value="">Selectează tipul</option>';
+        
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// Încarcă subcategoriile când se schimbă categoria principală
+async function loadSubcategories(parentId) {
+    const container = document.getElementById('subcategory_container');
+    const select = document.getElementById('category_sub');
+    
+    if (!parentId) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/expense-categories/sub/${parentId}`);
+        const subcategories = await response.json();
+        
+        select.innerHTML = '<option value="">Selectează subcategoria</option>';
+        subcategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+        });
+        
+        container.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading subcategories:', error);
+    }
+}
+
+// Event listeners
+document.getElementById('category_main').addEventListener('change', function() {
+    loadSubcategories(this.value);
+});
+
+// Inițializare la încărcare pagină
+document.addEventListener('DOMContentLoaded', loadMainCategories);
+```
+
+---
+
+## ENDPOINT-URI FLASK:
+
+```python
+# API pentru categorii cheltuieli
+@app.route('/api/expense-categories/main')
+@login_required
+def get_main_categories():
+    categories = ExpenseCategory.query.filter_by(level='main', active=True)\
+        .order_by(ExpenseCategory.display_order).all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+
+@app.route('/api/expense-categories/sub/<int:parent_id>')
+@login_required
+def get_sub_categories(parent_id):
+    categories = ExpenseCategory.query.filter_by(
+        parent_id=parent_id, level='sub', active=True
+    ).order_by(ExpenseCategory.display_order).all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+
+@app.route('/api/expense-categories/detail/<int:parent_id>')
+@login_required
+def get_detail_categories(parent_id):
+    categories = ExpenseCategory.query.filter_by(
+        parent_id=parent_id, level='detail', active=True
+    ).order_by(ExpenseCategory.display_order).all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+
+# Pagina cheltuieli
+@app.route('/cheltuieli')
+@login_required
+def cheltuieli():
+    if current_user.role != 'admin':
+        flash('Acces restricționat', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Query toate cheltuielile cu join pe categorii și agenți
+    cheltuieli = db.session.query(
+        CheltuieliAgent.id,
+        CheltuieliAgent.suma,
+        CheltuieliAgent.judet,
+        CheltuieliAgent.data_cheltuiala,
+        CheltuieliAgent.tip_cheltuiala,
+        CheltuieliAgent.auto_nr,
+        CheltuieliAgent.firma,
+        CheltuieliAgent.factura_filename,
+        User.first_name,
+        User.last_name
+    ).outerjoin(User, CheltuieliAgent.agent_id == User.id)\
+     .order_by(CheltuieliAgent.data_cheltuiala.desc()).all()
+    
+    agenti = User.query.filter_by(role='agent', active=True).all()
+    
+    return render_template('cheltuieli.html', 
+                          cheltuieli=cheltuieli,
+                          agenti=agenti)
+
+# Adăugare cheltuială
+@app.route('/add_cheltuiala', methods=['POST'])
+@login_required
+def add_cheltuiala():
+    if current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Acces restricționat'})
+    
+    suma = float(request.form.get('suma'))
+    judet = request.form.get('judet')
+    data = datetime.strptime(request.form.get('data_cheltuiala'), '%Y-%m-%d')
+    agent_id = request.form.get('agent_id') or None
+    category_id = request.form.get('category_id') or None
+    subcategory_id = request.form.get('subcategory_id') or None
+    firma = request.form.get('firma')
+    
+    cheltuiala = CheltuieliAgent(
+        agent_id=agent_id or current_user.id,
+        suma=suma,
+        judet=judet,
+        data_cheltuiala=data,
+        luna=data.month,
+        an=data.year,
+        category_id=category_id,
+        subcategory_id=subcategory_id,
+        firma=firma
+    )
+    
+    # Upload factură dacă există
+    if 'factura_file' in request.files:
+        file = request.files['factura_file']
+        if file.filename:
+            cheltuiala.factura_content = file.read()
+            cheltuiala.factura_filename = file.filename
+    
+    db.session.add(cheltuiala)
+    db.session.commit()
+    
+    flash('Cheltuială adăugată cu succes!', 'success')
+    return redirect(url_for('cheltuieli'))
+```
+
+---
+
+## CALCUL PROFITABILITATE CU CHELTUIELI:
+
+```python
+def calculeaza_profitabilitate(agent_id, luna, an):
+    # Total vânzări agent
+    vanzari = db.session.query(func.sum(Client.valoare_oferta)).filter(
+        Client.agent_id == agent_id,
+        Client.stadiu_oferta == 'Vandut',
+        extract('month', Client.data_vanzarii) == luna,
+        extract('year', Client.data_vanzarii) == an
+    ).scalar() or 0
+    
+    # Total costuri achiziție
+    costuri = db.session.query(func.sum(Client.pret_achizitie)).filter(
+        Client.agent_id == agent_id,
+        Client.stadiu_oferta == 'Vandut',
+        extract('month', Client.data_vanzarii) == luna,
+        extract('year', Client.data_vanzarii) == an
+    ).scalar() or 0
+    
+    # Total cheltuieli agent
+    cheltuieli_agent = db.session.query(func.sum(CheltuieliAgent.suma)).filter(
+        CheltuieliAgent.agent_id == agent_id,
+        CheltuieliAgent.luna == luna,
+        CheltuieliAgent.an == an
+    ).scalar() or 0
+    
+    # Cheltuieli sediu (proporțional cu numărul de agenți)
+    total_agenti = User.query.filter_by(role='agent', active=True).count()
+    cheltuieli_sediu_total = db.session.query(func.sum(CheltuieliSediu.suma)).filter(
+        CheltuieliSediu.luna == luna,
+        CheltuieliSediu.an == an
+    ).scalar() or 0
+    cheltuieli_sediu_proportional = cheltuieli_sediu_total / total_agenti if total_agenti > 0 else 0
+    
+    # Calcul profit
+    profit = vanzari - costuri - cheltuieli_agent - cheltuieli_sediu_proportional
+    marja = (profit / vanzari * 100) if vanzari > 0 else 0
+    
+    return {
+        'vanzari': vanzari,
+        'costuri': costuri,
+        'cheltuieli_agent': cheltuieli_agent,
+        'cheltuieli_sediu': cheltuieli_sediu_proportional,
+        'profit': profit,
+        'marja': marja
+    }
+```
+
+---

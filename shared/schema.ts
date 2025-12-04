@@ -366,3 +366,184 @@ export type InsertPartner = z.infer<typeof insertPartnerSchema>;
 export type CreatePartner = z.infer<typeof createPartnerSchema>;
 export type UpdatePartner = z.infer<typeof updatePartnerSchema>;
 export type PartnerType = "FURNIZOR" | "SUBCONTRACTOR" | "COLABORATOR" | "DISTRIBUITOR";
+
+// ============ SEDII (Locații/Showroom-uri) ============
+
+export const sedii = pgTable("sedii", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  nume: varchar("nume", { length: 100 }).notNull(),
+  adresa: varchar("adresa", { length: 200 }),
+  oras: varchar("oras", { length: 50 }),
+  judet: varchar("judet", { length: 50 }),
+  telefon: varchar("telefon", { length: 50 }),
+  email: varchar("email", { length: 120 }),
+  activ: boolean("activ").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertSediuSchema = createInsertSchema(sedii).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const createSediuSchema = z.object({
+  nume: z.string().min(1, "Numele este obligatoriu"),
+  adresa: z.string().optional(),
+  oras: z.string().optional(),
+  judet: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().email("Email invalid").optional().or(z.literal("")),
+  activ: z.boolean().default(true),
+});
+
+export const updateSediuSchema = createSediuSchema.partial();
+
+export type Sediu = typeof sedii.$inferSelect;
+export type InsertSediu = z.infer<typeof insertSediuSchema>;
+export type CreateSediu = z.infer<typeof createSediuSchema>;
+export type UpdateSediu = z.infer<typeof updateSediuSchema>;
+
+// ============ EXPENSE CATEGORIES (Categorii cheltuieli - ierarhic) ============
+
+export const categoryLevelEnum = pgEnum("category_level", ["main", "sub", "detail"]);
+
+export const expenseCategories = pgTable("expense_categories", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  parentId: varchar("parent_id", { length: 36 }),
+  level: categoryLevelEnum("level").notNull(),
+  active: boolean("active").notNull().default(true),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertExpenseCategorySchema = createInsertSchema(expenseCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const createExpenseCategorySchema = z.object({
+  name: z.string().min(1, "Numele este obligatoriu"),
+  parentId: z.string().optional().nullable(),
+  level: z.enum(["main", "sub", "detail"]),
+  active: z.boolean().default(true),
+  displayOrder: z.number().default(0),
+});
+
+export const updateExpenseCategorySchema = createExpenseCategorySchema.partial();
+
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
+export type CreateExpenseCategory = z.infer<typeof createExpenseCategorySchema>;
+export type UpdateExpenseCategory = z.infer<typeof updateExpenseCategorySchema>;
+export type CategoryLevel = "main" | "sub" | "detail";
+
+// ============ CHELTUIELI AGENT ============
+
+export const cheltuieliAgent = pgTable("cheltuieli_agent", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
+  
+  categoryId: varchar("category_id", { length: 36 }).references(() => expenseCategories.id),
+  subcategoryId: varchar("subcategory_id", { length: 36 }).references(() => expenseCategories.id),
+  detailCategoryId: varchar("detail_category_id", { length: 36 }).references(() => expenseCategories.id),
+  
+  suma: decimal("suma", { precision: 12, scale: 2 }).notNull(),
+  descriere: text("descriere"),
+  dataCheltuiala: timestamp("data_cheltuiala").notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  judet: varchar("judet", { length: 100 }),
+  sediuId: varchar("sediu_id", { length: 36 }).references(() => sedii.id),
+  firma: varchar("firma", { length: 100 }),
+  autoNr: varchar("auto_nr", { length: 50 }),
+  
+  facturaFilename: varchar("factura_filename", { length: 255 }),
+  
+  tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCheltuialaAgentSchema = createInsertSchema(cheltuieliAgent).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const createCheltuialaAgentSchema = z.object({
+  agentId: z.string().optional().nullable(),
+  categoryId: z.string().min(1, "Categoria este obligatorie"),
+  subcategoryId: z.string().min(1, "Subcategoria este obligatorie"),
+  detailCategoryId: z.string().optional().nullable(),
+  suma: z.string().min(1, "Suma este obligatorie"),
+  descriere: z.string().optional(),
+  dataCheltuiala: z.string().min(1, "Data este obligatorie"),
+  luna: z.number().min(1).max(12),
+  an: z.number().min(2020).max(2100),
+  judet: z.string().optional(),
+  sediuId: z.string().optional().nullable(),
+  firma: z.string().min(1, "Firma este obligatorie"),
+  autoNr: z.string().optional(),
+  facturaFilename: z.string().optional(),
+  tipCheltuiala: z.string().optional(),
+});
+
+export const updateCheltuialaAgentSchema = createCheltuialaAgentSchema.partial();
+
+export type CheltuialaAgent = typeof cheltuieliAgent.$inferSelect;
+export type InsertCheltuialaAgent = z.infer<typeof insertCheltuialaAgentSchema>;
+export type CreateCheltuialaAgent = z.infer<typeof createCheltuialaAgentSchema>;
+export type UpdateCheltuialaAgent = z.infer<typeof updateCheltuialaAgentSchema>;
+
+// ============ CHELTUIELI SEDIU ============
+
+export const cheltuieliSediu = pgTable("cheltuieli_sediu", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  sediuId: varchar("sediu_id", { length: 36 }).references(() => sedii.id).notNull(),
+  
+  categoryId: varchar("category_id", { length: 36 }).references(() => expenseCategories.id),
+  subcategoryId: varchar("subcategory_id", { length: 36 }).references(() => expenseCategories.id),
+  detailCategoryId: varchar("detail_category_id", { length: 36 }).references(() => expenseCategories.id),
+  
+  suma: decimal("suma", { precision: 12, scale: 2 }).notNull(),
+  descriere: text("descriere"),
+  dataCheltuiala: timestamp("data_cheltuiala").notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  firma: varchar("firma", { length: 100 }),
+  
+  facturaFilename: varchar("factura_filename", { length: 255 }),
+  
+  tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCheltuialaSediuSchema = createInsertSchema(cheltuieliSediu).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const createCheltuialaSediuSchema = z.object({
+  sediuId: z.string().min(1, "Sediul este obligatoriu"),
+  categoryId: z.string().min(1, "Categoria este obligatorie"),
+  subcategoryId: z.string().min(1, "Subcategoria este obligatorie"),
+  detailCategoryId: z.string().optional().nullable(),
+  suma: z.string().min(1, "Suma este obligatorie"),
+  descriere: z.string().optional(),
+  dataCheltuiala: z.string().min(1, "Data este obligatorie"),
+  luna: z.number().min(1).max(12),
+  an: z.number().min(2020).max(2100),
+  firma: z.string().min(1, "Firma este obligatorie"),
+  facturaFilename: z.string().optional(),
+  tipCheltuiala: z.string().optional(),
+});
+
+export const updateCheltuialaSediuSchema = createCheltuialaSediuSchema.partial();
+
+export type CheltuialaSediu = typeof cheltuieliSediu.$inferSelect;
+export type InsertCheltuialaSediu = z.infer<typeof insertCheltuialaSediuSchema>;
+export type CreateCheltuialaSediu = z.infer<typeof createCheltuialaSediuSchema>;
+export type UpdateCheltuialaSediu = z.infer<typeof updateCheltuialaSediuSchema>;
