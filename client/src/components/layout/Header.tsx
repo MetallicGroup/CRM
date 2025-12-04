@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from 'sonner';
 import { 
   LayoutDashboard, 
   Users, 
@@ -20,7 +32,8 @@ import {
   LogOut,
   User,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Key
 } from 'lucide-react';
 
 interface NavItem {
@@ -41,7 +54,22 @@ const navItems: NavItem[] = [
 
 export function Header() {
   const [location, setLocation] = useLocation();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, refreshUser } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [profileData, setProfileData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+  });
+  
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   const handleLogout = async () => {
     try {
@@ -49,6 +77,76 @@ export function Header() {
       setLocation('/login');
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const handleOpenProfile = () => {
+    setProfileData({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.email || '',
+    });
+    setIsProfileOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData),
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      
+      await refreshUser();
+      toast.success('Profil actualizat cu succes');
+      setIsProfileOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Eroare la actualizare');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('Parolele nu coincid');
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      toast.error('Parola nouă trebuie să aibă minim 6 caractere');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/profile/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      
+      toast.success('Parola a fost schimbată cu succes');
+      setIsPasswordOpen(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Eroare la schimbarea parolei');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,9 +220,13 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Contul meu</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleOpenProfile} data-testid="menu-profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsPasswordOpen(true)} data-testid="menu-password">
+                  <Key className="mr-2 h-4 w-4" />
+                  <span>Schimbă Parola</span>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => setLocation('/utilizatori')}>
@@ -142,6 +244,108 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Profile Dialog */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Profilul Meu</DialogTitle>
+            <DialogDescription>
+              Actualizează informațiile tale de profil
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Prenume</Label>
+                <Input
+                  value={profileData.firstName}
+                  onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                  data-testid="input-profile-firstname"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nume</Label>
+                <Input
+                  value={profileData.lastName}
+                  onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                  data-testid="input-profile-lastname"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                data-testid="input-profile-email"
+              />
+            </div>
+            <div className="p-3 bg-muted rounded-lg text-sm">
+              <p><strong>Rol:</strong> {user?.role === 'ADMIN' ? 'Administrator' : user?.role === 'AGENT' ? 'Agent' : 'Special'}</p>
+              <p><strong>Cont creat:</strong> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('ro-RO') : '-'}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProfileOpen(false)}>
+              Anulează
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={isLoading} data-testid="button-save-profile">
+              {isLoading ? 'Se salvează...' : 'Salvează'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schimbă Parola</DialogTitle>
+            <DialogDescription>
+              Introdu parola curentă și parola nouă
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Parola curentă</Label>
+              <Input
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                data-testid="input-current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Parola nouă</Label>
+              <Input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                data-testid="input-new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirmă parola nouă</Label>
+              <Input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                data-testid="input-confirm-password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPasswordOpen(false)}>
+              Anulează
+            </Button>
+            <Button onClick={handleChangePassword} disabled={isLoading} data-testid="button-change-password">
+              {isLoading ? 'Se schimbă...' : 'Schimbă Parola'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

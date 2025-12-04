@@ -162,3 +162,87 @@ export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type ClientStatus = "NOU" | "CONTACTAT" | "OFERTA_TRIMISA" | "NEGOCIERE" | "CASTIGAT" | "PIERDUT" | "ANULAT";
 export type ClientSource = "TELEFON" | "EMAIL" | "WEBSITE" | "FACEBOOK" | "INSTAGRAM" | "GOOGLE_ADS" | "RECOMANDARE" | "SHOWROOM" | "ALTELE";
 export type ProductCategory = "GARD" | "ACOPERIS" | "AMBELE";
+
+// ============ TARGETS (Target-uri) ============
+
+export const targets = pgTable("targets", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  targetVanzari: decimal("target_vanzari", { precision: 12, scale: 2 }).notNull(),
+  targetClienti: integer("target_clienti").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTargetSchema = createInsertSchema(targets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createTargetSchema = z.object({
+  agentId: z.string().min(1, "Agentul este obligatoriu"),
+  luna: z.number().min(1).max(12),
+  an: z.number().min(2020).max(2100),
+  targetVanzari: z.string().min(1, "Target-ul de vânzări este obligatoriu"),
+  targetClienti: z.number().min(0).default(0),
+});
+
+export const updateTargetSchema = createTargetSchema.partial();
+
+export type Target = typeof targets.$inferSelect;
+export type InsertTarget = z.infer<typeof insertTargetSchema>;
+export type CreateTarget = z.infer<typeof createTargetSchema>;
+export type UpdateTarget = z.infer<typeof updateTargetSchema>;
+
+// ============ PARTNERS (Parteneri) ============
+
+export const partnerTypeEnum = pgEnum("partner_type", [
+  "FURNIZOR",
+  "SUBCONTRACTOR", 
+  "COLABORATOR",
+  "DISTRIBUITOR"
+]);
+
+export const partners = pgTable("partners", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  nume: varchar("nume", { length: 150 }).notNull(),
+  tipPartener: partnerTypeEnum("tip_partener").notNull().default("FURNIZOR"),
+  cui: varchar("cui", { length: 20 }),
+  telefon: varchar("telefon", { length: 20 }),
+  email: varchar("email", { length: 120 }),
+  adresa: text("adresa"),
+  persoanaContact: varchar("persoana_contact", { length: 100 }),
+  note: text("note"),
+  activ: boolean("activ").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPartnerSchema = createInsertSchema(partners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createPartnerSchema = z.object({
+  nume: z.string().min(1, "Numele este obligatoriu"),
+  tipPartener: z.enum(["FURNIZOR", "SUBCONTRACTOR", "COLABORATOR", "DISTRIBUITOR"]).default("FURNIZOR"),
+  cui: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().email("Email invalid").optional().or(z.literal("")),
+  adresa: z.string().optional(),
+  persoanaContact: z.string().optional(),
+  note: z.string().optional(),
+  activ: z.boolean().default(true),
+});
+
+export const updatePartnerSchema = createPartnerSchema.partial();
+
+export type Partner = typeof partners.$inferSelect;
+export type InsertPartner = z.infer<typeof insertPartnerSchema>;
+export type CreatePartner = z.infer<typeof createPartnerSchema>;
+export type UpdatePartner = z.infer<typeof updatePartnerSchema>;
+export type PartnerType = "FURNIZOR" | "SUBCONTRACTOR" | "COLABORATOR" | "DISTRIBUITOR";

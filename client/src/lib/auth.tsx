@@ -25,6 +25,7 @@ interface AuthContextType {
   isAgent: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
 }
 
@@ -130,6 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await logoutMutation.mutateAsync();
   };
 
+  const refreshUser = async () => {
+    await refetch();
+  };
+
   if (!isInitialized) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -148,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAgent,
         login,
         logout,
+        refreshUser,
         hasPermission,
       }}
     >

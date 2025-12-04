@@ -243,7 +243,7 @@ export default function CRMDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
-                  {agents.map((agent) => (
+                  {agents.filter(a => a.id).map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}
                     </SelectItem>
@@ -304,7 +304,7 @@ export default function CRMDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
-                  {agents.map((agent) => (
+                  {agents.filter(a => a.id).map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}
                     </SelectItem>

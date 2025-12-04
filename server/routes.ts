@@ -1,8 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema } from "@shared/schema";
+import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -406,6 +407,246 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete client error:", error);
       res.status(500).json({ message: "Eroare la ștergerea clientului" });
+    }
+  });
+
+  // ============ PROFILE ROUTES ============
+
+  // Update own profile
+  app.patch("/api/profile", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { firstName, lastName, email } = req.body;
+      
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== req.userId) {
+          return res.status(400).json({ message: "Email-ul este deja folosit" });
+        }
+      }
+
+      const updateData: any = {};
+      if (firstName) updateData.firstName = firstName;
+      if (lastName) updateData.lastName = lastName;
+      if (email) updateData.email = email;
+
+      const user = await storage.updateUser(req.userId!, updateData);
+      res.json(user);
+    } catch (error) {
+      console.error("Update profile error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea profilului" });
+    }
+  });
+
+  // Change own password
+  app.post("/api/profile/change-password", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Ambele parole sunt obligatorii" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Parola nouă trebuie să aibă minim 6 caractere" });
+      }
+
+      const user = await storage.getUser(req.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "Utilizator negăsit" });
+      }
+
+      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValid) {
+        return res.status(400).json({ message: "Parola curentă este incorectă" });
+      }
+
+      await storage.changePassword(req.userId!, newPassword);
+      res.json({ message: "Parola a fost schimbată cu succes" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Eroare la schimbarea parolei" });
+    }
+  });
+
+  // ============ TARGET ROUTES ============
+
+  // Get all targets
+  app.get("/api/targets", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an } = req.query;
+      
+      // Non-admins can only see their own targets
+      const filters: any = {};
+      if (req.userRole !== "ADMIN") {
+        filters.agentId = req.userId;
+      } else if (agentId) {
+        filters.agentId = agentId as string;
+      }
+      
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+      
+      const targets = await storage.getAllTargets(filters);
+      res.json(targets);
+    } catch (error) {
+      console.error("Get targets error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea target-urilor" });
+    }
+  });
+
+  // Get target progress (agents only see their own)
+  app.get("/api/targets/progress", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an } = req.query;
+      
+      // Non-admins can ONLY see their own progress - ignore agentId parameter
+      const targetAgentId = req.userRole !== "ADMIN" ? req.userId! : (agentId as string || req.userId!);
+      const targetLuna = parseInt(luna as string) || new Date().getMonth() + 1;
+      const targetAn = parseInt(an as string) || new Date().getFullYear();
+
+      const progress = await storage.getTargetProgress(targetAgentId, targetLuna, targetAn);
+      res.json(progress);
+    } catch (error) {
+      console.error("Get target progress error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea progresului" });
+    }
+  });
+
+  // Create target (admin only)
+  app.post("/api/targets", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createTargetSchema.parse(req.body);
+      const target = await storage.createTarget(data);
+      res.status(201).json(target);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create target error:", error);
+      res.status(500).json({ message: "Eroare la crearea target-ului" });
+    }
+  });
+
+  // Update target (admin only)
+  app.patch("/api/targets/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updateTargetSchema.parse(req.body);
+      const target = await storage.updateTarget(req.params.id, data);
+      
+      if (!target) {
+        return res.status(404).json({ message: "Target negăsit" });
+      }
+
+      res.json(target);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update target error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea target-ului" });
+    }
+  });
+
+  // Delete target (admin only)
+  app.delete("/api/targets/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteTarget(req.params.id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Target negăsit" });
+      }
+
+      res.json({ message: "Target șters cu succes" });
+    } catch (error) {
+      console.error("Delete target error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea target-ului" });
+    }
+  });
+
+  // ============ PARTNER ROUTES ============
+
+  // Get all partners
+  app.get("/api/partners", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { tipPartener, activ, search } = req.query;
+      
+      const filters: any = {};
+      if (tipPartener) filters.tipPartener = tipPartener as string;
+      if (activ !== undefined) filters.activ = activ === "true";
+      if (search) filters.search = search as string;
+      
+      const partners = await storage.getAllPartners(filters);
+      res.json(partners);
+    } catch (error) {
+      console.error("Get partners error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea partenerilor" });
+    }
+  });
+
+  // Get single partner
+  app.get("/api/partners/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const partner = await storage.getPartner(req.params.id);
+      
+      if (!partner) {
+        return res.status(404).json({ message: "Partener negăsit" });
+      }
+
+      res.json(partner);
+    } catch (error) {
+      console.error("Get partner error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea partenerului" });
+    }
+  });
+
+  // Create partner (admin only)
+  app.post("/api/partners", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createPartnerSchema.parse(req.body);
+      const partner = await storage.createPartner(data);
+      res.status(201).json(partner);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create partner error:", error);
+      res.status(500).json({ message: "Eroare la crearea partenerului" });
+    }
+  });
+
+  // Update partner (admin only)
+  app.patch("/api/partners/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = updatePartnerSchema.parse(req.body);
+      const partner = await storage.updatePartner(req.params.id, data);
+      
+      if (!partner) {
+        return res.status(404).json({ message: "Partener negăsit" });
+      }
+
+      res.json(partner);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update partner error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea partenerului" });
+    }
+  });
+
+  // Delete partner (admin only)
+  app.delete("/api/partners/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deletePartner(req.params.id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Partener negăsit" });
+      }
+
+      res.json({ message: "Partener șters cu succes" });
+    } catch (error) {
+      console.error("Delete partner error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea partenerului" });
     }
   });
 

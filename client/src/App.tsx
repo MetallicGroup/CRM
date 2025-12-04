@@ -12,9 +12,11 @@ import Distributors from "@/pages/Distributors";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import UserManagement from "@/pages/UserManagement";
-import ComingSoon from "@/pages/ComingSoon";
 import Profitabilitate from "@/pages/Profitabilitate";
 import Clienti from "@/pages/Clienti";
+import Targeturi from "@/pages/Targeturi";
+import Vanzari from "@/pages/Vanzari";
+import Parteneri from "@/pages/Parteneri";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -94,13 +96,13 @@ function Router() {
         <ProtectedRoute component={Clienti} />
       </Route>
       <Route path="/targeturi">
-        <ProtectedRoute component={ComingSoon} />
+        <ProtectedRoute component={Targeturi} />
       </Route>
       <Route path="/vanzari">
-        <ProtectedRoute component={ComingSoon} />
+        <ProtectedRoute component={Vanzari} />
       </Route>
       <Route path="/parteneri">
-        <ProtectedRoute component={ComingSoon} />
+        <ProtectedRoute component={Parteneri} />
       </Route>
 
       {/* Profitabilitate - Financial Module */}
