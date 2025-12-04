@@ -684,15 +684,15 @@ export default function Clienti() {
                   <div className="space-y-2">
                     <Label htmlFor="agentId">Agent Responsabil</Label>
                     <Select
-                      value={formData.agentId || ""}
-                      onValueChange={(value) => setFormData({ ...formData, agentId: value || undefined })}
+                      value={formData.agentId || "unassigned"}
+                      onValueChange={(value) => setFormData({ ...formData, agentId: value === "unassigned" ? undefined : value })}
                     >
                       <SelectTrigger data-testid="select-agent">
                         <SelectValue placeholder="Selectează agent" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Neasignat</SelectItem>
-                        {agents.filter((a: any) => a.active).map((agent: any) => (
+                        <SelectItem value="unassigned">Neasignat</SelectItem>
+                        {agents.filter((a: any) => a.active && a.id).map((agent: any) => (
                           <SelectItem key={agent.id} value={agent.id}>
                             {agent.firstName} {agent.lastName}
                           </SelectItem>
