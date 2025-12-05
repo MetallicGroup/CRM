@@ -275,7 +275,7 @@ const defaultFormData: Partial<CreateClient> = {
 };
 
 export default function Clienti() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
@@ -396,7 +396,10 @@ export default function Clienti() {
 
   const openCreateDialog = () => {
     setEditingClient(null);
-    setFormData(defaultFormData);
+    setFormData({
+      ...defaultFormData,
+      agentId: isAdmin ? "" : (user?.id || ""),
+    });
     setIsDialogOpen(true);
   };
 
