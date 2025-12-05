@@ -142,6 +142,19 @@ Preferred communication style: Simple, everyday language.
 - Custom hook `useAllAgentsExpenseCosts` provides real-time expense data to the Angajati page
 - Nullish coalescing (`??`) ensures zero expense values propagate correctly (not treated as falsy)
 
+**Sales-to-Profitability Integration:**
+- When a client is marked as VANDUT, the sales data is automatically aggregated into the agent's monthly profitability
+- `agent_sales_profitability` table stores aggregated data: venitGard, achizitieGard, adaosGard, comisionGard (and same for Acoperis category)
+- Auto-recalculation triggers on client create/update/delete when stadiuOferta = VANDUT and agentId is set
+- Product classification: GARD goes to garduri metrics; all other categories (ACOPERIS, RULOURI_EXTERIOARE, FATADA, SISTEM_PLUVIAL, etc.) go to acoperis metrics
+- API endpoints:
+  - `GET /api/profitabilitate/sales?an={year}`: Get all agents' sales profitability for a year
+  - `GET /api/profitabilitate/sales/:agentId?an={year}`: Get specific agent's sales profitability
+  - `POST /api/profitabilitate/sales/recalculate`: Manually trigger recalculation for an agent/month
+  - `POST /api/profitabilitate/sales/recalculate-all`: Recalculate all agents for a month
+- Custom hook `useAgentSalesProfitabilityForMonth` provides real-time sales data to the Angajati page
+- Data merges with expense costs in Angajati page via nullish coalescing, with API data taking priority
+
 ### External Dependencies
 
 **Development Tools:**
