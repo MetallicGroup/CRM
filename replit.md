@@ -109,6 +109,24 @@ Preferred communication style: Simple, everyday language.
 - Tracked metrics include: revenue (with/without VAT), purchases, commissions, salaries, auto costs, logistics costs
 - All calculations are performed on-demand when viewing data, not pre-stored
 
+**Expense-to-Profitability Integration:**
+- Expenses added via the Cheltuieli (Expenses) page are automatically reflected in agent profitability calculations
+- Expense subcategory to profitability field mapping:
+  - Salarii → salariu
+  - Combustibil → combustibil
+  - Revizii → revizii
+  - Asigurări → alteCheltuieliAuto
+  - Leasing → amortizareAuto
+  - Rovinieta → alteCheltuieliAuto
+  - Telefon → abonamente
+  - Materiale birou → alteCheltuieli
+  - Deplasări → diurne
+  - Protocol → alteCheltuieli
+  - Bugete de stat → excluded from profitability
+- API endpoint: `/api/profitabilitate/agent-costs/all` aggregates expenses by agent and month
+- Custom hook `useAllAgentsExpenseCosts` provides real-time expense data to the Angajati page
+- Nullish coalescing (`??`) ensures zero expense values propagate correctly (not treated as falsy)
+
 ### External Dependencies
 
 **Development Tools:**
