@@ -16,14 +16,19 @@ export const clientSourceEnum = pgEnum("client_source", [
 ]);
 
 export const productCategoryEnum = pgEnum("product_category", [
-  "GARD_METALIC",
-  "RULOU",
-  "PANOU_SANDWICH",
-  "TABLA_CUTATA",
-  "JGHEABURI",
+  "GARD",
+  "ACOPERIS",
+  "RULOURI_EXTERIOARE",
+  "FATADA",
+  "SISTEM_PLUVIAL",
+  "FERESTRE_MANSARDA",
+  "SAGEAC",
   "ACCESORII",
-  "COAMA",
-  "ALTELE"
+  "ELEMENTE_SPECIALE",
+  "STORE_EXTERIOARE",
+  "JALUZELE_INTERIOARE",
+  "ROLETE",
+  "PLISEE"
 ]);
 
 export const offerStatusEnum = pgEnum("offer_status", [
@@ -46,22 +51,22 @@ export const orderStatusEnum = pgEnum("order_status", [
 ]);
 
 export const colorEnum = pgEnum("color_ral", [
-  "RAL_8017",
-  "RAL_7016",
   "RAL_9005",
-  "RAL_3011",
-  "RAL_6005",
+  "RAL_7016",
+  "RAL_7024",
+  "RAL_8019",
+  "RAL_8017",
+  "RAL_3005",
+  "RAL_8004",
   "RAL_9002",
-  "RAL_1015",
-  "MARO",
-  "ANTRACIT",
-  "ALB"
+  "RAL_6005",
+  "RAL_6020",
+  "RAL_3011",
+  "RAL_7001",
+  "RAL_1015"
 ]);
 
 export const thicknessEnum = pgEnum("thickness", [
-  "0.35",
-  "0.40",
-  "0.45",
   "0.50",
   "0.60"
 ]);
@@ -69,9 +74,61 @@ export const thicknessEnum = pgEnum("thickness", [
 export const finishEnum = pgEnum("finish_type", [
   "MAT",
   "LUCIOS",
-  "STRUCTURAT",
-  "PURAL",
-  "PVDF"
+  "BRILIANT",
+  "MAT_DUO",
+  "LUCIOS_DUO",
+  "BRILIANT_DUO"
+]);
+
+export const brandEnum = pgEnum("brand", [
+  "CARETTA",
+  "BILKA",
+  "WETTERBEST",
+  "METALLIC_GROUP",
+  "MX",
+  "ZEBRA",
+  "FAKRO",
+  "VELUX",
+  "NOVATIK",
+  "METIGLA",
+  "BUDMAT",
+  "STUBAI",
+  "TPS",
+  "ROOF4YOU",
+  "CUTATA"
+]);
+
+export const modelEnum = pgEnum("model", [
+  "SIPCA_GARD",
+  "TRAFORAT",
+  "MX_15",
+  "MX_25",
+  "MX_60",
+  "MC_75",
+  "MC_105",
+  "MX_15_DUO",
+  "MX_25_DUO",
+  "MX_60_DUO",
+  "MC_75_DUO",
+  "MC_105_DUO",
+  "CLASIC",
+  "CANTO",
+  "NOBEL",
+  "GLADIATOR",
+  "IBERIC",
+  "BALCANIC",
+  "X121",
+  "X140",
+  "X174",
+  "Y109",
+  "Y118",
+  "DAILY"
+]);
+
+export const commissionPercentEnum = pgEnum("commission_percent", [
+  "1",
+  "2",
+  "3"
 ]);
 
 export const users = pgTable("users", {
@@ -148,9 +205,9 @@ export const clients = pgTable("clients", {
   partnerId: varchar("partner_id", { length: 36 }).references(() => partners.id),
   
   // SECȚIUNEA 3: Detalii produs
-  categorieProdus: productCategoryEnum("categorie_produs").default("GARD_METALIC"),
-  brand: varchar("brand", { length: 100 }),
-  model: varchar("model", { length: 100 }),
+  categorieProdus: productCategoryEnum("categorie_produs").default("GARD"),
+  brand: brandEnum("brand"),
+  model: modelEnum("model"),
   suprafataMp: decimal("suprafata_mp", { precision: 10, scale: 2 }),
   culoare: colorEnum("culoare"),
   grosime: thicknessEnum("grosime"),
@@ -165,7 +222,7 @@ export const clients = pgTable("clients", {
   stadiuComanda: orderStatusEnum("stadiu_comanda"),
   dataVanzarii: timestamp("data_vanzarii"),
   dataLivrarii: timestamp("data_livrarii"),
-  procentComision: decimal("procent_comision", { precision: 4, scale: 2 }),
+  procentComision: commissionPercentEnum("procent_comision"),
   comisionOferta: decimal("comision_oferta", { precision: 12, scale: 2 }),
   incasat: boolean("incasat").default(false),
   pretAchizitie: decimal("pret_achizitie", { precision: 12, scale: 2 }),
@@ -223,13 +280,13 @@ export const createClientSchema = z.object({
   partnerId: z.string().optional(),
   
   // Secțiunea 3: Detalii produs
-  categorieProdus: z.enum(["GARD_METALIC", "RULOU", "PANOU_SANDWICH", "TABLA_CUTATA", "JGHEABURI", "ACCESORII", "COAMA", "ALTELE"]).optional(),
-  brand: z.string().optional(),
-  model: z.string().optional(),
+  categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE"]).optional(),
+  brand: z.enum(["CARETTA", "BILKA", "WETTERBEST", "METALLIC_GROUP", "MX", "ZEBRA", "FAKRO", "VELUX", "NOVATIK", "METIGLA", "BUDMAT", "STUBAI", "TPS", "ROOF4YOU", "CUTATA"]).optional(),
+  model: z.enum(["SIPCA_GARD", "TRAFORAT", "MX_15", "MX_25", "MX_60", "MC_75", "MC_105", "MX_15_DUO", "MX_25_DUO", "MX_60_DUO", "MC_75_DUO", "MC_105_DUO", "CLASIC", "CANTO", "NOBEL", "GLADIATOR", "IBERIC", "BALCANIC", "X121", "X140", "X174", "Y109", "Y118", "DAILY"]).optional(),
   suprafataMp: z.string().optional(),
-  culoare: z.enum(["RAL_8017", "RAL_7016", "RAL_9005", "RAL_3011", "RAL_6005", "RAL_9002", "RAL_1015", "MARO", "ANTRACIT", "ALB"]).optional(),
-  grosime: z.enum(["0.35", "0.40", "0.45", "0.50", "0.60"]).optional(),
-  finisaj: z.enum(["MAT", "LUCIOS", "STRUCTURAT", "PURAL", "PVDF"]).optional(),
+  culoare: z.enum(["RAL_9005", "RAL_7016", "RAL_7024", "RAL_8019", "RAL_8017", "RAL_3005", "RAL_8004", "RAL_9002", "RAL_6005", "RAL_6020", "RAL_3011", "RAL_7001", "RAL_1015"]).optional(),
+  grosime: z.enum(["0.50", "0.60"]).optional(),
+  finisaj: z.enum(["MAT", "LUCIOS", "BRILIANT", "MAT_DUO", "LUCIOS_DUO", "BRILIANT_DUO"]).optional(),
   mlRulouProd: z.string().optional(),
   smartDripstop: z.boolean().optional().default(false),
   
@@ -240,7 +297,7 @@ export const createClientSchema = z.object({
   stadiuComanda: z.enum(["CUSTODIE", "COMANDAT", "LISTAT", "IN_PRODUCTIE", "PRODUS", "LIVRAT"]).optional(),
   dataVanzarii: z.string().optional(),
   dataLivrarii: z.string().optional(),
-  procentComision: z.string().optional(),
+  procentComision: z.enum(["1", "2", "3"]).optional(),
   comisionOferta: z.string().optional(),
   incasat: z.boolean().optional().default(false),
   pretAchizitie: z.string().optional(),
@@ -276,12 +333,15 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "ALTELE";
-export type ProductCategory = "GARD_METALIC" | "RULOU" | "PANOU_SANDWICH" | "TABLA_CUTATA" | "JGHEABURI" | "ACCESORII" | "COAMA" | "ALTELE";
+export type ProductCategory = "GARD" | "ACOPERIS" | "RULOURI_EXTERIOARE" | "FATADA" | "SISTEM_PLUVIAL" | "FERESTRE_MANSARDA" | "SAGEAC" | "ACCESORII" | "ELEMENTE_SPECIALE" | "STORE_EXTERIOARE" | "JALUZELE_INTERIOARE" | "ROLETE" | "PLISEE";
 export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
-export type ColorRAL = "RAL_8017" | "RAL_7016" | "RAL_9005" | "RAL_3011" | "RAL_6005" | "RAL_9002" | "RAL_1015" | "MARO" | "ANTRACIT" | "ALB";
-export type Thickness = "0.35" | "0.40" | "0.45" | "0.50" | "0.60";
-export type FinishType = "MAT" | "LUCIOS" | "STRUCTURAT" | "PURAL" | "PVDF";
+export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015";
+export type Thickness = "0.50" | "0.60";
+export type FinishType = "MAT" | "LUCIOS" | "BRILIANT" | "MAT_DUO" | "LUCIOS_DUO" | "BRILIANT_DUO";
+export type Brand = "CARETTA" | "BILKA" | "WETTERBEST" | "METALLIC_GROUP" | "MX" | "ZEBRA" | "FAKRO" | "VELUX" | "NOVATIK" | "METIGLA" | "BUDMAT" | "STUBAI" | "TPS" | "ROOF4YOU" | "CUTATA";
+export type Model = "SIPCA_GARD" | "TRAFORAT" | "MX_15" | "MX_25" | "MX_60" | "MC_75" | "MC_105" | "MX_15_DUO" | "MX_25_DUO" | "MX_60_DUO" | "MC_75_DUO" | "MC_105_DUO" | "CLASIC" | "CANTO" | "NOBEL" | "GLADIATOR" | "IBERIC" | "BALCANIC" | "X121" | "X140" | "X174" | "Y109" | "Y118" | "DAILY";
+export type CommissionPercent = "1" | "2" | "3";
 
 // ============ TARGETS (Target-uri) ============
 
