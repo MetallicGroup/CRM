@@ -11,6 +11,7 @@ import { Download, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Employee, EmployeeType, MONTHS } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { useAllAgentsExpenseCosts } from "@/hooks/useAgentExpenseCosts";
+import { useAgentSalesProfitabilityForMonth, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -33,38 +34,46 @@ export default function Angajati() {
   
   const currentYear = new Date().getFullYear();
   const { data: expenseCosts = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAllAgentsExpenseCosts(selectedMonth, currentYear);
+  const { data: salesProfitability = {}, isLoading: isLoadingSales, refetch: refetchSales } = useAgentSalesProfitabilityForMonth(selectedMonth, currentYear);
   
-  const employeesWithExpenses = useMemo(() => {
+  const employeesWithExpensesAndSales = useMemo(() => {
     return employees.map(emp => {
       const expenseData = expenseCosts[emp.id];
-      if (!expenseData) return emp;
+      const salesData = salesProfitability[emp.id];
       
       const updatedMonthlyData = { ...emp.monthlyData };
       if (updatedMonthlyData[selectedMonth]) {
         updatedMonthlyData[selectedMonth] = {
           ...updatedMonthlyData[selectedMonth],
-          salariu: expenseData.salariu ?? updatedMonthlyData[selectedMonth].salariu,
-          amortizareAuto: expenseData.amortizareAuto ?? updatedMonthlyData[selectedMonth].amortizareAuto,
-          combustibil: expenseData.combustibil ?? updatedMonthlyData[selectedMonth].combustibil,
-          revizii: expenseData.revizii ?? updatedMonthlyData[selectedMonth].revizii,
-          alteCheltuieliAuto: expenseData.alteCheltuieliAuto ?? updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
-          abonamente: expenseData.abonamente ?? updatedMonthlyData[selectedMonth].abonamente,
-          diurne: expenseData.diurne ?? updatedMonthlyData[selectedMonth].diurne,
-          alteCheltuieli: expenseData.alteCheltuieli ?? updatedMonthlyData[selectedMonth].alteCheltuieli ?? 0,
+          salariu: expenseData?.salariu ?? updatedMonthlyData[selectedMonth].salariu,
+          amortizareAuto: expenseData?.amortizareAuto ?? updatedMonthlyData[selectedMonth].amortizareAuto,
+          combustibil: expenseData?.combustibil ?? updatedMonthlyData[selectedMonth].combustibil,
+          revizii: expenseData?.revizii ?? updatedMonthlyData[selectedMonth].revizii,
+          alteCheltuieliAuto: expenseData?.alteCheltuieliAuto ?? updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
+          abonamente: expenseData?.abonamente ?? updatedMonthlyData[selectedMonth].abonamente,
+          diurne: expenseData?.diurne ?? updatedMonthlyData[selectedMonth].diurne,
+          alteCheltuieli: expenseData?.alteCheltuieli ?? updatedMonthlyData[selectedMonth].alteCheltuieli ?? 0,
+          venitGard: salesData ? parseFloat(salesData.venitGard) : updatedMonthlyData[selectedMonth].venitGard,
+          achizitieGard: salesData ? parseFloat(salesData.achizitieGard) : updatedMonthlyData[selectedMonth].achizitieGard,
+          venitAcoperis: salesData ? parseFloat(salesData.venitAcoperis) : updatedMonthlyData[selectedMonth].venitAcoperis,
+          achizitieAcoperis: salesData ? parseFloat(salesData.achizitieAcoperis) : updatedMonthlyData[selectedMonth].achizitieAcoperis,
         };
       }
       
       return { ...emp, monthlyData: updatedMonthlyData };
     });
-  }, [employees, expenseCosts, selectedMonth]);
+  }, [employees, expenseCosts, salesProfitability, selectedMonth]);
   
-  const handleRefreshExpenses = () => {
+  const handleRefreshData = () => {
     refetchExpenses();
+    refetchSales();
   };
+  
+  const isLoadingData = isLoadingExpenses || isLoadingSales;
 
   const filteredEmployees = filterType === 'ALL' 
-    ? employeesWithExpenses 
-    : employeesWithExpenses.filter(e => e.type === filterType);
+    ? employeesWithExpensesAndSales 
+    : employeesWithExpensesAndSales.filter(e => e.type === filterType);
 
   const handleAddEmployee = (type: EmployeeType) => {
     const newEmp: Employee = {
@@ -132,12 +141,12 @@ export default function Angajati() {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            onClick={handleRefreshExpenses} 
-            disabled={isLoadingExpenses}
-            data-testid="button-refresh-expenses"
+            onClick={handleRefreshData} 
+            disabled={isLoadingData}
+            data-testid="button-refresh-data"
           >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingExpenses ? 'animate-spin' : ''}`} />
-            {isLoadingExpenses ? 'Se încarcă...' : 'Actualizează Cheltuieli'}
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+            {isLoadingData ? 'Se încarcă...' : 'Actualizează Date'}
           </Button>
           <Button variant="outline" onClick={handleExportCSV} data-testid="button-export-csv">
             <Download className="mr-2 h-4 w-4" /> Export CSV
