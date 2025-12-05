@@ -57,6 +57,8 @@ export default function Angajati() {
           achizitieGard: salesData ? parseFloat(salesData.achizitieGard) : updatedMonthlyData[selectedMonth].achizitieGard,
           venitAcoperis: salesData ? parseFloat(salesData.venitAcoperis) : updatedMonthlyData[selectedMonth].venitAcoperis,
           achizitieAcoperis: salesData ? parseFloat(salesData.achizitieAcoperis) : updatedMonthlyData[selectedMonth].achizitieAcoperis,
+          venitTVA: salesData ? parseFloat(salesData.venitTvaTotal || "0") : updatedMonthlyData[selectedMonth].venitTVA,
+          comisionPercent: salesData ? parseFloat(salesData.comisionPercentMediu || "0") : updatedMonthlyData[selectedMonth].comisionPercent,
         };
       }
       
@@ -352,22 +354,20 @@ export default function Angajati() {
                         <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? metrics.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
                         <TableCell className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900">{isAgent ? metrics.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
 
-                        <TableCell>
+                        <TableCell className="bg-blue-50 dark:bg-blue-950">
                           {isAgent ? (
-                            <Input type="number" className="w-24 h-8" value={metrics.venitTVA} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { venitTVA: Number(e.target.value) })} 
-                              data-testid={`input-venit-tva-${emp.id}`}
-                            />
+                            <span className="font-semibold text-blue-600" data-testid={`text-venit-tva-${emp.id}`}>
+                              {metrics.venitTVA.toFixed(0)}
+                            </span>
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
                         
                         {/* Comision */}
-                        <TableCell>
+                        <TableCell className="bg-green-50 dark:bg-green-950">
                           {isAgent ? (
-                            <Input type="number" className="w-16 h-8" value={metrics.comisionPercent} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { comisionPercent: Number(e.target.value) })} 
-                              data-testid={`input-comision-${emp.id}`}
-                            />
+                            <span className="font-semibold text-green-600" data-testid={`text-comision-${emp.id}`}>
+                              {metrics.comisionPercent.toFixed(2)}%
+                            </span>
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
                         <TableCell className="font-bold text-green-600">{isAgent ? metrics.valoareComision.toFixed(0) : '-'}</TableCell>

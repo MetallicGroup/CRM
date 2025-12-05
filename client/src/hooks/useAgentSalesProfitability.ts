@@ -16,6 +16,8 @@ export interface AgentSalesProfitability {
   comisionAcoperis: string;
   nrVanzariGard: number;
   nrVanzariAcoperis: number;
+  venitTvaTotal: string;
+  comisionPercentMediu: string;
   updatedAt: string;
 }
 
