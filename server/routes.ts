@@ -1070,5 +1070,74 @@ export async function registerRoutes(
     }
   });
 
+  // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
+
+  // Get upload URL for a file
+  app.post("/api/files/upload-url", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { filename } = req.body;
+      
+      if (!filename) {
+        return res.status(400).json({ message: "Numele fișierului este obligatoriu" });
+      }
+      
+      const { ObjectStorageService } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
+      const { uploadURL, objectPath } = await objectStorageService.getObjectEntityUploadURL(filename);
+      
+      res.json({ 
+        url: uploadURL, 
+        objectPath,
+        method: "PUT" as const 
+      });
+    } catch (error) {
+      console.error("Get upload URL error:", error);
+      res.status(500).json({ message: "Eroare la generarea URL-ului de upload" });
+    }
+  });
+
+  // Download a file
+  app.get("/objects/*", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
+      
+      const objectPath = req.path;
+      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+      
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Download file error:", error);
+      const { ObjectNotFoundError } = await import("./objectStorage");
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ message: "Fișierul nu a fost găsit" });
+      }
+      res.status(500).json({ message: "Eroare la descărcarea fișierului" });
+    }
+  });
+
+  // Confirm file upload and set ACL (for storing the file path in database)
+  app.post("/api/files/confirm-upload", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { objectPath, clientId, fileType } = req.body;
+      
+      if (!objectPath || !clientId || !fileType) {
+        return res.status(400).json({ message: "objectPath, clientId și fileType sunt obligatorii" });
+      }
+      
+      // Update the client record with the file path
+      if (fileType === "oferta1") {
+        await storage.updateClient(clientId, { ofertaFilename: objectPath });
+      } else if (fileType === "oferta2") {
+        await storage.updateClient(clientId, { ofertaFilename2: objectPath });
+      }
+      
+      res.json({ success: true, objectPath });
+    } catch (error) {
+      console.error("Confirm upload error:", error);
+      res.status(500).json({ message: "Eroare la confirmarea upload-ului" });
+    }
+  });
+
   return httpServer;
 }
