@@ -73,7 +73,10 @@ import type {
   ProductCategory,
   ColorRAL,
   Thickness,
-  FinishType
+  FinishType,
+  Brand,
+  Model,
+  CommissionPercent
 } from "@shared/schema";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
@@ -106,33 +109,38 @@ const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
 ];
 
 const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
-  { value: "GARD_METALIC", label: "Gard Metalic" },
-  { value: "RULOU", label: "Rulou" },
-  { value: "PANOU_SANDWICH", label: "Panou Sandwich" },
-  { value: "TABLA_CUTATA", label: "Tablă Cutată" },
-  { value: "JGHEABURI", label: "Jgheaburi" },
+  { value: "GARD", label: "Gard" },
+  { value: "ACOPERIS", label: "Acoperiș" },
+  { value: "RULOURI_EXTERIOARE", label: "Rulouri Exterioare" },
+  { value: "FATADA", label: "Fațadă" },
+  { value: "SISTEM_PLUVIAL", label: "Sistem Pluvial" },
+  { value: "FERESTRE_MANSARDA", label: "Ferestre Mansardă" },
+  { value: "SAGEAC", label: "Șageac" },
   { value: "ACCESORII", label: "Accesorii" },
-  { value: "COAMA", label: "Coamă" },
-  { value: "ALTELE", label: "Altele" },
+  { value: "ELEMENTE_SPECIALE", label: "Elemente Speciale" },
+  { value: "STORE_EXTERIOARE", label: "Store Exterioare" },
+  { value: "JALUZELE_INTERIOARE", label: "Jaluzele Interioare" },
+  { value: "ROLETE", label: "Rolete" },
+  { value: "PLISEE", label: "Plisee" },
 ];
 
 const COLOR_OPTIONS: { value: ColorRAL; label: string }[] = [
-  { value: "RAL_8017", label: "RAL 8017 (Maro închis)" },
-  { value: "RAL_7016", label: "RAL 7016 (Gri antracit)" },
   { value: "RAL_9005", label: "RAL 9005 (Negru)" },
-  { value: "RAL_3011", label: "RAL 3011 (Roșu închis)" },
-  { value: "RAL_6005", label: "RAL 6005 (Verde)" },
+  { value: "RAL_7016", label: "RAL 7016 (Gri antracit)" },
+  { value: "RAL_7024", label: "RAL 7024 (Gri grafit)" },
+  { value: "RAL_8019", label: "RAL 8019 (Maro gri)" },
+  { value: "RAL_8017", label: "RAL 8017 (Maro ciocolată)" },
+  { value: "RAL_3005", label: "RAL 3005 (Vișiniu)" },
+  { value: "RAL_8004", label: "RAL 8004 (Maro cupru)" },
   { value: "RAL_9002", label: "RAL 9002 (Alb gri)" },
+  { value: "RAL_6005", label: "RAL 6005 (Verde mușchi)" },
+  { value: "RAL_6020", label: "RAL 6020 (Verde crom)" },
+  { value: "RAL_3011", label: "RAL 3011 (Roșu închis)" },
+  { value: "RAL_7001", label: "RAL 7001 (Gri argintiu)" },
   { value: "RAL_1015", label: "RAL 1015 (Crem)" },
-  { value: "MARO", label: "Maro" },
-  { value: "ANTRACIT", label: "Antracit" },
-  { value: "ALB", label: "Alb" },
 ];
 
 const THICKNESS_OPTIONS: { value: Thickness; label: string }[] = [
-  { value: "0.35", label: "0.35 mm" },
-  { value: "0.40", label: "0.40 mm" },
-  { value: "0.45", label: "0.45 mm" },
   { value: "0.50", label: "0.50 mm" },
   { value: "0.60", label: "0.60 mm" },
 ];
@@ -140,9 +148,61 @@ const THICKNESS_OPTIONS: { value: Thickness; label: string }[] = [
 const FINISH_OPTIONS: { value: FinishType; label: string }[] = [
   { value: "MAT", label: "Mat" },
   { value: "LUCIOS", label: "Lucios" },
-  { value: "STRUCTURAT", label: "Structurat" },
-  { value: "PURAL", label: "Pural" },
-  { value: "PVDF", label: "PVDF" },
+  { value: "BRILIANT", label: "Briliant" },
+  { value: "MAT_DUO", label: "Mat DUO" },
+  { value: "LUCIOS_DUO", label: "Lucios DUO" },
+  { value: "BRILIANT_DUO", label: "Briliant DUO" },
+];
+
+const BRAND_OPTIONS: { value: Brand; label: string }[] = [
+  { value: "CARETTA", label: "Caretta" },
+  { value: "BILKA", label: "Bilka" },
+  { value: "WETTERBEST", label: "Wetterbest" },
+  { value: "METALLIC_GROUP", label: "Metallic Group" },
+  { value: "MX", label: "MX" },
+  { value: "ZEBRA", label: "Zebra" },
+  { value: "FAKRO", label: "Fakro" },
+  { value: "VELUX", label: "Velux" },
+  { value: "NOVATIK", label: "Novatik" },
+  { value: "METIGLA", label: "Metigla" },
+  { value: "BUDMAT", label: "Budmat" },
+  { value: "STUBAI", label: "Stubai" },
+  { value: "TPS", label: "TPS" },
+  { value: "ROOF4YOU", label: "Roof4You" },
+  { value: "CUTATA", label: "Cutata" },
+];
+
+const MODEL_OPTIONS: { value: Model; label: string }[] = [
+  { value: "SIPCA_GARD", label: "Șipcă Gard" },
+  { value: "TRAFORAT", label: "Traforat" },
+  { value: "MX_15", label: "MX 15" },
+  { value: "MX_25", label: "MX 25" },
+  { value: "MX_60", label: "MX 60" },
+  { value: "MC_75", label: "MC 75" },
+  { value: "MC_105", label: "MC 105" },
+  { value: "MX_15_DUO", label: "MX 15 DUO" },
+  { value: "MX_25_DUO", label: "MX 25 DUO" },
+  { value: "MX_60_DUO", label: "MX 60 DUO" },
+  { value: "MC_75_DUO", label: "MC 75 DUO" },
+  { value: "MC_105_DUO", label: "MC 105 DUO" },
+  { value: "CLASIC", label: "Clasic" },
+  { value: "CANTO", label: "Canto" },
+  { value: "NOBEL", label: "Nobel" },
+  { value: "GLADIATOR", label: "Gladiator" },
+  { value: "IBERIC", label: "Iberic" },
+  { value: "BALCANIC", label: "Balcanic" },
+  { value: "X121", label: "X121" },
+  { value: "X140", label: "X140" },
+  { value: "X174", label: "X174" },
+  { value: "Y109", label: "Y109" },
+  { value: "Y118", label: "Y118" },
+  { value: "DAILY", label: "Daily" },
+];
+
+const COMMISSION_OPTIONS: { value: CommissionPercent; label: string }[] = [
+  { value: "1", label: "1%" },
+  { value: "2", label: "2%" },
+  { value: "3", label: "3%" },
 ];
 
 const JUDETE = [
@@ -173,9 +233,9 @@ const defaultFormData: Partial<CreateClient> = {
   sursa: "ALTELE",
   isPartnerOrder: false,
   partnerId: "",
-  categorieProdus: "GARD_METALIC",
-  brand: "",
-  model: "",
+  categorieProdus: undefined,
+  brand: undefined,
+  model: undefined,
   suprafataMp: "",
   grosime: undefined,
   finisaj: undefined,
@@ -188,7 +248,7 @@ const defaultFormData: Partial<CreateClient> = {
   stadiuComanda: undefined,
   dataVanzarii: "",
   dataLivrarii: "",
-  procentComision: "",
+  procentComision: undefined,
   comisionOferta: "",
   incasat: false,
   pretAchizitie: "",
@@ -346,9 +406,9 @@ export default function Clienti() {
       sursa: client.sursa || "ALTELE",
       isPartnerOrder: client.isPartnerOrder || false,
       partnerId: client.partnerId || "",
-      categorieProdus: client.categorieProdus || "GARD_METALIC",
-      brand: client.brand || "",
-      model: client.model || "",
+      categorieProdus: client.categorieProdus || undefined,
+      brand: client.brand || undefined,
+      model: client.model || undefined,
       suprafataMp: client.suprafataMp || "",
       grosime: client.grosime || undefined,
       finisaj: client.finisaj || undefined,
@@ -361,7 +421,7 @@ export default function Clienti() {
       stadiuComanda: client.stadiuComanda || undefined,
       dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
       dataLivrarii: client.dataLivrarii ? format(new Date(client.dataLivrarii), "yyyy-MM-dd") : "",
-      procentComision: client.procentComision || "",
+      procentComision: client.procentComision || undefined,
       comisionOferta: client.comisionOferta || "",
       incasat: client.incasat || false,
       pretAchizitie: client.pretAchizitie || "",
@@ -777,13 +837,14 @@ export default function Clienti() {
                   <div className="space-y-2">
                     <Label htmlFor="categorieProdus">Categorie Produs</Label>
                     <Select
-                      value={formData.categorieProdus || "GARD_METALIC"}
-                      onValueChange={(value) => setFormData({ ...formData, categorieProdus: value as ProductCategory })}
+                      value={formData.categorieProdus || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, categorieProdus: value === "none" ? undefined : value as ProductCategory })}
                     >
                       <SelectTrigger data-testid="select-categorie">
-                        <SelectValue />
+                        <SelectValue placeholder="Selectează" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
                         {CATEGORY_OPTIONS.map((cat) => (
                           <SelectItem key={cat.value} value={cat.value}>
                             {cat.label}
@@ -794,23 +855,43 @@ export default function Clienti() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="brand">Brand</Label>
-                    <Input
-                      id="brand"
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      data-testid="input-brand"
-                    />
+                    <Select
+                      value={formData.brand || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, brand: value === "none" ? undefined : value as Brand })}
+                    >
+                      <SelectTrigger data-testid="select-brand">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {BRAND_OPTIONS.map((brand) => (
+                          <SelectItem key={brand.value} value={brand.value}>
+                            {brand.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="model">Model</Label>
-                    <Input
-                      id="model"
-                      value={formData.model}
-                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                      data-testid="input-model"
-                    />
+                    <Select
+                      value={formData.model || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, model: value === "none" ? undefined : value as Model })}
+                    >
+                      <SelectTrigger data-testid="select-model">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {MODEL_OPTIONS.map((model) => (
+                          <SelectItem key={model.value} value={model.value}>
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="suprafataMp">Suprafață (mp)</Label>
@@ -934,7 +1015,18 @@ export default function Clienti() {
                       type="number"
                       step="0.01"
                       value={formData.valoareOferta}
-                      onChange={(e) => setFormData({ ...formData, valoareOferta: e.target.value })}
+                      onChange={(e) => {
+                        const newValoare = e.target.value;
+                        const valoareOferta = parseFloat(newValoare || "0");
+                        const comisionCalculat = formData.procentComision 
+                          ? (valoareOferta * parseInt(formData.procentComision) / 100).toFixed(2)
+                          : "";
+                        setFormData({ 
+                          ...formData, 
+                          valoareOferta: newValoare,
+                          comisionOferta: comisionCalculat
+                        });
+                      }}
                       data-testid="input-valoare-oferta"
                     />
                   </div>
@@ -994,15 +1086,34 @@ export default function Clienti() {
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="procentComision">Procent Comision (%)</Label>
-                    <Input
-                      id="procentComision"
-                      type="number"
-                      step="0.01"
-                      value={formData.procentComision}
-                      onChange={(e) => setFormData({ ...formData, procentComision: e.target.value })}
-                      data-testid="input-procent-comision"
-                    />
+                    <Label htmlFor="procentComision">Procent Comision</Label>
+                    <Select
+                      value={formData.procentComision || "none"}
+                      onValueChange={(value) => {
+                        const newProcentComision = value === "none" ? undefined : value as CommissionPercent;
+                        const valoareOferta = parseFloat(formData.valoareOferta || "0");
+                        const comisionCalculat = newProcentComision 
+                          ? (valoareOferta * parseInt(newProcentComision) / 100).toFixed(2)
+                          : "";
+                        setFormData({ 
+                          ...formData, 
+                          procentComision: newProcentComision,
+                          comisionOferta: comisionCalculat
+                        });
+                      }}
+                    >
+                      <SelectTrigger data-testid="select-procent-comision">
+                        <SelectValue placeholder="Selectează" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Neselectat</SelectItem>
+                        {COMMISSION_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="comisionOferta">Comision Ofertă (RON)</Label>
@@ -1011,7 +1122,8 @@ export default function Clienti() {
                       type="number"
                       step="0.01"
                       value={formData.comisionOferta}
-                      onChange={(e) => setFormData({ ...formData, comisionOferta: e.target.value })}
+                      readOnly
+                      className="bg-muted"
                       data-testid="input-comision-oferta"
                     />
                   </div>
