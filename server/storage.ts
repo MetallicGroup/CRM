@@ -7,6 +7,7 @@ import {
   expenseCategories,
   cheltuieliAgent,
   cheltuieliSediu,
+  agentSalesProfitability,
   type User, 
   type InsertUser, 
   type SafeUser, 
@@ -32,7 +33,8 @@ import {
   type UpdateCheltuialaAgent,
   type CheltuialaSediu,
   type CreateCheltuialaSediu,
-  type UpdateCheltuialaSediu
+  type UpdateCheltuialaSediu,
+  type AgentSalesProfitability
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -133,6 +135,11 @@ export interface IStorage {
     diurne: number;
     alteCheltuieli: number;
   }>;
+  
+  // Agent Sales Profitability methods
+  recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability>;
+  getAgentSalesProfitability(agentId: string, an: number): Promise<AgentSalesProfitability[]>;
+  getAllAgentsSalesProfitability(an: number): Promise<AgentSalesProfitability[]>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1177,6 +1184,122 @@ export class DatabaseStorage implements IStorage {
     }
 
     return result;
+  }
+
+  // ============ AGENT SALES PROFITABILITY METHODS ============
+
+  async recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability> {
+    // Get all VANDUT clients for this agent in the specified month/year
+    const soldClients = await db.select().from(clients).where(
+      and(
+        eq(clients.agentId, agentId),
+        eq(clients.stadiuOferta, "VANDUT"),
+        sql`EXTRACT(MONTH FROM ${clients.dataVanzarii}) = ${luna}`,
+        sql`EXTRACT(YEAR FROM ${clients.dataVanzarii}) = ${an}`
+      )
+    );
+
+    // Initialize aggregates
+    let venitGard = 0;
+    let achizitieGard = 0;
+    let comisionGard = 0;
+    let nrVanzariGard = 0;
+    
+    let venitAcoperis = 0;
+    let achizitieAcoperis = 0;
+    let comisionAcoperis = 0;
+    let nrVanzariAcoperis = 0;
+
+    // Aggregate sales by category
+    for (const client of soldClients) {
+      const valoare = parseFloat(client.valoareOferta || "0");
+      const achizitie = parseFloat(client.pretAchizitie || "0");
+      const comision = parseFloat(client.comisionOferta || "0");
+      
+      if (client.categorieProdus === "GARD") {
+        venitGard += valoare;
+        achizitieGard += achizitie;
+        comisionGard += comision;
+        nrVanzariGard++;
+      } else {
+        // All other categories go to Acoperis (ACOPERIS, RULOURI_EXTERIOARE, FATADA, SISTEM_PLUVIAL, etc.)
+        venitAcoperis += valoare;
+        achizitieAcoperis += achizitie;
+        comisionAcoperis += comision;
+        nrVanzariAcoperis++;
+      }
+    }
+
+    // Calculate adaos (margin)
+    const adaosGard = venitGard - achizitieGard;
+    const adaosAcoperis = venitAcoperis - achizitieAcoperis;
+
+    // Upsert the profitability record
+    const [existing] = await db.select().from(agentSalesProfitability).where(
+      and(
+        eq(agentSalesProfitability.agentId, agentId),
+        eq(agentSalesProfitability.an, an),
+        eq(agentSalesProfitability.luna, luna)
+      )
+    );
+
+    if (existing) {
+      // Update existing record
+      const [updated] = await db
+        .update(agentSalesProfitability)
+        .set({
+          venitGard: venitGard.toFixed(2),
+          achizitieGard: achizitieGard.toFixed(2),
+          adaosGard: adaosGard.toFixed(2),
+          comisionGard: comisionGard.toFixed(2),
+          venitAcoperis: venitAcoperis.toFixed(2),
+          achizitieAcoperis: achizitieAcoperis.toFixed(2),
+          adaosAcoperis: adaosAcoperis.toFixed(2),
+          comisionAcoperis: comisionAcoperis.toFixed(2),
+          nrVanzariGard,
+          nrVanzariAcoperis,
+          updatedAt: new Date(),
+        })
+        .where(eq(agentSalesProfitability.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Insert new record
+      const [created] = await db
+        .insert(agentSalesProfitability)
+        .values({
+          agentId,
+          an,
+          luna,
+          venitGard: venitGard.toFixed(2),
+          achizitieGard: achizitieGard.toFixed(2),
+          adaosGard: adaosGard.toFixed(2),
+          comisionGard: comisionGard.toFixed(2),
+          venitAcoperis: venitAcoperis.toFixed(2),
+          achizitieAcoperis: achizitieAcoperis.toFixed(2),
+          adaosAcoperis: adaosAcoperis.toFixed(2),
+          comisionAcoperis: comisionAcoperis.toFixed(2),
+          nrVanzariGard,
+          nrVanzariAcoperis,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async getAgentSalesProfitability(agentId: string, an: number): Promise<AgentSalesProfitability[]> {
+    return db.select().from(agentSalesProfitability).where(
+      and(
+        eq(agentSalesProfitability.agentId, agentId),
+        eq(agentSalesProfitability.an, an)
+      )
+    );
+  }
+
+  async getAllAgentsSalesProfitability(an: number): Promise<AgentSalesProfitability[]> {
+    return db.select().from(agentSalesProfitability).where(
+      eq(agentSalesProfitability.an, an)
+    );
   }
 }
 
