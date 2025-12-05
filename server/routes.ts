@@ -1070,6 +1070,84 @@ export async function registerRoutes(
     }
   });
 
+  // ============ SALES PROFITABILITY ROUTES ============
+
+  // Get all agents sales profitability for a year
+  app.get("/api/profitabilitate/sales", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { an } = req.query;
+      
+      if (!an) {
+        return res.status(400).json({ message: "Anul este obligatoriu" });
+      }
+      
+      const salesData = await storage.getAllAgentsSalesProfitability(parseInt(an as string));
+      res.json(salesData);
+    } catch (error) {
+      console.error("Get all agents sales profitability error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea datelor de vânzări" });
+    }
+  });
+
+  // Get a specific agent's sales profitability for a year
+  app.get("/api/profitabilitate/sales/:agentId", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const { an } = req.query;
+      
+      if (!an) {
+        return res.status(400).json({ message: "Anul este obligatoriu" });
+      }
+      
+      const salesData = await storage.getAgentSalesProfitability(agentId, parseInt(an as string));
+      res.json(salesData);
+    } catch (error) {
+      console.error("Get agent sales profitability error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea datelor de vânzări" });
+    }
+  });
+
+  // Manually trigger recalculation of profitability for an agent/month
+  app.post("/api/profitabilitate/sales/recalculate", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, an, luna } = req.body;
+      
+      if (!agentId || !an || !luna) {
+        return res.status(400).json({ message: "agentId, an și luna sunt obligatorii" });
+      }
+      
+      const result = await storage.recomputeAgentMonthlyProfit(agentId, an, luna);
+      res.json(result);
+    } catch (error) {
+      console.error("Recalculate agent profitability error:", error);
+      res.status(500).json({ message: "Eroare la recalcularea profitabilității" });
+    }
+  });
+
+  // Recalculate profitability for all agents for a specific month
+  app.post("/api/profitabilitate/sales/recalculate-all", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { an, luna } = req.body;
+      
+      if (!an || !luna) {
+        return res.status(400).json({ message: "an și luna sunt obligatorii" });
+      }
+      
+      const agents = await storage.getAgents();
+      const results = [];
+      
+      for (const agent of agents) {
+        const result = await storage.recomputeAgentMonthlyProfit(agent.id, an, luna);
+        results.push({ agentId: agent.id, agentName: `${agent.firstName} ${agent.lastName}`, ...result });
+      }
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Recalculate all agents profitability error:", error);
+      res.status(500).json({ message: "Eroare la recalcularea profitabilității" });
+    }
+  });
+
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
   // Get upload URL for a file
