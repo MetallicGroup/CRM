@@ -11,7 +11,6 @@ import { Download, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Employee, EmployeeType, MONTHS } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { useAllAgentsExpenseCosts } from "@/hooks/useAgentExpenseCosts";
-import { useQueryClient } from "@tanstack/react-query";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -29,7 +28,6 @@ export default function Angajati() {
   const { employees = [], showrooms = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
   const fullStore = useStore();
   const totals = getTotalsForMonth(fullStore, selectedMonth);
-  const queryClient = useQueryClient();
   
   const [filterType, setFilterType] = useState<EmployeeType | 'ALL'>('ALL');
   
@@ -45,14 +43,14 @@ export default function Angajati() {
       if (updatedMonthlyData[selectedMonth]) {
         updatedMonthlyData[selectedMonth] = {
           ...updatedMonthlyData[selectedMonth],
-          salariu: expenseData.salariu || updatedMonthlyData[selectedMonth].salariu,
-          amortizareAuto: expenseData.amortizareAuto || updatedMonthlyData[selectedMonth].amortizareAuto,
-          combustibil: expenseData.combustibil || updatedMonthlyData[selectedMonth].combustibil,
-          revizii: expenseData.revizii || updatedMonthlyData[selectedMonth].revizii,
-          alteCheltuieliAuto: expenseData.alteCheltuieliAuto || updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
-          abonamente: expenseData.abonamente || updatedMonthlyData[selectedMonth].abonamente,
-          diurne: expenseData.diurne || updatedMonthlyData[selectedMonth].diurne,
-          alteCheltuieli: expenseData.alteCheltuieli || updatedMonthlyData[selectedMonth].alteCheltuieli || 0,
+          salariu: expenseData.salariu ?? updatedMonthlyData[selectedMonth].salariu,
+          amortizareAuto: expenseData.amortizareAuto ?? updatedMonthlyData[selectedMonth].amortizareAuto,
+          combustibil: expenseData.combustibil ?? updatedMonthlyData[selectedMonth].combustibil,
+          revizii: expenseData.revizii ?? updatedMonthlyData[selectedMonth].revizii,
+          alteCheltuieliAuto: expenseData.alteCheltuieliAuto ?? updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
+          abonamente: expenseData.abonamente ?? updatedMonthlyData[selectedMonth].abonamente,
+          diurne: expenseData.diurne ?? updatedMonthlyData[selectedMonth].diurne,
+          alteCheltuieli: expenseData.alteCheltuieli ?? updatedMonthlyData[selectedMonth].alteCheltuieli ?? 0,
         };
       }
       
