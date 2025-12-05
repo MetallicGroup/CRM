@@ -19,10 +19,6 @@ externalPort = 80
 localPort = 32873
 externalPort = 3000
 
-[[ports]]
-localPort = 46455
-externalPort = 3001
-
 [env]
 PORT = "5000"
 
@@ -49,3 +45,8 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.shared]
+PRIVATE_OBJECT_DIR = "/metallic-crm-files"

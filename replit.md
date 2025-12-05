@@ -85,6 +85,21 @@ Preferred communication style: Simple, everyday language.
 - Role-based access control middleware (requireAuth, requireAdmin)
 - Protected API routes for user management
 
+**File Storage (Object Storage):**
+- Replit Object Storage for persistent file storage
+- Files are stored in cloud and persist across deployments
+- Environment variable `PRIVATE_OBJECT_DIR` defines the storage bucket path
+- Presigned URLs for secure uploads directly to cloud storage
+- Key files:
+  - `server/objectStorage.ts`: Object Storage service with upload/download functionality
+  - `server/objectAcl.ts`: ACL system for file permissions
+  - `client/src/components/ObjectUploader.tsx`: Reusable file upload component
+- API endpoints:
+  - `POST /api/files/upload-url`: Get presigned URL for file upload
+  - `GET /objects/*`: Download files from storage
+  - `POST /api/files/confirm-upload`: Confirm upload and update client record
+- To use: Create a bucket in Replit's "App Storage" tool and set `PRIVATE_OBJECT_DIR` to `/<bucket-name>`
+
 **Build Process:**
 - Custom build script (`script/build.ts`) using esbuild for server bundling
 - Vite for client-side bundling with code splitting

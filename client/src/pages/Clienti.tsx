@@ -59,8 +59,11 @@ import {
   FileText,
   Calendar,
   MessageSquare,
-  Handshake
+  Handshake,
+  Download,
+  File as FileIcon
 } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -1151,23 +1154,111 @@ export default function Clienti() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="ofertaFilename">Fișier Ofertă 1</Label>
-                    <Input
-                      id="ofertaFilename"
-                      value={formData.ofertaFilename}
-                      onChange={(e) => setFormData({ ...formData, ofertaFilename: e.target.value })}
-                      placeholder="Nume fișier..."
-                      data-testid="input-oferta-filename"
-                    />
+                    <div className="flex items-center gap-2">
+                      {formData.ofertaFilename ? (
+                        <>
+                          <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                            <FileIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm truncate flex-1">
+                              {formData.ofertaFilename.split('/').pop() || "Fișier încărcat"}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`${window.location.origin}${formData.ofertaFilename}`, '_blank', 'noopener')}
+                            data-testid="button-download-oferta-1"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, ofertaFilename: "" })}
+                            data-testid="button-remove-oferta-1"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <ObjectUploader
+                          onGetUploadParameters={async (file) => {
+                            const response = await fetch("/api/files/upload-url", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ filename: file.name }),
+                            });
+                            if (!response.ok) throw new Error("Failed to get upload URL");
+                            const data = await response.json();
+                            return { method: "PUT", url: data.url, objectPath: data.objectPath };
+                          }}
+                          onComplete={(objectPath, filename) => {
+                            setFormData({ ...formData, ofertaFilename: objectPath });
+                            toast.success(`Fișier "${filename}" încărcat cu succes`);
+                          }}
+                          onError={(error) => toast.error(error.message)}
+                          data-testid="uploader-oferta-1"
+                        >
+                          Încarcă Fișier
+                        </ObjectUploader>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ofertaFilename2">Fișier Ofertă 2</Label>
-                    <Input
-                      id="ofertaFilename2"
-                      value={formData.ofertaFilename2}
-                      onChange={(e) => setFormData({ ...formData, ofertaFilename2: e.target.value })}
-                      placeholder="Nume fișier..."
-                      data-testid="input-oferta-filename-2"
-                    />
+                    <div className="flex items-center gap-2">
+                      {formData.ofertaFilename2 ? (
+                        <>
+                          <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                            <FileIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm truncate flex-1">
+                              {formData.ofertaFilename2.split('/').pop() || "Fișier încărcat"}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`${window.location.origin}${formData.ofertaFilename2}`, '_blank', 'noopener')}
+                            data-testid="button-download-oferta-2"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, ofertaFilename2: "" })}
+                            data-testid="button-remove-oferta-2"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <ObjectUploader
+                          onGetUploadParameters={async (file) => {
+                            const response = await fetch("/api/files/upload-url", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ filename: file.name }),
+                            });
+                            if (!response.ok) throw new Error("Failed to get upload URL");
+                            const data = await response.json();
+                            return { method: "PUT", url: data.url, objectPath: data.objectPath };
+                          }}
+                          onComplete={(objectPath, filename) => {
+                            setFormData({ ...formData, ofertaFilename2: objectPath });
+                            toast.success(`Fișier "${filename}" încărcat cu succes`);
+                          }}
+                          onError={(error) => toast.error(error.message)}
+                          data-testid="uploader-oferta-2"
+                        >
+                          Încarcă Fișier
+                        </ObjectUploader>
+                      )}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
