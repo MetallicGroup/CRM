@@ -32,13 +32,15 @@ export const productCategoryEnum = pgEnum("product_category", [
 ]);
 
 export const offerStatusEnum = pgEnum("offer_status", [
-  "NOUA",
-  "TRIMISA",
-  "IN_ASTEPTARE",
-  "ACCEPTATA",
+  "NOU",
+  "CONTACTAT",
+  "INFORMATII",
+  "OFERTAT",
+  "FOLLOW_UP",
+  "PROSPECT",
+  "CUSTODIE",
   "VANDUT",
-  "REFUZAT",
-  "ANULATA"
+  "PIERDUT"
 ]);
 
 export const orderStatusEnum = pgEnum("order_status", [
@@ -217,7 +219,7 @@ export const clients = pgTable("clients", {
   
   // SECȚIUNEA 4: Ofertă și vânzare
   valoareOferta: decimal("valoare_oferta", { precision: 12, scale: 2 }),
-  stadiuOferta: offerStatusEnum("stadiu_oferta").default("NOUA"),
+  stadiuOferta: offerStatusEnum("stadiu_oferta").default("NOU"),
   dataOfertarii: timestamp("data_ofertarii"),
   stadiuComanda: orderStatusEnum("stadiu_comanda"),
   dataVanzarii: timestamp("data_vanzarii"),

@@ -83,13 +83,15 @@ import type {
 } from "@shared/schema";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
-  { value: "NOUA", label: "Nouă", color: "bg-blue-100 text-blue-800" },
-  { value: "TRIMISA", label: "Trimisă", color: "bg-yellow-100 text-yellow-800" },
-  { value: "IN_ASTEPTARE", label: "În așteptare", color: "bg-purple-100 text-purple-800" },
-  { value: "ACCEPTATA", label: "Acceptată", color: "bg-orange-100 text-orange-800" },
+  { value: "NOU", label: "Nou", color: "bg-blue-100 text-blue-800" },
+  { value: "CONTACTAT", label: "Contactat", color: "bg-cyan-100 text-cyan-800" },
+  { value: "INFORMATII", label: "Informații", color: "bg-indigo-100 text-indigo-800" },
+  { value: "OFERTAT", label: "Ofertat", color: "bg-yellow-100 text-yellow-800" },
+  { value: "FOLLOW_UP", label: "Follow UP (Negociere)", color: "bg-purple-100 text-purple-800" },
+  { value: "PROSPECT", label: "Prospect", color: "bg-orange-100 text-orange-800" },
+  { value: "CUSTODIE", label: "Custodie", color: "bg-amber-100 text-amber-800" },
   { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
-  { value: "REFUZAT", label: "Refuzat", color: "bg-red-100 text-red-800" },
-  { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
+  { value: "PIERDUT", label: "Pierdut", color: "bg-red-100 text-red-800" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -246,7 +248,7 @@ const defaultFormData: Partial<CreateClient> = {
   mlRulouProd: "",
   smartDripstop: false,
   valoareOferta: "",
-  stadiuOferta: "NOUA",
+  stadiuOferta: "NOU",
   dataOfertarii: "",
   stadiuComanda: undefined,
   dataVanzarii: "",
@@ -419,7 +421,7 @@ export default function Clienti() {
       mlRulouProd: client.mlRulouProd || "",
       smartDripstop: client.smartDripstop || false,
       valoareOferta: client.valoareOferta || "",
-      stadiuOferta: client.stadiuOferta || "NOUA",
+      stadiuOferta: client.stadiuOferta || "NOU",
       dataOfertarii: client.dataOfertarii ? format(new Date(client.dataOfertarii), "yyyy-MM-dd") : "",
       stadiuComanda: client.stadiuComanda || undefined,
       dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
@@ -996,7 +998,7 @@ export default function Clienti() {
                   <div className="space-y-2">
                     <Label htmlFor="stadiuOferta">Stadiu Ofertă</Label>
                     <Select
-                      value={formData.stadiuOferta || "NOUA"}
+                      value={formData.stadiuOferta || "NOU"}
                       onValueChange={(value) => setFormData({ ...formData, stadiuOferta: value as OfferStatus })}
                     >
                       <SelectTrigger data-testid="select-stadiu-oferta">
