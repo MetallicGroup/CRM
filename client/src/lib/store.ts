@@ -86,7 +86,8 @@ const getEmployeeMonthlyCosts = (emp: Employee, month: Month): number => {
   const data = emp.monthlyData[month];
   if (!data) return 0;
   return (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 
-         (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + (data.diurne || 0);
+         (data.revizii || 0) + (data.alteCheltuieliAuto || 0) + (data.abonamente || 0) + 
+         (data.diurne || 0) + (data.alteCheltuieli || 0);
 };
 
 // Selectors for Calculations

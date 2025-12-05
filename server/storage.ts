@@ -121,6 +121,18 @@ export interface IStorage {
   updateCheltuialaSediu(id: string, data: UpdateCheltuialaSediu): Promise<CheltuialaSediu | undefined>;
   deleteCheltuialaSediu(id: string): Promise<boolean>;
   getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{ total: number; byCategory: Record<string, number> }>;
+  
+  // Profitability integration - aggregate expenses to profitability fields
+  getAgentProfitabilityCosts(agentId: string, luna: number, an: number): Promise<{
+    salariu: number;
+    amortizareAuto: number;
+    combustibil: number;
+    revizii: number;
+    alteCheltuieliAuto: number;
+    abonamente: number;
+    diurne: number;
+    alteCheltuieli: number;
+  }>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1062,6 +1074,109 @@ export class DatabaseStorage implements IStorage {
     }
     
     return { total, byCategory };
+  }
+
+  // Profitability integration - aggregate expenses by subcategory and map to profitability fields
+  async getAgentProfitabilityCosts(agentId: string, luna: number, an: number): Promise<{
+    salariu: number;
+    amortizareAuto: number;
+    combustibil: number;
+    revizii: number;
+    alteCheltuieliAuto: number;
+    abonamente: number;
+    diurne: number;
+    alteCheltuieli: number;
+  }> {
+    // Get all expenses for this agent in the specified month/year
+    const expenses = await db.select().from(cheltuieliAgent).where(
+      and(
+        eq(cheltuieliAgent.agentId, agentId),
+        eq(cheltuieliAgent.luna, luna),
+        eq(cheltuieliAgent.an, an)
+      )
+    );
+
+    // Initialize result with zeros
+    const result = {
+      salariu: 0,
+      amortizareAuto: 0,
+      combustibil: 0,
+      revizii: 0,
+      alteCheltuieliAuto: 0,
+      abonamente: 0,
+      diurne: 0,
+      alteCheltuieli: 0,
+    };
+
+    // Get all subcategories to build the mapping
+    const allSubcategories = await db.select().from(expenseCategories).where(
+      eq(expenseCategories.level, "sub")
+    );
+
+    // Create a map of subcategory ID to name for faster lookup
+    const subcategoryNames: Record<string, string> = {};
+    for (const cat of allSubcategories) {
+      subcategoryNames[cat.id] = cat.name.toLowerCase();
+    }
+
+    // Process each expense and map to the appropriate profitability field
+    for (const expense of expenses) {
+      const suma = parseFloat(expense.suma || "0");
+      const subcategoryId = expense.subcategoryId;
+      
+      if (!subcategoryId) {
+        // If no subcategory, check main category
+        if (expense.categoryId === "cat-salarii") {
+          result.salariu += suma;
+        } else if (expense.categoryId === "cat-auto") {
+          result.alteCheltuieliAuto += suma;
+        } else if (expense.categoryId === "cat-generale") {
+          result.alteCheltuieli += suma;
+        }
+        continue;
+      }
+
+      const subcategoryName = subcategoryNames[subcategoryId] || "";
+
+      // Mapping based on subcategory name (case-insensitive)
+      if (subcategoryName.includes("salariu") || subcategoryName.includes("salarii") || 
+          subcategoryName.includes("comision") || subcategoryName.includes("bonuri")) {
+        // Salarii + bonusuri → salariu
+        result.salariu += suma;
+      } else if (subcategoryName.includes("combustibil")) {
+        result.combustibil += suma;
+      } else if (subcategoryName.includes("revizii")) {
+        result.revizii += suma;
+      } else if (subcategoryName.includes("asigur")) {
+        // Asigurări → alteCheltuieliAuto
+        result.alteCheltuieliAuto += suma;
+      } else if (subcategoryName.includes("leasing")) {
+        // Leasing → amortizareAuto
+        result.amortizareAuto += suma;
+      } else if (subcategoryName.includes("rovinieta")) {
+        // Rovinieta → alteCheltuieliAuto
+        result.alteCheltuieliAuto += suma;
+      } else if (subcategoryName.includes("telefon")) {
+        // Telefon → abonamente
+        result.abonamente += suma;
+      } else if (subcategoryName.includes("deplasări") || subcategoryName.includes("deplasari")) {
+        // Deplasări → diurne
+        result.diurne += suma;
+      } else if (subcategoryName.includes("materiale") || subcategoryName.includes("protocol") || 
+                 subcategoryName.includes("alte cheltuieli") || subcategoryName.includes("echipament") ||
+                 subcategoryName.includes("cota parte") || subcategoryName.includes("marketing") ||
+                 subcategoryName.includes("investiții") || subcategoryName.includes("protecția") ||
+                 subcategoryName.includes("contabil") || subcategoryName.includes("angajații") ||
+                 subcategoryName.includes("credite")) {
+        // General expenses → alteCheltuieli
+        result.alteCheltuieli += suma;
+      } else {
+        // Default: put in alteCheltuieli
+        result.alteCheltuieli += suma;
+      }
+    }
+
+    return result;
   }
 }
 

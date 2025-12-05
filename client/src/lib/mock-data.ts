@@ -19,6 +19,7 @@ const createEmptyMonthlyData = () => {
       alteCheltuieliAuto: 0, 
       abonamente: 0, 
       diurne: 0,
+      alteCheltuieli: 0,
       costAmbalarePropriu: 0, 
       costCurierAmbalare: 0, 
       costCurierTransport: 0, 

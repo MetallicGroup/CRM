@@ -1013,5 +1013,62 @@ export async function registerRoutes(
     }
   });
 
+  // ============ PROFITABILITY INTEGRATION ROUTES ============
+
+  // Get aggregated expenses mapped to profitability fields for an agent
+  app.get("/api/profitabilitate/agent-costs/:agentId", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { luna, an } = req.query;
+      
+      if (!luna || !an) {
+        return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
+      }
+      
+      const costs = await storage.getAgentProfitabilityCosts(
+        req.params.agentId,
+        parseInt(luna as string),
+        parseInt(an as string)
+      );
+      
+      res.json(costs);
+    } catch (error) {
+      console.error("Get agent profitability costs error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea costurilor" });
+    }
+  });
+
+  // Get aggregated expenses for all agents for a specific month
+  app.get("/api/profitabilitate/all-agents-costs", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { luna, an } = req.query;
+      
+      if (!luna || !an) {
+        return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
+      }
+      
+      // Get all agents
+      const agents = await storage.getAgents();
+      
+      // Get costs for each agent
+      const result: Record<string, any> = {};
+      for (const agent of agents) {
+        const costs = await storage.getAgentProfitabilityCosts(
+          agent.id,
+          parseInt(luna as string),
+          parseInt(an as string)
+        );
+        result[agent.id] = {
+          agentName: `${agent.firstName} ${agent.lastName}`,
+          ...costs
+        };
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Get all agents profitability costs error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea costurilor" });
+    }
+  });
+
   return httpServer;
 }

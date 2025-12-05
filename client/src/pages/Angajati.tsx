@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useStore, getTotalsForMonth, calculateEmployeeMetrics } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Employee, EmployeeType, MONTHS } from "@/lib/types";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAllAgentsExpenseCosts } from "@/hooks/useAgentExpenseCosts";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -27,12 +29,44 @@ export default function Angajati() {
   const { employees = [], showrooms = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
   const fullStore = useStore();
   const totals = getTotalsForMonth(fullStore, selectedMonth);
+  const queryClient = useQueryClient();
   
   const [filterType, setFilterType] = useState<EmployeeType | 'ALL'>('ALL');
+  
+  const currentYear = new Date().getFullYear();
+  const { data: expenseCosts = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAllAgentsExpenseCosts(selectedMonth, currentYear);
+  
+  const employeesWithExpenses = useMemo(() => {
+    return employees.map(emp => {
+      const expenseData = expenseCosts[emp.id];
+      if (!expenseData) return emp;
+      
+      const updatedMonthlyData = { ...emp.monthlyData };
+      if (updatedMonthlyData[selectedMonth]) {
+        updatedMonthlyData[selectedMonth] = {
+          ...updatedMonthlyData[selectedMonth],
+          salariu: expenseData.salariu || updatedMonthlyData[selectedMonth].salariu,
+          amortizareAuto: expenseData.amortizareAuto || updatedMonthlyData[selectedMonth].amortizareAuto,
+          combustibil: expenseData.combustibil || updatedMonthlyData[selectedMonth].combustibil,
+          revizii: expenseData.revizii || updatedMonthlyData[selectedMonth].revizii,
+          alteCheltuieliAuto: expenseData.alteCheltuieliAuto || updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
+          abonamente: expenseData.abonamente || updatedMonthlyData[selectedMonth].abonamente,
+          diurne: expenseData.diurne || updatedMonthlyData[selectedMonth].diurne,
+          alteCheltuieli: expenseData.alteCheltuieli || updatedMonthlyData[selectedMonth].alteCheltuieli || 0,
+        };
+      }
+      
+      return { ...emp, monthlyData: updatedMonthlyData };
+    });
+  }, [employees, expenseCosts, selectedMonth]);
+  
+  const handleRefreshExpenses = () => {
+    refetchExpenses();
+  };
 
   const filteredEmployees = filterType === 'ALL' 
-    ? employees 
-    : employees.filter(e => e.type === filterType);
+    ? employeesWithExpenses 
+    : employeesWithExpenses.filter(e => e.type === filterType);
 
   const handleAddEmployee = (type: EmployeeType) => {
     const newEmp: Employee = {
@@ -49,7 +83,7 @@ export default function Angajati() {
         achizitieGard: 0, achizitieAcoperis: 0,
         comisionPercent: 0,
         salariu: 0, amortizareAuto: 0, combustibil: 0, revizii: 0,
-        alteCheltuieliAuto: 0, abonamente: 0, diurne: 0,
+        alteCheltuieliAuto: 0, abonamente: 0, diurne: 0, alteCheltuieli: 0,
         costAmbalarePropriu: 0, costCurierAmbalare: 0, costCurierTransport: 0, transportIntern: 0
       };
     });
@@ -98,6 +132,15 @@ export default function Angajati() {
           <p className="text-muted-foreground">Toți angajații: Agenți, Producție, Indirect/HQ</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleRefreshExpenses} 
+            disabled={isLoadingExpenses}
+            data-testid="button-refresh-expenses"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingExpenses ? 'animate-spin' : ''}`} />
+            {isLoadingExpenses ? 'Se încarcă...' : 'Actualizează Cheltuieli'}
+          </Button>
           <Button variant="outline" onClick={handleExportCSV} data-testid="button-export-csv">
             <Download className="mr-2 h-4 w-4" /> Export CSV
           </Button>

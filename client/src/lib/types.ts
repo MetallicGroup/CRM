@@ -44,6 +44,7 @@ export interface EmployeeMonthlyData {
   alteCheltuieliAuto: number;
   abonamente: number;
   diurne: number;
+  alteCheltuieli: number;
   
   // Costuri logistice (doar pentru AGENT)
   costAmbalarePropriu: number;
