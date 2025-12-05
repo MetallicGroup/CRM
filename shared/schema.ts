@@ -609,3 +609,29 @@ export type CheltuialaSediu = typeof cheltuieliSediu.$inferSelect;
 export type InsertCheltuialaSediu = z.infer<typeof insertCheltuialaSediuSchema>;
 export type CreateCheltuialaSediu = z.infer<typeof createCheltuialaSediuSchema>;
 export type UpdateCheltuialaSediu = z.infer<typeof updateCheltuialaSediuSchema>;
+
+// ============ AGENT SALES PROFITABILITY ============
+
+export const agentSalesProfitability = pgTable("agent_sales_profitability", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  venitGard: decimal("venit_gard", { precision: 12, scale: 2 }).default("0"),
+  achizitieGard: decimal("achizitie_gard", { precision: 12, scale: 2 }).default("0"),
+  adaosGard: decimal("adaos_gard", { precision: 12, scale: 2 }).default("0"),
+  comisionGard: decimal("comision_gard", { precision: 12, scale: 2 }).default("0"),
+  
+  venitAcoperis: decimal("venit_acoperis", { precision: 12, scale: 2 }).default("0"),
+  achizitieAcoperis: decimal("achizitie_acoperis", { precision: 12, scale: 2 }).default("0"),
+  adaosAcoperis: decimal("adaos_acoperis", { precision: 12, scale: 2 }).default("0"),
+  comisionAcoperis: decimal("comision_acoperis", { precision: 12, scale: 2 }).default("0"),
+  
+  nrVanzariGard: integer("nr_vanzari_gard").default(0),
+  nrVanzariAcoperis: integer("nr_vanzari_acoperis").default(0),
+  
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type AgentSalesProfitability = typeof agentSalesProfitability.$inferSelect;
