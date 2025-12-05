@@ -1209,12 +1209,20 @@ export class DatabaseStorage implements IStorage {
     let achizitieAcoperis = 0;
     let comisionAcoperis = 0;
     let nrVanzariAcoperis = 0;
+    
+    // For weighted average commission calculation
+    let totalValoareOferta = 0;
+    let totalComisionOferta = 0;
 
     // Aggregate sales by category
     for (const client of soldClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
       const comision = parseFloat(client.comisionOferta || "0");
+      
+      // Track totals for weighted average commission
+      totalValoareOferta += valoare;
+      totalComisionOferta += comision;
       
       if (client.categorieProdus === "GARD") {
         venitGard += valoare;
@@ -1233,6 +1241,15 @@ export class DatabaseStorage implements IStorage {
     // Calculate adaos (margin)
     const adaosGard = venitGard - achizitieGard;
     const adaosAcoperis = venitAcoperis - achizitieAcoperis;
+    
+    // Calculate venitTvaTotal (sum of all revenues)
+    const venitTvaTotal = venitGard + venitAcoperis;
+    
+    // Calculate weighted average commission percentage
+    // Formula: (Σ comisionOferta / Σ valoareOferta) * 100
+    const comisionPercentMediu = totalValoareOferta > 0 
+      ? (totalComisionOferta / totalValoareOferta) * 100 
+      : 0;
 
     // Upsert the profitability record
     const [existing] = await db.select().from(agentSalesProfitability).where(
@@ -1258,6 +1275,8 @@ export class DatabaseStorage implements IStorage {
           comisionAcoperis: comisionAcoperis.toFixed(2),
           nrVanzariGard,
           nrVanzariAcoperis,
+          venitTvaTotal: venitTvaTotal.toFixed(2),
+          comisionPercentMediu: comisionPercentMediu.toFixed(2),
           updatedAt: new Date(),
         })
         .where(eq(agentSalesProfitability.id, existing.id))
@@ -1281,6 +1300,8 @@ export class DatabaseStorage implements IStorage {
           comisionAcoperis: comisionAcoperis.toFixed(2),
           nrVanzariGard,
           nrVanzariAcoperis,
+          venitTvaTotal: venitTvaTotal.toFixed(2),
+          comisionPercentMediu: comisionPercentMediu.toFixed(2),
         })
         .returning();
       return created;
