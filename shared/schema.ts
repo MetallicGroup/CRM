@@ -631,6 +631,9 @@ export const agentSalesProfitability = pgTable("agent_sales_profitability", {
   nrVanzariGard: integer("nr_vanzari_gard").default(0),
   nrVanzariAcoperis: integer("nr_vanzari_acoperis").default(0),
   
+  venitTvaTotal: decimal("venit_tva_total", { precision: 12, scale: 2 }).default("0"),
+  comisionPercentMediu: decimal("comision_percent_mediu", { precision: 5, scale: 2 }).default("0"),
+  
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
