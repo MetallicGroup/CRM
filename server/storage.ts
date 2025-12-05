@@ -54,11 +54,13 @@ export interface IStorage {
   
   // Client methods
   getClient(id: string): Promise<Client | undefined>;
+  getClientByPhone(telefon: string): Promise<Client | undefined>;
   getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]>;
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
   getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
+  bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
   
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
@@ -225,6 +227,12 @@ export class DatabaseStorage implements IStorage {
 
   async getClient(id: string): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async getClientByPhone(telefon: string): Promise<Client | undefined> {
+    const normalizedPhone = telefon.replace(/\s+/g, "").trim();
+    const [client] = await db.select().from(clients).where(eq(clients.telefon, normalizedPhone));
     return client || undefined;
   }
 
@@ -436,6 +444,83 @@ export class DatabaseStorage implements IStorage {
       wonValue,
       pipelineValue
     };
+  }
+
+  async bulkImportClients(
+    rows: Partial<CreateClient>[],
+    agentId?: string,
+    duplicateStrategy: "skip" | "update" = "skip"
+  ): Promise<{ 
+    success: number; 
+    errors: number; 
+    skipped: number; 
+    errorDetails: { row: number; error: string; data: Record<string, string> }[] 
+  }> {
+    let success = 0;
+    let errors = 0;
+    let skipped = 0;
+    const errorDetails: { row: number; error: string; data: Record<string, string> }[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2;
+
+      try {
+        if (!row.nume || !row.telefon) {
+          errors++;
+          errorDetails.push({
+            row: rowNum,
+            error: "Nume și telefon sunt obligatorii",
+            data: row as Record<string, string>
+          });
+          continue;
+        }
+
+        const normalizedPhone = row.telefon.replace(/\s+/g, "").trim();
+        const existingClient = await this.getClientByPhone(normalizedPhone);
+
+        if (existingClient) {
+          if (duplicateStrategy === "skip") {
+            skipped++;
+            continue;
+          } else if (duplicateStrategy === "update") {
+            await this.updateClient(existingClient.id, {
+              ...row,
+              telefon: normalizedPhone,
+              agentId: agentId || row.agentId || existingClient.agentId || undefined
+            } as any);
+            success++;
+            continue;
+          }
+        }
+
+        await this.createClient({
+          nume: row.nume,
+          telefon: normalizedPhone,
+          email: row.email || undefined,
+          localitate: row.localitate || undefined,
+          judet: row.judet || undefined,
+          sursa: row.sursa as any || undefined,
+          categorieProdus: row.categorieProdus as any || undefined,
+          brand: row.brand as any || undefined,
+          model: row.model as any || undefined,
+          valoareOferta: row.valoareOferta || undefined,
+          stadiuOferta: row.stadiuOferta as any || undefined,
+          observatiiClient: row.observatiiClient || undefined,
+          agentId: agentId || row.agentId || undefined
+        } as any);
+        success++;
+      } catch (error) {
+        errors++;
+        errorDetails.push({
+          row: rowNum,
+          error: error instanceof Error ? error.message : "Eroare necunoscută",
+          data: row as Record<string, string>
+        });
+      }
+    }
+
+    return { success, errors, skipped, errorDetails };
   }
 
   async getActiveAgentsCount(): Promise<number> {

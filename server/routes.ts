@@ -370,6 +370,53 @@ export async function registerRoutes(
     }
   });
 
+  // Import clients from CSV (admin only)
+  const importRowSchema = z.object({
+    nume: z.string().min(1).optional(),
+    telefon: z.string().min(1).optional(),
+    email: z.string().optional(),
+    localitate: z.string().optional(),
+    judet: z.string().optional(),
+    sursa: z.string().optional(),
+    categorieProdus: z.string().optional(),
+    brand: z.string().optional(),
+    model: z.string().optional(),
+    valoareOferta: z.string().optional(),
+    stadiuOferta: z.string().optional(),
+    observatiiClient: z.string().optional(),
+  });
+
+  const importPayloadSchema = z.object({
+    rows: z.array(importRowSchema).min(1).max(5000),
+    agentId: z.string().optional(),
+    duplicateStrategy: z.enum(["skip", "update"]).optional().default("skip"),
+  });
+
+  app.post("/api/clients/import", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const parsed = importPayloadSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message 
+        });
+      }
+
+      const { rows, agentId, duplicateStrategy } = parsed.data;
+
+      const result = await storage.bulkImportClients(
+        rows,
+        agentId,
+        duplicateStrategy
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Import clients error:", error);
+      res.status(500).json({ message: "Eroare la importul clienților" });
+    }
+  });
+
   // Update client
   app.patch("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

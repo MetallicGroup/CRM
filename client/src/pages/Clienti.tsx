@@ -61,8 +61,10 @@ import {
   MessageSquare,
   Handshake,
   Download,
-  File as FileIcon
+  File as FileIcon,
+  Upload
 } from "lucide-react";
+import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -280,6 +282,7 @@ export default function Clienti() {
   const [search, setSearch] = useState("");
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
@@ -491,10 +494,18 @@ export default function Clienti() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreateDialog} className="gap-2" data-testid="button-add-client">
-          <Plus className="h-4 w-4" />
-          Adaugă Client
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2" data-testid="button-import-clients">
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </Button>
+          )}
+          <Button onClick={openCreateDialog} className="gap-2" data-testid="button-add-client">
+            <Plus className="h-4 w-4" />
+            Adaugă Client
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -1554,6 +1565,17 @@ export default function Clienti() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientImportDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        onImportComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+        }}
+        agents={agents}
+        isAdmin={isAdmin}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }
