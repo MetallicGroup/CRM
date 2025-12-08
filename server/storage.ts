@@ -498,10 +498,11 @@ export class DatabaseStorage implements IStorage {
       if (trimmed.includes("/")) {
         const parts = trimmed.split("/");
         if (parts.length === 3) {
-          const month = parseInt(parts[0]);
-          const day = parseInt(parts[1]);
+          // Format european D/M/YYYY (ziua/luna/anul)
+          const day = parseInt(parts[0]);
+          const month = parseInt(parts[1]);
           const year = parseInt(parts[2]);
-          if (!isNaN(month) && !isNaN(day) && !isNaN(year)) {
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day >= 1 && day <= 31 && month >= 1 && month <= 12) {
             return new Date(year, month - 1, day);
           }
         }
