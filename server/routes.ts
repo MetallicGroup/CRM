@@ -1019,6 +1019,207 @@ export async function registerRoutes(
     }
   });
 
+  // Import cheltuieli (admin only)
+  const expenseImportRowSchema = z.object({
+    Suma: z.string().optional(),
+    Judet: z.string().optional(),
+    Data: z.string().optional(),
+    Agent: z.string().optional(),
+    "Tip Cheltuiala": z.string().optional(),
+    "Cheltuieli Showroom": z.string().optional(),
+    "Cheltuieli Auto": z.string().optional(),
+    "Auto Nr": z.string().optional(),
+    Firma: z.string().optional(),
+  });
+
+  const expenseImportPayloadSchema = z.object({
+    rows: z.array(expenseImportRowSchema).min(1).max(10000),
+  });
+
+  app.post("/api/cheltuieli-agent/import", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const parsed = expenseImportPayloadSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message 
+        });
+      }
+
+      const { rows } = parsed.data;
+
+      // Category mappings
+      const categoryMap: Record<string, string> = {
+        "auto": "cat-auto",
+        "showroom": "cat-generale",
+        "generale": "cat-generale",
+        "angajati": "cat-salarii",
+        "bugete stat": "cat-bugete",
+        "altele": "cat-generale",
+      };
+
+      // Subcategory mappings for Auto
+      const autoSubcategoryMap: Record<string, string> = {
+        "combustibil": "838bc6c6-83fb-4e1e-b1f1-e770714396a0",
+        "asigurare": "ea32e8a4-8b48-477e-bff2-d4a0c7103149",
+        "leasing": "f7bc70b5-9611-48db-8550-838df8b174a4",
+        "rovigneta": "f1aab9e2-eb23-4a72-831a-4b34154a5a1e",
+        "rovinieta": "f1aab9e2-eb23-4a72-831a-4b34154a5a1e",
+        "service": "95bb26dc-5f13-4ded-9d04-8e0b8d5105a9",
+        "revizii": "95bb26dc-5f13-4ded-9d04-8e0b8d5105a9",
+        "altele": "sub-alte",
+      };
+
+      // Subcategory mappings for Showroom/Generale
+      const showroomSubcategoryMap: Record<string, string> = {
+        "utilitati": "c3b11246-7867-40f5-ba0b-511dad776321",
+        "consumabile": "sub-materiale",
+        "chirie": "c3b11246-7867-40f5-ba0b-511dad776321",
+        "marketing": "eb6d1178-49ee-43ee-8d27-3c704182cb0f",
+        "altele": "sub-alte",
+      };
+
+      // Agent name to ID mapping
+      const agentNameMap: Record<string, string> = {
+        "marian toma": "ag_marian_t",
+        "dragos frangache": "ag_dragos",
+        "dragos": "ag_dragos",
+        "bebe marius": "ag_marian_c",
+        "marian costache": "ag_marian_c",
+        "mihai coman": "ag_marian_t",
+        "dana marcu": "ag_iulian_m",
+        "iulian marcu": "ag_iulian_m",
+        "raluca munteanu": "ag_alexandra",
+        "raluca": "ag_alexandra",
+        "razvan rosu": "ag_dragos",
+        "oana": "ag_oana",
+        "adrian radu": "ag_marian_t",
+        "alexandru croitoru": "ag_alexandru_c",
+        "cristina toma": "ag_cristina_t",
+        "alexandra": "ag_alexandra",
+      };
+
+      const parseValue = (val: string | undefined): string | undefined => {
+        if (!val) return undefined;
+        const cleaned = val.replace(/LEI\s*/gi, "").replace(/[,\s]/g, "").trim();
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? undefined : num.toString();
+      };
+
+      const parseDate = (dateStr: string | undefined): { date: Date; luna: number; an: number } | undefined => {
+        if (!dateStr || dateStr.trim() === "") return undefined;
+        const trimmed = dateStr.trim();
+        if (trimmed.includes("/")) {
+          const parts = trimmed.split("/");
+          if (parts.length >= 2) {
+            const month = parseInt(parts[0]);
+            const day = parseInt(parts[1]);
+            const year = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
+            if (!isNaN(month) && !isNaN(day) && !isNaN(year)) {
+              const fullYear = year < 100 ? 2000 + year : year;
+              return { 
+                date: new Date(fullYear, month - 1, day),
+                luna: month,
+                an: fullYear
+              };
+            }
+          }
+        }
+        return undefined;
+      };
+
+      let success = 0;
+      let errors = 0;
+      let skipped = 0;
+      const errorDetails: { row: number; error: string; data: Record<string, any> }[] = [];
+      const affectedMonths: Set<string> = new Set();
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNum = i + 2;
+
+        try {
+          const suma = parseValue(row.Suma);
+          if (!suma || parseFloat(suma) === 0) {
+            skipped++;
+            continue;
+          }
+
+          const dateInfo = parseDate(row.Data);
+          if (!dateInfo) {
+            errors++;
+            errorDetails.push({ row: rowNum, error: "Data invalidă", data: row as Record<string, any> });
+            continue;
+          }
+
+          const tipCheltuiala = (row["Tip Cheltuiala"] || "").toLowerCase().trim();
+          const categoryId = categoryMap[tipCheltuiala] || "cat-generale";
+
+          let subcategoryId = "sub-alte";
+          if (tipCheltuiala === "auto" && row["Cheltuieli Auto"]) {
+            const autoSub = row["Cheltuieli Auto"].toLowerCase().trim();
+            subcategoryId = autoSubcategoryMap[autoSub] || "sub-alte";
+          } else if ((tipCheltuiala === "showroom" || tipCheltuiala === "generale") && row["Cheltuieli Showroom"]) {
+            const showroomSub = row["Cheltuieli Showroom"].toLowerCase().trim();
+            subcategoryId = showroomSubcategoryMap[showroomSub] || "sub-alte";
+          } else if (tipCheltuiala === "angajati") {
+            subcategoryId = "4ff12bb9-46b0-4836-b0a3-759f99eeb820"; // Salariu brut
+          } else if (tipCheltuiala === "bugete stat") {
+            subcategoryId = "sub-alte";
+          }
+
+          // Map agent name to ID
+          let agentId: string | undefined = undefined;
+          if (row.Agent) {
+            const agentName = row.Agent.toLowerCase().trim();
+            agentId = agentNameMap[agentName];
+          }
+
+          const cheltuialaData = {
+            agentId: agentId || undefined,
+            categoryId,
+            subcategoryId,
+            suma,
+            descriere: `Import: ${row["Tip Cheltuiala"] || ""} - ${row["Cheltuieli Showroom"] || row["Cheltuieli Auto"] || ""}`.trim(),
+            dataCheltuiala: dateInfo.date.toISOString(),
+            luna: dateInfo.luna,
+            an: dateInfo.an,
+            judet: row.Judet !== "Cheltuieli comune" ? row.Judet : undefined,
+            firma: row.Firma || "N/A",
+            autoNr: row["Auto Nr"] || undefined,
+            tipCheltuiala: tipCheltuiala || undefined,
+          };
+
+          await storage.createCheltuialaAgent(cheltuialaData as any);
+          
+          if (agentId) {
+            affectedMonths.add(`${agentId}:${dateInfo.an}:${dateInfo.luna}`);
+          }
+          
+          success++;
+        } catch (error) {
+          errors++;
+          errorDetails.push({
+            row: rowNum,
+            error: error instanceof Error ? error.message : "Eroare necunoscută",
+            data: row as Record<string, any>
+          });
+        }
+      }
+
+      res.json({ 
+        success, 
+        errors, 
+        skipped, 
+        errorDetails: errorDetails.slice(0, 50),
+        affectedMonths: Array.from(affectedMonths)
+      });
+    } catch (error) {
+      console.error("Import cheltuieli error:", error);
+      res.status(500).json({ message: "Eroare la importul cheltuielilor" });
+    }
+  });
+
   // ============ CHELTUIELI SEDIU ROUTES (Admin only) ============
 
   // Get all cheltuieli sediu (admin only)
