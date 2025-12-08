@@ -384,6 +384,10 @@ export async function registerRoutes(
     valoareOferta: z.string().optional(),
     stadiuOferta: z.string().optional(),
     observatiiClient: z.string().optional(),
+    dataVanzarii: z.string().optional(),
+    dataLivrarii: z.string().optional(),
+    comisionOferta: z.string().optional(),
+    incasat: z.boolean().optional(),
   });
 
   const importPayloadSchema = z.object({

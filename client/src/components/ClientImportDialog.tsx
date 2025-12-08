@@ -64,6 +64,9 @@ const CLIENT_FIELDS = [
   { key: "valoareOferta", label: "Valoare Ofertă", required: false },
   { key: "stadiuOferta", label: "Stadiu Ofertă", required: false },
   { key: "observatiiClient", label: "Observații", required: false },
+  { key: "dataVanzarii", label: "Data Vânzării", required: false },
+  { key: "dataLivrarii", label: "Data Livrării", required: false },
+  { key: "comisionOferta", label: "Comision", required: false },
 ];
 
 const COLUMN_MAPPINGS: Record<string, string[]> = {
@@ -78,7 +81,10 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   model: ["model", "tip", "varianta"],
   valoareOferta: ["valoare", "value", "pret", "suma", "valoare oferta", "total"],
   stadiuOferta: ["stadiu", "status", "stare", "stadiu oferta"],
-  observatiiClient: ["observatii", "notes", "comentarii", "detalii", "obs"],
+  observatiiClient: ["observatii", "notes", "comentarii", "detalii", "obs", "observatii client"],
+  dataVanzarii: ["data vanzarii", "data vanzare", "vandut la", "data vandut"],
+  dataLivrarii: ["data livrarii", "data livrare", "livrat la", "data livrat"],
+  comisionOferta: ["comision", "commission", "com"],
 };
 
 export function ClientImportDialog({

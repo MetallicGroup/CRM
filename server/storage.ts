@@ -447,7 +447,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async bulkImportClients(
-    rows: Partial<CreateClient>[],
+    rows: Partial<CreateClient & { dataVanzarii?: string; dataLivrarii?: string; comisionOferta?: string; incasat?: boolean }>[],
     agentId?: string,
     duplicateStrategy: "skip" | "update" = "skip"
   ): Promise<{ 
@@ -460,6 +460,8 @@ export class DatabaseStorage implements IStorage {
     let errors = 0;
     let skipped = 0;
     const errorDetails: { row: number; error: string; data: Record<string, string> }[] = [];
+    const affectedMonths: Set<string> = new Set();
+    const finalAgentId = agentId;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -489,6 +491,10 @@ export class DatabaseStorage implements IStorage {
               telefon: normalizedPhone,
               agentId: agentId || row.agentId || existingClient.agentId || undefined
             } as any);
+            if (row.stadiuOferta === "VANDUT" && row.dataVanzarii) {
+              const date = new Date(row.dataVanzarii);
+              affectedMonths.add(`${finalAgentId || existingClient.agentId}:${date.getFullYear()}:${date.getMonth() + 1}`);
+            }
             success++;
             continue;
           }
@@ -507,8 +513,17 @@ export class DatabaseStorage implements IStorage {
           valoareOferta: row.valoareOferta || undefined,
           stadiuOferta: row.stadiuOferta as any || undefined,
           observatiiClient: row.observatiiClient || undefined,
-          agentId: agentId || row.agentId || undefined
+          agentId: agentId || row.agentId || undefined,
+          dataVanzarii: row.dataVanzarii ? new Date(row.dataVanzarii) : undefined,
+          dataLivrarii: row.dataLivrarii ? new Date(row.dataLivrarii) : undefined,
+          comisionOferta: row.comisionOferta ? parseFloat(row.comisionOferta) : undefined,
+          incasat: row.incasat || false
         } as any);
+        
+        if (row.stadiuOferta === "VANDUT" && row.dataVanzarii && finalAgentId) {
+          const date = new Date(row.dataVanzarii);
+          affectedMonths.add(`${finalAgentId}:${date.getFullYear()}:${date.getMonth() + 1}`);
+        }
         success++;
       } catch (error) {
         errors++;
@@ -517,6 +532,16 @@ export class DatabaseStorage implements IStorage {
           error: error instanceof Error ? error.message : "Eroare necunoscută",
           data: row as Record<string, string>
         });
+      }
+    }
+
+    // Auto-recalculate profitability for all affected agent/month combinations
+    for (const key of affectedMonths) {
+      const [agId, an, luna] = key.split(":");
+      try {
+        await this.recomputeAgentMonthlyProfit(agId, parseInt(an), parseInt(luna));
+      } catch (e) {
+        console.error(`Failed to recalculate profitability for ${key}:`, e);
       }
     }
 
