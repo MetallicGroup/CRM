@@ -26,9 +26,9 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
 };
 
 export default function Angajati() {
-  const { employees = [], showrooms = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
+  const { employees = [], showrooms = [], distributors = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
   const fullStore = useStore();
-  const totals = getTotalsForMonth(fullStore, selectedMonth);
+  const baseTotals = getTotalsForMonth(fullStore, selectedMonth);
   
   const [filterType, setFilterType] = useState<EmployeeType | 'ALL'>('ALL');
   
@@ -65,6 +65,19 @@ export default function Angajati() {
       return { ...emp, monthlyData: updatedMonthlyData };
     });
   }, [employees, expenseCosts, salesProfitability, selectedMonth]);
+  
+  const totals = useMemo(() => {
+    const agents = employeesWithExpensesAndSales.filter(e => e.type === 'AGENT');
+    const totalVenitAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[selectedMonth]?.venitTVA || 0), 0);
+    const totalVenitDistribuitori = distributors.reduce((sum, d) => sum + (d.monthlyData[selectedMonth]?.venitTVA || 0), 0);
+    const totalVenitGardAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[selectedMonth]?.venitGard || 0), 0);
+    
+    return {
+      ...baseTotals,
+      totalVenitFirma: totalVenitAgenti + totalVenitDistribuitori,
+      totalVenitGardFirma: totalVenitGardAgenti + totalVenitDistribuitori,
+    };
+  }, [employeesWithExpensesAndSales, distributors, selectedMonth, baseTotals]);
   
   const handleRefreshData = () => {
     refetchExpenses();
