@@ -447,7 +447,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async bulkImportClients(
-    rows: Partial<CreateClient & { dataVanzarii?: string; dataLivrarii?: string; comisionOferta?: string; incasat?: boolean }>[],
+    rows: Partial<Record<string, string>>[],
     agentId?: string,
     duplicateStrategy: "skip" | "update" = "skip"
   ): Promise<{ 
@@ -463,66 +463,143 @@ export class DatabaseStorage implements IStorage {
     const affectedMonths: Set<string> = new Set();
     const finalAgentId = agentId;
 
+    const normalizePhone = (phone: string | undefined): string => {
+      if (!phone) return "";
+      return phone.replace(/[^\d+]/g, "").replace(/^\+40/, "0").trim();
+    };
+
+    const parseDate = (dateStr: string | undefined): Date | undefined => {
+      if (!dateStr || dateStr.trim() === "") return undefined;
+      const trimmed = dateStr.trim();
+      if (trimmed.includes("/")) {
+        const parts = trimmed.split("/");
+        if (parts.length === 3) {
+          const month = parseInt(parts[0]);
+          const day = parseInt(parts[1]);
+          const year = parseInt(parts[2]);
+          if (!isNaN(month) && !isNaN(day) && !isNaN(year)) {
+            return new Date(year, month - 1, day);
+          }
+        }
+      }
+      const parsed = new Date(trimmed);
+      return isNaN(parsed.getTime()) ? undefined : parsed;
+    };
+
+    const parseValue = (val: string | undefined): string | undefined => {
+      if (!val) return undefined;
+      const cleaned = val.replace(/LEI\s*/gi, "").replace(/[,\s]/g, "").trim();
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? undefined : num.toString();
+    };
+
+    const parsePercent = (val: string | undefined): string | undefined => {
+      if (!val) return undefined;
+      const cleaned = val.replace(/%/g, "").replace(/,/g, ".").trim();
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? undefined : num.toString();
+    };
+
+    const mapStadiuOferta = (status: string | undefined): string | undefined => {
+      if (!status) return undefined;
+      const s = status.toLowerCase().trim();
+      if (s.includes("vandut") || s.includes("vândut")) return "VANDUT";
+      if (s.includes("ofertat") || s.includes("trimis")) return "TRIMISA";
+      if (s.includes("pierdut") || s.includes("refuzat")) return "REFUZAT";
+      if (s.includes("follow") || s.includes("negociere") || s.includes("asteptare")) return "IN_ASTEPTARE";
+      if (s.includes("contactat") || s.includes("nou")) return "NOUA";
+      if (s.includes("livrat")) return "VANDUT";
+      return undefined;
+    };
+
+    const mapSursa = (sursa: string | undefined): string | undefined => {
+      if (!sursa) return undefined;
+      const s = sursa.toLowerCase().trim();
+      if (s.includes("facebook") || s.includes("fb")) return "FACEBOOK";
+      if (s.includes("google")) return "GOOGLE";
+      if (s.includes("olx") || s.includes("reclam")) return "RECLAME";
+      if (s.includes("site") || s.includes("cerere oferta")) return "SITE";
+      if (s.includes("recomandare") || s.includes("client vechi")) return "RECOMANDARE";
+      if (s.includes("targ") || s.includes("expo")) return "TARG";
+      if (s.includes("birou") || s.includes("telefon") || s.includes("lead")) return "ALTELE";
+      return "ALTELE";
+    };
+
+    const parseBool = (val: string | undefined): boolean => {
+      if (!val) return false;
+      const s = val.toLowerCase().trim();
+      return s === "da" || s === "yes" || s === "true" || s === "1" || s === "x" || s === "✓";
+    };
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rowNum = i + 2;
 
       try {
-        if (!row.nume || !row.telefon) {
+        if (!row.nume) {
           errors++;
           errorDetails.push({
             row: rowNum,
-            error: "Nume și telefon sunt obligatorii",
+            error: "Nume este obligatoriu",
             data: row as Record<string, string>
           });
           continue;
         }
 
-        const normalizedPhone = row.telefon.replace(/\s+/g, "").trim();
-        const existingClient = await this.getClientByPhone(normalizedPhone);
+        const normalizedPhone = normalizePhone(row.telefon);
+        
+        if (normalizedPhone && normalizedPhone !== "#ERROR!") {
+          const existingClient = await this.getClientByPhone(normalizedPhone);
 
-        if (existingClient) {
-          if (duplicateStrategy === "skip") {
-            skipped++;
-            continue;
-          } else if (duplicateStrategy === "update") {
-            await this.updateClient(existingClient.id, {
-              ...row,
-              telefon: normalizedPhone,
-              agentId: agentId || row.agentId || existingClient.agentId || undefined
-            } as any);
-            if (row.stadiuOferta === "VANDUT" && row.dataVanzarii) {
-              const date = new Date(row.dataVanzarii);
-              affectedMonths.add(`${finalAgentId || existingClient.agentId}:${date.getFullYear()}:${date.getMonth() + 1}`);
+          if (existingClient) {
+            if (duplicateStrategy === "skip") {
+              skipped++;
+              continue;
             }
-            success++;
-            continue;
           }
         }
 
-        await this.createClient({
-          nume: row.nume,
-          telefon: normalizedPhone,
+        const stadiuOferta = mapStadiuOferta(row.stadiuOferta);
+        const dataVanzarii = parseDate(row.dataVanzarii);
+        const dataLivrarii = parseDate(row.dataLivrarii);
+
+        const clientData: any = {
+          nume: row.nume.trim(),
+          telefon: normalizedPhone || "N/A",
           email: row.email || undefined,
           localitate: row.localitate || undefined,
           judet: row.judet || undefined,
-          sursa: row.sursa as any || undefined,
-          categorieProdus: row.categorieProdus as any || undefined,
-          brand: row.brand as any || undefined,
-          model: row.model as any || undefined,
-          valoareOferta: row.valoareOferta || undefined,
-          stadiuOferta: row.stadiuOferta as any || undefined,
-          observatiiClient: row.observatiiClient || undefined,
-          agentId: agentId || row.agentId || undefined,
-          dataVanzarii: row.dataVanzarii ? new Date(row.dataVanzarii) : undefined,
-          dataLivrarii: row.dataLivrarii ? new Date(row.dataLivrarii) : undefined,
-          comisionOferta: row.comisionOferta ? parseFloat(row.comisionOferta) : undefined,
-          incasat: row.incasat || false
-        } as any);
+          dataOfertarii: parseDate(row.dataOfertarii),
+          sursa: mapSursa(row.sursa),
+          mlRulouProd: parseValue(row.mlRulouProd),
+          valoareOferta: parseValue(row.valoareOferta),
+          categorieProdus: row.categorieProdus?.toUpperCase()?.includes("GARD") ? "GARD" : 
+                          row.categorieProdus?.toUpperCase()?.includes("ACOPERIS") ? "ACOPERIS" : undefined,
+          brand: row.brand || undefined,
+          model: row.model || undefined,
+          suprafataMp: parseValue(row.suprafataMp),
+          culoare: row.culoare || undefined,
+          grosime: row.grosime || undefined,
+          finisaj: row.finisaj || undefined,
+          smartDripstop: parseBool(row.smartDripstop),
+          dataRevenire1: parseDate(row.dataRevenire1),
+          comentariuObservatii1: row.comentariuObservatii1 || undefined,
+          dataRevenire2: parseDate(row.dataRevenire2),
+          comentariuObservatii2: row.comentariuObservatii2 || undefined,
+          stadiuOferta: stadiuOferta,
+          dataVanzarii: dataVanzarii,
+          stadiuComanda: row.stadiuComanda?.toUpperCase()?.includes("LIVRAT") ? "LIVRAT" : 
+                         row.stadiuComanda?.toUpperCase()?.includes("PROD") ? "IN_PRODUCTIE" : undefined,
+          dataLivrarii: dataLivrarii,
+          incasat: parseBool(row.incasat),
+          procentComision: parsePercent(row.procentComision),
+          agentId: agentId || undefined,
+        };
+
+        await this.createClient(clientData);
         
-        if (row.stadiuOferta === "VANDUT" && row.dataVanzarii && finalAgentId) {
-          const date = new Date(row.dataVanzarii);
-          affectedMonths.add(`${finalAgentId}:${date.getFullYear()}:${date.getMonth() + 1}`);
+        if (stadiuOferta === "VANDUT" && dataVanzarii && finalAgentId) {
+          affectedMonths.add(`${finalAgentId}:${dataVanzarii.getFullYear()}:${dataVanzarii.getMonth() + 1}`);
         }
         success++;
       } catch (error) {
@@ -535,7 +612,6 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // Auto-recalculate profitability for all affected agent/month combinations
     for (const key of Array.from(affectedMonths)) {
       const [agId, an, luna] = key.split(":");
       try {

@@ -1,4 +1,4 @@
-nume,telefon,email,localitate,judet,sursa,categorieProdus,brand,model,valoareOferta,stadiuOferta,observatiiClient,dataVanzarii,dataLivrarii,comisionOferta
-Ion Popescu,0722123456,ion.popescu@email.com,București,București,RECOMANDARE,GARD,WETTERBEST,CLASIC,15000,VANDUT,Client fidel,2025-10-15,2025-10-20,450
-Maria Ionescu,0733456789,maria@email.com,Cluj-Napoca,Cluj,FACEBOOK,ACOPERIS,BILKA,BALCANIC,25000,VANDUT,Acoperiș casă nouă,2025-11-05,2025-11-10,750
-Andrei Marin,0744789123,,Timișoara,Timiș,SITE,GARD,CARETTA,NOBEL,8500,TRIMISA,În negociere,,,
+Nume Client,Judet,Adresa,Telefon,Data ofertarii,Sursa de provenienta,ML Rulou,Valoare Oferta,CATEGORIE PRODUS,Brand,Model,Suprafata MP,Culoare,Grosime,Finisaj,Smart Drip stop (checkbox),Data de revenire,Comentariu / Observatii 1,Data Revenire 2,Comentariu / Observatii 2,Stadiu Oferta,Data vanzarii,Stadiu Comanda,Data livrarii,Incasat ? (checkbox),Procent Comision
+Ion Popescu,București,Str. Exemplu 10,0722123456,11/15/2023,Facebook,,LEI 15000.00,GARD,Zebra,Classic,25.5,RAL 7016,0.6mm,Briliant,,12/1/2023,Client interesat de gard,,,Vandut,11/20/2023,LIVRAT,11/25/2023,Da,3.0%
+Maria Ionescu,Cluj,Strada Mare 5,0733456789,10/5/2023,OLX,,LEI 25000.00,ACOPERIS,Wetterbest,Balcanic,120,Roșu,,,11/1/2023,Proiect acoperiș casă,,,Follow UP ( Negociere ),,,,,2.0%
+Andrei Marin,Timișoara,Calea Victoriei 20,0744789123,9/1/2023,Birou,,LEI 8500.00,GARD,Caretta,Nobel,,Verde închis,0.5mm,Mat,Da,,În negociere pentru discount,,,Ofertat,,,,,3.0%
