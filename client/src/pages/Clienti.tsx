@@ -593,95 +593,99 @@ export default function Clienti() {
               )}
             </div>
           ) : (
-            <Table>
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nume</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Locație</TableHead>
-                  <TableHead>Stadiu Ofertă</TableHead>
-                  <TableHead>Categorie</TableHead>
-                  <TableHead>Valoare</TableHead>
-                  <TableHead className="text-right">Acțiuni</TableHead>
+                  <TableHead className="w-[18%]">Nume</TableHead>
+                  <TableHead className="w-[15%]">Contact</TableHead>
+                  <TableHead className="w-[18%]">Locație</TableHead>
+                  <TableHead className="w-[12%]">Stadiu</TableHead>
+                  <TableHead className="w-[12%]">Categorie</TableHead>
+                  <TableHead className="w-[10%]">Valoare</TableHead>
+                  <TableHead className="w-[15%] text-right">Acțiuni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
                   <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{client.nume}</div>
-                        <div className="text-sm text-muted-foreground">
+                    <TableCell className="py-2">
+                      <div className="truncate">
+                        <div className="font-medium truncate" title={client.nume}>{client.nume}</div>
+                        <div className="text-xs text-muted-foreground">
                           {SOURCE_OPTIONS.find(s => s.value === client.sursa)?.label}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-3 w-3" />
-                          {client.telefon}
+                    <TableCell className="py-2">
+                      <div className="text-xs space-y-0.5">
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{client.telefon}</span>
                         </div>
                         {client.email && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Mail className="h-3 w-3" />
-                            {client.email}
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Mail className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate" title={client.email}>{client.email}</span>
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       {client.judet || client.localitate ? (
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-3 w-3" />
-                          {[client.localitate, client.judet].filter(Boolean).join(", ")}
+                        <div className="flex items-center gap-1 text-xs">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate" title={[client.localitate, client.judet].filter(Boolean).join(", ")}>
+                            {[client.localitate, client.judet].filter(Boolean).join(", ")}
+                          </span>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell>{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                    <TableCell className="py-2">{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
+                    <TableCell className="py-2">
+                      <Badge variant="outline" className="text-xs">
                         {CATEGORY_OPTIONS.find(c => c.value === client.categorieProdus)?.label || "-"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       {client.valoareOferta ? (
-                        <span className="font-medium">
-                          {Number(client.valoareOferta).toLocaleString("ro-RO")} RON
+                        <span className="font-medium text-xs whitespace-nowrap">
+                          {Number(client.valoareOferta).toLocaleString("ro-RO")}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
+                    <TableCell className="py-2">
+                      <div className="flex items-center justify-end gap-0">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7"
                           onClick={() => setViewClient(client)}
                           data-testid={`button-view-${client.id}`}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7"
                           onClick={() => openEditDialog(client)}
                           data-testid={`button-edit-${client.id}`}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         {isAdmin && (
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7 text-red-600 hover:text-red-700"
                             onClick={() => setDeleteClient(client)}
-                            className="text-red-600 hover:text-red-700"
                             data-testid={`button-delete-${client.id}`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
