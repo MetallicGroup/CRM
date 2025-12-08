@@ -157,6 +157,15 @@ export interface IStorage {
     combustibil: number;
     auto: number;
   }>>;
+  
+  // Showroom costs distributed to agents
+  getShowroomCostsDistributedToAgents(luna: number, an: number): Promise<Record<string, {
+    agentId: string;
+    agentName: string;
+    sediuId: string;
+    sediuName: string;
+    costuriShowroomDistribuite: number;
+  }>>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1654,6 +1663,123 @@ export class DatabaseStorage implements IStorage {
         result[sediuId].combustibil += suma;
       } else if (subcategoryName.includes("leasing") || subcategoryName.includes("asigur") || subcategoryName.includes("revizi") || subcategoryName.includes("rovin")) {
         result[sediuId].auto += suma;
+      }
+    }
+
+    return result;
+  }
+
+  async getShowroomCostsDistributedToAgents(luna: number, an: number): Promise<Record<string, {
+    agentId: string;
+    agentName: string;
+    sediuId: string;
+    sediuName: string;
+    costuriShowroomDistribuite: number;
+  }>> {
+    // Get all showrooms
+    const allSedii = await db.select().from(sedii);
+    const sediuMap: Record<string, string> = {};
+    for (const sediu of allSedii) {
+      sediuMap[sediu.id] = sediu.nume;
+    }
+
+    // Get all agents with their sediuId
+    const agents = await this.getAgents();
+    const agentsBySediu: Record<string, { id: string; name: string }[]> = {};
+    for (const agent of agents) {
+      if (agent.sediuId) {
+        if (!agentsBySediu[agent.sediuId]) {
+          agentsBySediu[agent.sediuId] = [];
+        }
+        agentsBySediu[agent.sediuId].push({
+          id: agent.id,
+          name: `${agent.firstName} ${agent.lastName}`
+        });
+      }
+    }
+
+    // Get showroom expenses (cheltuieli_sediu only - not including agent expenses)
+    const sediuExpenses = await db.select().from(cheltuieliSediu).where(
+      and(
+        eq(cheltuieliSediu.luna, luna),
+        eq(cheltuieliSediu.an, an)
+      )
+    );
+
+    // Calculate total showroom costs per sediu
+    const sediuCosts: Record<string, number> = {};
+    for (const expense of sediuExpenses) {
+      const suma = parseFloat(expense.suma?.toString() || "0");
+      sediuCosts[expense.sediuId] = (sediuCosts[expense.sediuId] || 0) + suma;
+    }
+
+    // Get agent sales profitability for this month to weight distribution
+    const salesData = await this.getAllAgentsSalesProfitability(an);
+    const agentRevenue: Record<string, number> = {};
+    for (const sale of salesData) {
+      if (sale.luna === luna) {
+        const venit = parseFloat(sale.venitGard?.toString() || "0") + 
+                      parseFloat(sale.venitAcoperis?.toString() || "0");
+        agentRevenue[sale.agentId] = venit;
+      }
+    }
+
+    // Distribute showroom costs to agents
+    const result: Record<string, {
+      agentId: string;
+      agentName: string;
+      sediuId: string;
+      sediuName: string;
+      costuriShowroomDistribuite: number;
+    }> = {};
+
+    for (const [sediuId, cost] of Object.entries(sediuCosts)) {
+      const sediuName = sediuMap[sediuId] || sediuId;
+      const isBucuresti = sediuName.toLowerCase().includes('bucurești');
+      
+      // Apply București 20/80 rule
+      const costToDistribute = isBucuresti ? cost * 0.20 : cost;
+      
+      const agentsInSediu = agentsBySediu[sediuId] || [];
+      if (agentsInSediu.length === 0) continue;
+
+      // Calculate total revenue for agents in this showroom
+      let totalRevenue = 0;
+      for (const agent of agentsInSediu) {
+        totalRevenue += agentRevenue[agent.id] || 0;
+      }
+
+      // Distribute costs proportionally by revenue, or equally if no revenue
+      for (const agent of agentsInSediu) {
+        let share: number;
+        if (totalRevenue > 0) {
+          const agentRev = agentRevenue[agent.id] || 0;
+          share = (agentRev / totalRevenue) * costToDistribute;
+        } else {
+          // Equal distribution if no sales data
+          share = costToDistribute / agentsInSediu.length;
+        }
+
+        result[agent.id] = {
+          agentId: agent.id,
+          agentName: agent.name,
+          sediuId: sediuId,
+          sediuName: sediuName,
+          costuriShowroomDistribuite: share
+        };
+      }
+    }
+
+    // Include agents with no showroom costs (0 cost)
+    for (const agent of agents) {
+      if (!result[agent.id]) {
+        result[agent.id] = {
+          agentId: agent.id,
+          agentName: `${agent.firstName} ${agent.lastName}`,
+          sediuId: agent.sediuId || "",
+          sediuName: agent.sediuId ? (sediuMap[agent.sediuId] || "") : "",
+          costuriShowroomDistribuite: 0
+        };
       }
     }
 

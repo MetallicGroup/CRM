@@ -1308,6 +1308,26 @@ export async function registerRoutes(
     }
   });
 
+  // Get showroom costs distributed to agents for a specific month
+  app.get("/api/profitabilitate/showroom-costs-distributed", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { luna, an } = req.query;
+      
+      if (!luna || !an) {
+        return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
+      }
+
+      const lunaNum = parseInt(luna as string);
+      const anNum = parseInt(an as string);
+
+      const result = await storage.getShowroomCostsDistributedToAgents(lunaNum, anNum);
+      res.json(result);
+    } catch (error) {
+      console.error("Get showroom costs distributed error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea costurilor distribuite" });
+    }
+  });
+
   // Get single cheltuiala sediu (admin only)
   app.get("/api/cheltuieli-sediu/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
