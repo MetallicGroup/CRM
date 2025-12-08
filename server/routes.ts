@@ -1288,6 +1288,26 @@ export async function registerRoutes(
     }
   });
 
+  // Get showroom profitability costs aggregated by category for a specific month
+  app.get("/api/profitabilitate/showroom-costs", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { luna, an } = req.query;
+      
+      if (!luna || !an) {
+        return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
+      }
+
+      const lunaNum = parseInt(luna as string);
+      const anNum = parseInt(an as string);
+
+      const result = await storage.getShowroomProfitabilityCosts(lunaNum, anNum);
+      res.json(result);
+    } catch (error) {
+      console.error("Get showroom profitability costs error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea costurilor showroom" });
+    }
+  });
+
   // Get single cheltuiala sediu (admin only)
   app.get("/api/cheltuieli-sediu/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {

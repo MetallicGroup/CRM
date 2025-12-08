@@ -142,6 +142,17 @@ export interface IStorage {
   recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability>;
   getAgentSalesProfitability(agentId: string, an: number): Promise<AgentSalesProfitability[]>;
   getAllAgentsSalesProfitability(an: number): Promise<AgentSalesProfitability[]>;
+  
+  // Showroom profitability costs
+  getShowroomProfitabilityCosts(luna: number, an: number): Promise<Record<string, {
+    sediuName: string;
+    chirie: number;
+    utilitati: number;
+    marketing: number;
+    consumabile: number;
+    alteCheltuieli: number;
+    total: number;
+  }>>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1519,6 +1530,83 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(agentSalesProfitability).where(
       eq(agentSalesProfitability.an, an)
     );
+  }
+
+  async getShowroomProfitabilityCosts(luna: number, an: number): Promise<Record<string, {
+    sediuName: string;
+    chirie: number;
+    utilitati: number;
+    marketing: number;
+    consumabile: number;
+    alteCheltuieli: number;
+    total: number;
+  }>> {
+    // Get all showrooms
+    const allSedii = await db.select().from(sedii);
+    
+    // Get all expenses for this month/year
+    const expenses = await db.select().from(cheltuieliSediu).where(
+      and(
+        eq(cheltuieliSediu.luna, luna),
+        eq(cheltuieliSediu.an, an)
+      )
+    );
+
+    // Get all subcategories for mapping
+    const allSubcategories = await db.select().from(expenseCategories).where(
+      eq(expenseCategories.level, "sub")
+    );
+    const subcategoryNames: Record<string, string> = {};
+    for (const cat of allSubcategories) {
+      subcategoryNames[cat.id] = cat.name.toLowerCase();
+    }
+
+    // Initialize result with all showrooms
+    const result: Record<string, {
+      sediuName: string;
+      chirie: number;
+      utilitati: number;
+      marketing: number;
+      consumabile: number;
+      alteCheltuieli: number;
+      total: number;
+    }> = {};
+
+    for (const sediu of allSedii) {
+      result[sediu.id] = {
+        sediuName: sediu.nume,
+        chirie: 0,
+        utilitati: 0,
+        marketing: 0,
+        consumabile: 0,
+        alteCheltuieli: 0,
+        total: 0,
+      };
+    }
+
+    // Aggregate expenses by showroom and category
+    for (const expense of expenses) {
+      const sediuId = expense.sediuId;
+      if (!result[sediuId]) continue;
+
+      const suma = parseFloat(expense.suma?.toString() || "0");
+      const subcategoryName = expense.subcategoryId ? (subcategoryNames[expense.subcategoryId] || "") : "";
+
+      if (subcategoryName.includes("chir") || subcategoryName.includes("cota parte showroom")) {
+        result[sediuId].chirie += suma;
+      } else if (subcategoryName.includes("utilit")) {
+        result[sediuId].utilitati += suma;
+      } else if (subcategoryName.includes("marketing")) {
+        result[sediuId].marketing += suma;
+      } else if (subcategoryName.includes("consumabil") || subcategoryName.includes("materiale")) {
+        result[sediuId].consumabile += suma;
+      } else {
+        result[sediuId].alteCheltuieli += suma;
+      }
+      result[sediuId].total += suma;
+    }
+
+    return result;
   }
 }
 
