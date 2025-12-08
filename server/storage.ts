@@ -60,7 +60,7 @@ export interface IStorage {
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
   getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
-  bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
+  bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update" | "create"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
   
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
@@ -449,7 +449,7 @@ export class DatabaseStorage implements IStorage {
   async bulkImportClients(
     rows: Partial<Record<string, string>>[],
     agentId?: string,
-    duplicateStrategy: "skip" | "update" = "skip"
+    duplicateStrategy: "skip" | "update" | "create" = "skip"
   ): Promise<{ 
     success: number; 
     errors: number; 
@@ -548,7 +548,7 @@ export class DatabaseStorage implements IStorage {
 
         const normalizedPhone = normalizePhone(row.telefon);
         
-        if (normalizedPhone && normalizedPhone !== "#ERROR!") {
+        if (normalizedPhone && normalizedPhone !== "#ERROR!" && duplicateStrategy !== "create") {
           const existingClient = await this.getClientByPhone(normalizedPhone);
 
           if (existingClient) {

@@ -404,7 +404,7 @@ export async function registerRoutes(
   const importPayloadSchema = z.object({
     rows: z.array(importRowSchema).min(1).max(5000),
     agentId: z.string().optional(),
-    duplicateStrategy: z.enum(["skip", "update"]).optional().default("skip"),
+    duplicateStrategy: z.enum(["skip", "update", "create"]).optional().default("skip"),
   });
 
   app.post("/api/clients/import", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
