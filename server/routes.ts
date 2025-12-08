@@ -409,7 +409,7 @@ export async function registerRoutes(
       const { rows, agentId, duplicateStrategy } = parsed.data;
 
       const result = await storage.bulkImportClients(
-        rows,
+        rows as any,
         agentId,
         duplicateStrategy
       );

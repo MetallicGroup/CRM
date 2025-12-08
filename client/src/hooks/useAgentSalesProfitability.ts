@@ -31,7 +31,9 @@ export function useAllAgentsSalesProfitability(year: number = new Date().getFull
   return useQuery<AgentSalesProfitability[]>({
     queryKey: ["all-agents-sales-profitability", year],
     queryFn: async () => {
-      const res = await fetch(`/api/profitabilitate/sales?an=${year}`);
+      const res = await fetch(`/api/profitabilitate/sales?an=${year}`, {
+        credentials: 'include'
+      });
       if (!res.ok) {
         if (res.status === 403) {
           return [];
@@ -51,7 +53,9 @@ export function useAgentSalesProfitabilityForMonth(month: Month, year: number = 
   return useQuery<Record<string, AgentSalesProfitability>>({
     queryKey: ["all-agents-sales-profitability-month", luna, year],
     queryFn: async () => {
-      const res = await fetch(`/api/profitabilitate/sales?an=${year}`);
+      const res = await fetch(`/api/profitabilitate/sales?an=${year}`, {
+        credentials: 'include'
+      });
       if (!res.ok) {
         if (res.status === 403) {
           return {};
@@ -79,6 +83,7 @@ export function useRecalculateAllAgentsSales() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ an, luna }),
+      credentials: 'include'
     });
     if (!res.ok) {
       throw new Error("Eroare la recalcularea profitabilității");

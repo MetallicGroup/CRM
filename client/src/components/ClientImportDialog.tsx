@@ -194,14 +194,14 @@ export function ClientImportDialog({
     }));
   };
 
-  const previewData = useMemo((): (Record<string, string> & { index: number })[] => {
+  const previewData = useMemo(() => {
     return parsedData.slice(0, 5).map((row, index) => {
-      const mappedRow: Record<string, string> = {};
+      const mappedRow: Record<string, string | number> = { index: index + 1 };
       for (const field of CLIENT_FIELDS) {
         const csvColumn = columnMapping[field.key];
         mappedRow[field.key] = csvColumn ? (row[csvColumn] || "") : "";
       }
-      return { index: index + 1, ...mappedRow };
+      return mappedRow;
     });
   }, [parsedData, columnMapping]);
 

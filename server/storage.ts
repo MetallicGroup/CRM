@@ -536,7 +536,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Auto-recalculate profitability for all affected agent/month combinations
-    for (const key of affectedMonths) {
+    for (const key of Array.from(affectedMonths)) {
       const [agId, an, luna] = key.split(":");
       try {
         await this.recomputeAgentMonthlyProfit(agId, parseInt(an), parseInt(luna));
