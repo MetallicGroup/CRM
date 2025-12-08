@@ -208,12 +208,12 @@ export const clients = pgTable("clients", {
   
   // SECȚIUNEA 3: Detalii produs
   categorieProdus: productCategoryEnum("categorie_produs").default("GARD"),
-  brand: brandEnum("brand"),
-  model: modelEnum("model"),
+  brand: varchar("brand", { length: 100 }),
+  model: varchar("model", { length: 100 }),
   suprafataMp: decimal("suprafata_mp", { precision: 10, scale: 2 }),
-  culoare: colorEnum("culoare"),
-  grosime: thicknessEnum("grosime"),
-  finisaj: finishEnum("finisaj"),
+  culoare: varchar("culoare", { length: 100 }),
+  grosime: varchar("grosime", { length: 20 }),
+  finisaj: varchar("finisaj", { length: 50 }),
   mlRulouProd: decimal("ml_rulou_prod", { precision: 10, scale: 2 }),
   smartDripstop: boolean("smart_dripstop").default(false),
   
@@ -283,12 +283,12 @@ export const createClientSchema = z.object({
   
   // Secțiunea 3: Detalii produs
   categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE"]).optional(),
-  brand: z.enum(["CARETTA", "BILKA", "WETTERBEST", "METALLIC_GROUP", "MX", "ZEBRA", "FAKRO", "VELUX", "NOVATIK", "METIGLA", "BUDMAT", "STUBAI", "TPS", "ROOF4YOU", "CUTATA"]).optional(),
-  model: z.enum(["SIPCA_GARD", "TRAFORAT", "MX_15", "MX_25", "MX_60", "MC_75", "MC_105", "MX_15_DUO", "MX_25_DUO", "MX_60_DUO", "MC_75_DUO", "MC_105_DUO", "CLASIC", "CANTO", "NOBEL", "GLADIATOR", "IBERIC", "BALCANIC", "X121", "X140", "X174", "Y109", "Y118", "DAILY"]).optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
   suprafataMp: z.string().optional(),
-  culoare: z.enum(["RAL_9005", "RAL_7016", "RAL_7024", "RAL_8019", "RAL_8017", "RAL_3005", "RAL_8004", "RAL_9002", "RAL_6005", "RAL_6020", "RAL_3011", "RAL_7001", "RAL_1015"]).optional(),
-  grosime: z.enum(["0.50", "0.60"]).optional(),
-  finisaj: z.enum(["MAT", "LUCIOS", "BRILIANT", "MAT_DUO", "LUCIOS_DUO", "BRILIANT_DUO"]).optional(),
+  culoare: z.string().optional(),
+  grosime: z.string().optional(),
+  finisaj: z.string().optional(),
   mlRulouProd: z.string().optional(),
   smartDripstop: z.boolean().optional().default(false),
   
