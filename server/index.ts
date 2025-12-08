@@ -9,6 +9,9 @@ import connectPgSimple from "connect-pg-simple";
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy for Replit deployment (needed for secure cookies)
+app.set("trust proxy", 1);
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
