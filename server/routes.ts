@@ -1112,17 +1112,45 @@ export async function registerRoutes(
         if (trimmed.includes("/")) {
           const parts = trimmed.split("/");
           if (parts.length >= 2) {
-            const month = parseInt(parts[0]);
-            const day = parseInt(parts[1]);
+            let first = parseInt(parts[0]);
+            let second = parseInt(parts[1]);
             const year = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
-            if (!isNaN(month) && !isNaN(day) && !isNaN(year)) {
-              const fullYear = year < 100 ? 2000 + year : year;
-              return { 
-                date: new Date(fullYear, month - 1, day),
-                luna: month,
-                an: fullYear
-              };
+            
+            if (isNaN(first) || isNaN(second) || isNaN(year)) return undefined;
+            
+            const fullYear = year < 100 ? 2000 + year : year;
+            
+            // Validate year range
+            if (fullYear < 1900 || fullYear > 2100) return undefined;
+            
+            let month: number;
+            let day: number;
+            
+            // Smart format detection: if first > 12, it must be day (D/M/YYYY format)
+            // if second > 12, it must be day (M/D/YYYY format)
+            if (first > 12 && second <= 12) {
+              // D/M/YYYY format (European)
+              day = first;
+              month = second;
+            } else if (first <= 12 && second > 12) {
+              // M/D/YYYY format (US) - second must be day
+              month = first;
+              day = second;
+            } else {
+              // Both could be valid - assume M/D/YYYY (original assumption)
+              month = first;
+              day = second;
             }
+            
+            // Validate month and day bounds
+            if (month < 1 || month > 12) return undefined;
+            if (day < 1 || day > 31) return undefined;
+            
+            return { 
+              date: new Date(fullYear, month - 1, day),
+              luna: month,
+              an: fullYear
+            };
           }
         }
         return undefined;
