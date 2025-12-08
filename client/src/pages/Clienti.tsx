@@ -281,6 +281,7 @@ export default function Clienti() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -289,11 +290,12 @@ export default function Clienti() {
   const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["clients", search, stadiuFilter],
+    queryKey: ["clients", search, stadiuFilter, agentFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (stadiuFilter && stadiuFilter !== "all") params.set("stadiuOferta", stadiuFilter);
+      if (agentFilter && agentFilter !== "all") params.set("agentId", agentFilter);
       
       const res = await fetch(`/api/clients?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea clienților");
@@ -478,6 +480,7 @@ export default function Clienti() {
   const resetFilters = () => {
     setSearch("");
     setStadiuFilter("all");
+    setAgentFilter("all");
   };
 
   return (
@@ -548,6 +551,21 @@ export default function Clienti() {
                 ))}
               </SelectContent>
             </Select>
+            {isAdmin && (
+              <Select value={agentFilter} onValueChange={setAgentFilter}>
+                <SelectTrigger className="w-full md:w-[200px]" data-testid="select-agent-filter">
+                  <SelectValue placeholder="Toți agenții" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toți agenții</SelectItem>
+                  {agents.filter((a: any) => a.role === "AGENT" || a.role === "ADMIN").map((agent: any) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.firstName} {agent.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -563,11 +581,11 @@ export default function Clienti() {
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">Niciun client găsit</h3>
               <p className="text-muted-foreground mb-4">
-                {search || stadiuFilter !== "all" 
+                {search || stadiuFilter !== "all" || agentFilter !== "all"
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
               </p>
-              {!search && stadiuFilter === "all" && (
+              {!search && stadiuFilter === "all" && agentFilter === "all" && (
                 <Button onClick={openCreateDialog} className="gap-2">
                   <Plus className="h-4 w-4" />
                   Adaugă Client
