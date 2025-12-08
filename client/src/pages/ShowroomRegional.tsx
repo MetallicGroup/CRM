@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ShowroomCosts {
   sediuName: string;
@@ -19,12 +21,12 @@ interface ShowroomCosts {
 
 export default function ShowroomRegional() {
   const { selectedMonth } = useStore();
-  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: showroomCosts = {}, isLoading } = useQuery<Record<string, ShowroomCosts>>({
-    queryKey: ["showroom-costs", selectedMonth, currentYear],
+    queryKey: ["showroom-costs", selectedMonth, selectedYear],
     queryFn: async () => {
-      const res = await fetch(`/api/profitabilitate/showroom-costs?luna=${selectedMonth}&an=${currentYear}`);
+      const res = await fetch(`/api/profitabilitate/showroom-costs?luna=${selectedMonth}&an=${selectedYear}`);
       if (!res.ok) throw new Error("Eroare la încărcarea costurilor");
       return res.json();
     },
@@ -49,9 +51,21 @@ export default function ShowroomRegional() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Showroom-uri</h1>
-          <p className="text-muted-foreground">Cheltuieli pe locație - Luna {selectedMonth}/{currentYear}</p>
+          <p className="text-muted-foreground">Cheltuieli pe locație - Luna {selectedMonth}/{selectedYear}</p>
         </div>
-        <MonthSelector />
+        <div className="flex items-center gap-4">
+          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+            <SelectTrigger className="w-[100px]" data-testid="select-year">
+              <SelectValue placeholder="An" />
+            </SelectTrigger>
+            <SelectContent>
+              {[2023, 2024, 2025].map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <MonthSelector />
+        </div>
       </div>
 
       {showrooms.length === 0 ? (
