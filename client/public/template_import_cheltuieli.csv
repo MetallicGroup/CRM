@@ -1,0 +1,6 @@
+Agent Email,Categorie,Subcategorie,Suma,Descriere,Data Cheltuiala,Luna,An,Judet,Sediu,Firma,Numar Auto,Tip Cheltuiala
+alexandru.croitoru@metallicgroup.ro,Cheltuieli auto,Combustibil,250.50,Alimentare benzina,15/11/2025,11,2025,Bucuresti,Showroom Bragadiru,OMV,B-123-ABC,variabil
+alexandru.croitoru@metallicgroup.ro,Cheltuieli auto,Revizii,450.00,Revizie 10000 km,20/11/2025,11,2025,Bucuresti,,Service Auto SRL,B-123-ABC,variabil
+alexandru.croitoru@metallicgroup.ro,Cheltuieli generale,Telefon,89.99,Abonament lunar,01/11/2025,11,2025,,,Orange Romania,,fix
+alexandru.croitoru@metallicgroup.ro,Cheltuieli generale,Materiale birou,125.00,Hartie si tonere,05/11/2025,11,2025,,,Dedeman,,variabil
+alexandru.croitoru@metallicgroup.ro,Salarii + bonusuri,Comision,1500.00,Comision vanzari noiembrie,30/11/2025,11,2025,,,Metallic Group,,variabil
