@@ -75,3 +75,35 @@ export function useAgentExpenseCosts(agentId: string, month: Month, year: number
 export function getMonthNumber(month: Month): number {
   return MONTH_TO_NUMBER[month];
 }
+
+export interface ShowroomCostDistributed {
+  agentId: string;
+  agentName: string;
+  sediuId: string;
+  sediuName: string;
+  costuriShowroomDistribuite: number;
+}
+
+interface AllShowroomCostsDistributed {
+  [agentId: string]: ShowroomCostDistributed;
+}
+
+export function useShowroomCostsDistributed(month: Month, year: number = new Date().getFullYear()) {
+  const luna = MONTH_TO_NUMBER[month];
+  
+  return useQuery<AllShowroomCostsDistributed>({
+    queryKey: ["showroom-costs-distributed", luna, year],
+    queryFn: async () => {
+      const res = await fetch(`/api/profitabilitate/showroom-costs-distributed?luna=${luna}&an=${year}`);
+      if (!res.ok) {
+        if (res.status === 403) {
+          return {};
+        }
+        throw new Error("Eroare la încărcarea costurilor showroom distribuite");
+      }
+      return res.json();
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+}

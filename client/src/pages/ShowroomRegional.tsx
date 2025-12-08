@@ -97,8 +97,11 @@ export default function ShowroomRegional() {
             const costs = showroom.costs;
             const isBucuresti = showroom.name.toLowerCase().includes('bucurești');
             const cheltuieliShowroom = costs.chirie + costs.utilitati + costs.marketing + costs.consumabile + costs.alteCheltuieli;
-            const costDistribuit = isBucuresti ? costs.total * 0.20 : costs.total;
-            const costIndirecte = isBucuresti ? costs.total * 0.80 : 0;
+            // Regula 20/80 se aplică doar la cheltuieli showroom, nu și la cele ale agenților
+            const costShowroomDistribuit = isBucuresti ? cheltuieliShowroom * 0.20 : cheltuieliShowroom;
+            const costShowroomIndirect = isBucuresti ? cheltuieliShowroom * 0.80 : 0;
+            // Cheltuielile agenților sunt 100% ale agenților individuali
+            const totalDistribuitAgenti = costShowroomDistribuit + (costs.cheltuieliAgenti || 0);
             
             return (
               <TabsContent key={showroom.id} value={showroom.id} className="space-y-4">
@@ -232,24 +235,32 @@ export default function ShowroomRegional() {
                         </div>
                       </div>
                       
-                      {isBucuresti && costs.total > 0 && (
+                      {isBucuresti && cheltuieliShowroom > 0 && (
                         <div className="space-y-2 border-t pt-4">
-                          <p className="text-xs text-muted-foreground font-medium">Distribuție București:</p>
+                          <p className="text-xs text-muted-foreground font-medium">Distribuție Cheltuieli Showroom (București):</p>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">20% → Agenți:</span>
-                            <span className="font-bold text-blue-600">{costDistribuit.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
+                            <span className="font-bold text-blue-600">{costShowroomDistribuit.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">80% → Indirecte:</span>
-                            <span className="font-bold text-purple-600">{costIndirecte.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
+                            <span className="font-bold text-purple-600">{costShowroomIndirect.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
+                          </div>
+                          <div className="flex justify-between items-center border-t pt-2 mt-2">
+                            <span className="text-sm font-medium">Total → Agenți:</span>
+                            <span className="font-bold text-emerald-600">{totalDistribuitAgenti.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
                           </div>
                         </div>
                       )}
                       
                       {!isBucuresti && costs.total > 0 && (
-                        <p className="text-sm text-muted-foreground border-t pt-4">
-                          100% se distribuie agenților din acest showroom.
-                        </p>
+                        <div className="space-y-2 border-t pt-4">
+                          <p className="text-sm text-muted-foreground">100% cheltuieli showroom se distribuie agenților.</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Total → Agenți:</span>
+                            <span className="font-bold text-emerald-600">{totalDistribuitAgenti.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
+                          </div>
+                        </div>
                       )}
                       
                       {costs.total === 0 && (

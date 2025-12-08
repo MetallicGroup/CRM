@@ -10,7 +10,7 @@ import { MonthSelector } from "@/components/ui/month-selector";
 import { Download, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Employee, EmployeeType, MONTHS } from "@/lib/types";
 import { useState, useMemo } from "react";
-import { useAllAgentsExpenseCosts } from "@/hooks/useAgentExpenseCosts";
+import { useAllAgentsExpenseCosts, useShowroomCostsDistributed } from "@/hooks/useAgentExpenseCosts";
 import { useAgentSalesProfitabilityForMonth, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
@@ -35,6 +35,7 @@ export default function Angajati() {
   const currentYear = new Date().getFullYear();
   const { data: expenseCosts = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAllAgentsExpenseCosts(selectedMonth, currentYear);
   const { data: salesProfitability = {}, isLoading: isLoadingSales, refetch: refetchSales } = useAgentSalesProfitabilityForMonth(selectedMonth, currentYear);
+  const { data: showroomCostsDistributed = {}, isLoading: isLoadingShowroomCosts, refetch: refetchShowroomCosts } = useShowroomCostsDistributed(selectedMonth, currentYear);
   
   const employeesWithExpensesAndSales = useMemo(() => {
     return employees.map(emp => {
@@ -82,9 +83,10 @@ export default function Angajati() {
   const handleRefreshData = () => {
     refetchExpenses();
     refetchSales();
+    refetchShowroomCosts();
   };
   
-  const isLoadingData = isLoadingExpenses || isLoadingSales;
+  const isLoadingData = isLoadingExpenses || isLoadingSales || isLoadingShowroomCosts;
 
   const filteredEmployees = filterType === 'ALL' 
     ? employeesWithExpensesAndSales 
@@ -125,14 +127,19 @@ export default function Angajati() {
 
     const rows = filteredEmployees.map(emp => {
       const m = calculateEmployeeMetrics(emp, selectedMonth, totals);
+      const isAgent = emp.type === 'AGENT';
+      const apiShowroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
+      const finalCostShowroom = isAgent && apiShowroomCost > 0 ? apiShowroomCost : m.costShowroom;
+      const costShowroomDiff = finalCostShowroom - m.costShowroom;
+      const adjustedProfitFinal = m.profitFinal - costShowroomDiff;
       return [
         emp.name, emp.type, emp.showroomId || '-',
         m.venitGard, m.achizitieGard, m.adaosTVAGard,
         m.venitAcoperis, m.achizitieAcoperis, m.adaosTVAAcoperis,
         m.adaosTotalCuTVA, m.adaosFaraTVA, m.venitTVA, m.comisionPercent, m.valoareComision,
         m.salariu, m.amortizareAuto, m.combustibil, m.revizii, m.alteCheltuieliAuto, m.abonamente, m.diurne, m.costuriProprii,
-        m.costShowroom, m.costProductie, m.costIndirecte,
-        m.profitFinal
+        finalCostShowroom.toFixed(2), m.costProductie, m.costIndirecte,
+        adjustedProfitFinal.toFixed(2)
       ].join(",");
     });
 
@@ -292,6 +299,14 @@ export default function Angajati() {
                     const metrics = calculateEmployeeMetrics(emp, selectedMonth, totals);
                     const isAgent = emp.type === 'AGENT';
                     
+                    // Get API showroom cost distributed, fall back to calculated if not available
+                    const apiShowroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
+                    const finalCostShowroom = isAgent && apiShowroomCost > 0 ? apiShowroomCost : metrics.costShowroom;
+                    
+                    // Recalculate profit with API showroom cost
+                    const costShowroomDiff = finalCostShowroom - metrics.costShowroom;
+                    const adjustedProfitFinal = metrics.profitFinal - costShowroomDiff;
+                    
                     return (
                       <TableRow key={emp.id} className={!isAgent ? 'bg-muted/30' : ''} data-testid={`row-employee-${emp.id}`}>
                         <TableCell className="sticky left-0 bg-background z-10 font-medium border-r">
@@ -396,12 +411,12 @@ export default function Angajati() {
                         <TableCell className="font-bold text-red-600">{metrics.costuriProprii.toFixed(0)}</TableCell>
                         
                         {/* Distributed Costs (Read Only) - doar pentru AGENT */}
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? metrics.costShowroom.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? finalCostShowroom.toFixed(0) : '-'}</TableCell>
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? metrics.costProductie.toFixed(0) : '-'}</TableCell>
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? metrics.costIndirecte.toFixed(0) : '-'}</TableCell>
                         
-                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (metrics.profitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-muted-foreground border-gray-300'}`}>
-                          {isAgent ? metrics.profitFinal.toFixed(0) : '-'}
+                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (adjustedProfitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-muted-foreground border-gray-300'}`}>
+                          {isAgent ? adjustedProfitFinal.toFixed(0) : '-'}
                         </TableCell>
                         
                         <TableCell>
