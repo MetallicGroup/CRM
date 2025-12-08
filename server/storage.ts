@@ -547,15 +547,27 @@ export class DatabaseStorage implements IStorage {
         }
 
         const normalizedPhone = normalizePhone(row.telefon);
+        const parsedValue = parseValue(row.valoareOferta);
         
-        if (normalizedPhone && normalizedPhone !== "#ERROR!" && duplicateStrategy !== "create") {
-          const existingClient = await this.getClientByPhone(normalizedPhone);
+        // Check for duplicates: same phone + same value = skip, same phone + different value = add (returning client)
+        if (normalizedPhone && normalizedPhone !== "#ERROR!" && normalizedPhone !== "N/A") {
+          const existingClients = await db.select().from(clients)
+            .where(eq(clients.telefon, normalizedPhone));
 
-          if (existingClient) {
-            if (duplicateStrategy === "skip") {
+          if (existingClients.length > 0) {
+            // Check if any existing client has the exact same value
+            const exactDuplicate = existingClients.find(c => {
+              const existingValue = c.valoareOferta ? parseFloat(c.valoareOferta) : 0;
+              const newValue = parsedValue ? parseFloat(parsedValue) : 0;
+              return Math.abs(existingValue - newValue) < 0.01;
+            });
+
+            if (exactDuplicate) {
+              // Same phone + same value = pure duplicate, skip
               skipped++;
               continue;
             }
+            // Same phone + different value = returning client, continue to add
           }
         }
 
@@ -572,7 +584,7 @@ export class DatabaseStorage implements IStorage {
           dataOfertarii: parseDate(row.dataOfertarii),
           sursa: mapSursa(row.sursa),
           mlRulouProd: parseValue(row.mlRulouProd),
-          valoareOferta: parseValue(row.valoareOferta),
+          valoareOferta: parsedValue,
           categorieProdus: row.categorieProdus?.toUpperCase()?.includes("GARD") ? "GARD" : 
                           row.categorieProdus?.toUpperCase()?.includes("ACOPERIS") ? "ACOPERIS" : undefined,
           brand: row.brand || undefined,
