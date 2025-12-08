@@ -1,0 +1,539 @@
+ID,Nume Client,Telefon,Email,Localitate,Judet,Sursa,Categorie Produs,Brand,Model,Culoare,Valoare Oferta,Stadiu Oferta,Observatii Client,Data Adaugare,Data Vanzarii,Data Livrarii,Incasat,Comision,ML Rulou Produs,Stadiu Comanda,Are Oferta PDF
+8792,d&d,0765 628 245,,ciorogarla,,PARTENER,ACOPERIS,Wetterbest,Clasic,RAL7016,19800.0,Vandut,,2025-12-05,2025-12-04,2025-12-08,Nu,198.0,,comandat,Da
+8791,sc mureco,0767830338,,BUCURESTI,,Lead Caretta,ACOPERIS,Caretta,Nobel,RAL7016,20000.0,Vandut,,2025-12-05,,,Nu,400.0,,,Da
+8790,stefan ilie,0764337530,,BUCURESTI,,Recomandare,ACOPERIS,Wetterbest,Gladiator,RAL9016,19800.0,Vandut,,2025-12-02,2025-11-29,2025-12-04,Nu,,,,Da
+8787,NITU CATALIN,0747070785,,BUCURESTI,,Telefon,ELEMENTE SPECIALE,Caretta,Cutata,RAL8017,750.0,Vandut,,2025-11-24,2025-11-24,2025-11-27,Nu,22.5,,comandat,Nu
+8786,NEGRU GABRIEL,0766346179,,MAGURELE,,Recomandare,SAGEAC,Wetterbest,Cutata,RAL8028,5600.0,Vandut,,2025-11-24,2025-11-24,2025-11-27,Nu,168.0,,comandat,Nu
+8789,NEACSU MARIA,0744328996,,TUNARI,,Lead Caretta,SISTEM PLUVIAL,Caretta,Daily,RAL9007,2650.0,Vandut,,2025-11-24,2025-11-24,2025-11-28,Nu,79.5,,comandat,Nu
+8788,TUDORACHE AUREL,0740091493,,NOVACI,,Recomandare,ACOPERIS,Caretta,Daily,RAL8017,3200.0,Vandut,,2025-11-24,2025-11-24,2025-11-28,Nu,96.0,,comandat,Nu
+8770,NIDELEA VALENTIN,0767280453,,BUCURESTI,,Recomandare,ACOPERIS,Wetterbest,Clasic,RAL8014,3000.0,Vandut,,2025-11-19,2025-11-17,2025-11-20,Nu,90.0,,comandat,Nu
+8766,C&C HOUSE RESIDENCE,0724533263,,BRAGADIRU,,PARTENER,ACOPERIS,Caretta,Bello,RAL8014,22800.0,Vandut,,2025-11-19,2025-11-19,2025-11-26,Nu,228.0,,comandat,Nu
+8767,BULARDA MARCEL,0723 547 932,,GORNENI,,Telefon,ACOPERIS,Wetterbest,Canto,RAL7016,6000.0,Vandut,,2025-11-19,2025-11-19,2025-11-21,Nu,120.0,,comandat,Nu
+8768,BUTICA ANDREI,0726080111,,JLAVA,,Recomandare,SAGEAC,Wetterbest,Cutata,,2750.0,Vandut,,2025-11-19,2025-11-17,2025-11-19,Nu,,,comandat,Nu
+8771,ADRIAN MADESCU,0761292103,,COSERENI,,Recomandare,SAGEAC,Wetterbest,Cutata,RAL7016,2350.0,Vandut,,2025-11-19,2025-11-19,2025-11-21,Nu,70.5,,comandat,Nu
+8769,GEORGE COSMA,0743047711,,4 FRATI,,Recomandare,ACOPERIS,Caretta,Daily,RAL7016,2000.0,Vandut,,2025-11-19,2025-11-14,2025-11-17,Nu,60.0,,comandat,Nu
+8599,dragut tudor,0726418184,,branesti,,Telefon,ACOPERIS,Wetterbest,Clasic,RAL7016,4500.0,Vandut,,2025-11-12,2025-10-21,,Da,90.0,,,Nu
+8702,lumnasanu sevastian,0765463697,,sarulesti sat,,Recomandare,ACOPERIS,Caretta,Daily,RAL9016,15000.0,Vandut,,2025-11-12,2025-11-11,2025-11-14,Nu,150.0,,comandat,Nu
+8701,dinca ane mari,0724278923,,darasti,,Recomandare,ACOPERIS,Caretta,Daily,RAL9016,22000.0,Vandut,,2025-11-12,2025-11-11,2025-11-14,Nu,440.0,,,Da
+8704,erik profesional global ,0724872115,,darvari,,Telefon,ACOPERIS,Bilka,Balcanic,RAL9016,20900.0,Vandut,,2025-11-12,2025-11-11,2025-11-11,Nu,209.0,,comandat,Nu
+8703,madescu adrian,0761292103,,cosereni,,Recomandare,ACOPERIS,Caretta,Daily,RAL7016,21000.0,Vandut,,2025-11-12,2025-11-10,2025-11-14,Nu,,,comandat,Da
+8517,STREJA CRISTIAN,0728486651,,BRAGADIRU,,Recomandare,ACOPERIS,Caretta,Daily,RAL9016,30000.0,Vandut,,2025-11-06,2025-10-08,2025-11-07,Da,900.0,,comandat,Nu
+8658,STAN DANUT,076798965,,BUCURESTI,,Facebook,ACOPERIS,Bilka,Iberic,RAL7016,20000.0,Vandut,,2025-11-04,2025-11-03,2025-11-07,Nu,600.0,,comandat,Nu
+8659,AGRI COSAD UTILAJE,0784557525,,BUCURESTI,,Recomandare,SAGEAC,Caretta,Traforat,RAL7016,5700.0,Vandut,,2025-11-04,2025-11-04,2025-11-07,Nu,,,comandat,Nu
+8656,nicolescu valeria,0786866176,,BUCURESTI,,Recomandare,ACOPERIS,Caretta,Daily,,18000.0,Vandut,,2025-11-03,2025-10-29,2025-11-06,Nu,540.0,,comandat,Nu
+8657,moteco,0722333228,,BUCURESTI,,Recomandare,SISTEM PLUVIAL,Caretta,Daily,,1712.0,Vandut,,2025-11-03,2025-11-03,,Nu,51.36,,,Nu
+8655,costache cristina,0763754810,,balaceanca,,Telefon,ACOPERIS,Caretta,Canto,RAL8017,14000.0,Vandut,,2025-11-03,2025-10-30,2025-11-14,Nu,420.0,,comandat,Nu
+8612,RACHE IONUT,0763 383 033,,BUCURESTI,,Recomandare,ACOPERIS,Caretta,Canto,RAL7016,17000.0,Ofertat,,2025-10-27,,,Nu,510.0,,,Nu
+8611,RACHE IONUT,0763 383 033,,BUCURESTI,,Recomandare,ACOPERIS,Caretta,Canto,RAL7016,17000.0,Ofertat,,2025-10-27,,,Nu,510.0,,,Nu
+8610,pro next busines,0723877666,,bucsani,,Telefon,ACOPERIS,Caretta,Canto,RAL7016,13700.0,Vandut,,2025-10-27,2025-10-24,2025-10-30,Nu,137.0,,comandat,Nu
+8623,ralciu maria,0761125193,,BUCURESTI,,Lead Caretta,ACOPERIS,Caretta,Daily,RAL3009,20600.0,Vandut,,2025-10-27,2025-10-22,2025-10-28,Nu,618.0,,comandat,Nu
+8613,POCISTEANU STELUTA,0744538252,,BRAGADIRU,,Recomandare,ACOPERIS,Caretta,Canto,RAL9002,3050.0,Vandut,,2025-10-27,2025-10-21,2025-10-24,Nu,91.5,,comandat,Nu
+8600,fratila ionut,0760992249,,cornetu,,Telefon,ACOPERIS,Caretta,Daily,,4627.0,Vandut,,2025-10-24,2025-10-21,2025-10-23,Nu,92.54,,comandat,Nu
+8602,butica andrei,0726080111,,jilava,,Recomandare,ACOPERIS,Caretta,Canto,RAL7016,20800.0,Vandut,,2025-10-24,2025-10-22,2025-10-28,Nu,208.0,,comandat,Nu
+8598,ticu nicolae,0763754810,,bucuresti,,Telefon,ACOPERIS,Caretta,Canto,RAL7016,9582.0,Vandut,,2025-10-24,2025-10-20,2025-10-24,Nu,287.46,,comandat,Nu
+8601,lambe irina,0727223376,,ciorogarla,,Telefon,ACOPERIS,,Canto,RAL7016,2318.0,Vandut,,2025-10-24,2025-10-21,2025-10-23,Nu,,,comandat,Nu
+8457,DOROBANTU MARIA,0725 680 117,,BULBUCATA,,Recomandare,ACOPERIS,Caretta,Daily,RAL8017,10320.0,Vandut,,2025-10-21,2025-10-15,2025-10-17,Nu,309.6,,,Nu
+8537,necula gabriel,0761125193,,BUCURESTI,,Lead Caretta,ACOPERIS,Caretta,Daily,,20665.0,Vandut,,2025-10-21,2025-10-13,2025-10-28,Nu,619.95,,,Nu
+8543,MARC NICOLAE MIRCEA,0760352 241,,BRANESTI,,Recomandare,ACOPERIS,Wetterbest,Clasic,,13000.0,Vandut,,2025-10-15,2025-10-15,2025-10-17,Nu,,,comandat,Nu
+8536,luca mihaela,0767 679 426,,dascalu,,Lead Caretta,ACOPERIS,Caretta,Nobel,,28000.0,Ofertat,,2025-10-14,,,Nu,840.0,,,Nu
+8538,ancuta mihaela,0769172172,,clinceni,,Telefon,ACOPERIS,Caretta,Canto,RAL7016,20000.0,Ofertat,,2025-10-14,,,Nu,200.0,,,Nu
+8445,Dragoș Slănoiu,40741105078,,Sector 2,Bucuresti / Ilfov,Cerere oferta site,,Zebra,,,,Contactat,redirectionat catre Alexandru Croitoru,2025-10-06,,,Nu,,,,Nu
+8444,Nitu Iulian,0742130172,,Bucuresti sector 5,Bucuresti / Ilfov,Lead Caretta,,Zebra,,,,Contactat,"Este in negocieri cu sotia, ne suna el cand reuseste sa o convinga pe sotie",2025-10-06,,,Nu,,,,Nu
+8443,Daniel Chirvasa,0724666768,,Sector 5,Bucuresti / Ilfov,Lead Caretta,,,,,,Contactat,are treaba,2025-10-06,,,Nu,,,,Nu
+8442,CIUPITU MAGDALENA,0722241096,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,28000.0,Ofertat,ne intalnim sa stabilim custodie,2025-10-06,,,Nu,,,,Nu
+8441,DL Carol corp 2,0759338282,,sos industriilor nr 20,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,10852.0,Ofertat,Este in constructie . Ofertat dupa proiect,2025-10-06,,,Nu,,,,Nu
+8440,GICA,0723130200,,LUPSANI,Calarasi,Client Vechi ( Completare ),,Caretta,,,18962.28,Ofertat,I-am transmis oferta de pret actualizata,2025-10-06,,,Nu,,,,Nu
+8439,BORBOCARU MIHAI,,,BERCENI,Bucuresti / Ilfov,Teren,,Bilka,,,16000.0,Ofertat,TERMINA ASTERIALA SI REVINE CU TEL,2025-10-06,,,Nu,,,,Nu
+8438,DOMNU SANDU,0757029438,,JILAVA,Bucuresti / Ilfov,Teren,,Wetterbest,,,28585.32,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8437,SORIN,0722378971,,DOBROIESTI,Bucuresti / Ilfov,Teren,,Wetterbest,,,22000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8436,victor,,,fundeni frunzanesti,Bucuresti / Ilfov,Teren,,Wetterbest,,,27837.0,Ofertat,suna vineri cand termina asteriala,2025-10-06,,,Nu,,,,Nu
+8435,leonard,0767885044,,ramnicu sarat,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,13000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8434,marian pana,0760365862,,moldoveni,Ialomita,Client Vechi ( Completare ),,Caretta,,,20010.0,Ofertat,o sa faca custodi,2025-10-06,,,Nu,,,,Nu
+8433,Dl. Barbu,0745183422,,Corbeanca,Bucuresti / Ilfov,Telefon,,Zebra,,,2183.0,Ofertat,"Oferta dimensiuni client , vrea sa mearga cineva la masuratoare",2025-10-06,,,Nu,,,,Nu
+8432,victor,0730305810,,vidra,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,7445.27,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8431,mario,0730292123,,glina,Bucuresti / Ilfov,Birou,,Caretta,,,15071.28,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8430,ana maria gheorghe,0721961068,,darasti,Bucuresti / Ilfov,Teren,,Caretta,,,39709.88,Ofertat,discuta cu sotul si revine cu raspuns,2025-10-06,,,Nu,,,,Nu
+8429,laur,0722744484,,aurel persu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,45000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8428,andrei,0784048994,,cornetu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,25282.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8427,nicu,0724650299,,branesti,Bucuresti / Ilfov,Teren,,Bilka,,,26000.0,Pierdut,,2025-10-06,,,Nu,,,24/11/2023,Nu
+8426,diaconu alin,0766190073,,ghermanesti,Bucuresti / Ilfov,Cerere oferta site,,Caretta,,,25845.0,Ofertat,in ianuarie se finalizeaza acoperisul,2025-10-06,,,Nu,,,,Nu
+8425,IULIAN CHITA,0741259645,,STR ROZA LUXEMBURG VOLUNTARI,Bucuresti / Ilfov,Client Vechi ( Completare ),,"Caretta , Wetterbest",,,17097.88,Follow UP ( Negociere ),I-am transmis oferta pe mail si ne auzim maine la telefon,2025-10-06,,,Nu,,,,Nu
+8424,gavan ionel,0748237148,,dascalu,Bucuresti / Ilfov,Cerere oferta site,,Wetterbest,,,14836.08,Follow UP ( Negociere ),,2025-10-06,,,Nu,,,,Nu
+8423,dragos,0726202808,,hotarele,Giurgiu,Lead Caretta,,Caretta,,,27201.96,Follow UP ( Negociere ),asteapta si oferta de la metigla,2025-10-06,,,Nu,,,,Nu
+8422,dumitru daniela,0721062990,,dobreni,Giurgiu,Lead Caretta,,Wetterbest,,,15000.0,Follow UP ( Negociere ),mai are nevoie de banuti,2025-10-06,,,Nu,,,,Nu
+8421,Matei Remus Vasile,342670346062,,intrarea dunari 12,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,19851.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/1/2023,Nu
+8420,Curt Cornel,0736560404,,"str viitorului 47 bolintin , Giurgiu",Bucuresti / Ilfov,Client Vechi ( Completare ),,"Bilka, Fakro",,,41000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/1/2023,Nu
+8419,Dragut Tudor,0726418184,,vadu anei,Bucuresti / Ilfov,Import CSV,,Bilka,,,2343.98,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/2/2023,Nu
+8418,Matei Remus Vasile,346703460,,intrarea dunari otopeni,Bucuresti / Ilfov,Import CSV,,Zebra,,,3212.97,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/1/2023,Nu
+8417,Edera Residence,0799299600,,str trifoiului 60-62 dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,46095.88,Vandut,,2025-10-06,2025-10-06,,Nu,,,31/1/2023,Nu
+8416,MARISA ESTATE SRL,0726845755,,STR CEASORNICARULUI SECT 1,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,,1075.0,Vandut,in curs de achitare,2025-10-06,2025-10-06,,Nu,,,26/1/2023,Nu
+8415,GENERAL DAR &MAR CONS SRL,0755481636,,Berceni,Bucuresti / Ilfov,Teren,,Wetterbest,,,14000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/2/2023,Nu
+8414,SC ELITTE DEVELOPMENT,0765266160,,DOBROIESTI,Bucuresti / Ilfov,Teren,,Bilka,,,3738.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,3/2/2023,Nu
+8413,Mirea George,0765777215,,BUDESTI,Bucuresti / Ilfov,Teren,,Wetterbest,,,20500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/2/2023,Nu
+8412,TABACARU ION,0751014109,,ANDRONACHE,Bucuresti / Ilfov,Import CSV,,Novatik,,,2100.0,Vandut,PARAZAPEZI TIGLE CERAMICA,2025-10-06,2025-10-06,,Nu,,,20/2/2023,Nu
+8411,Panait Gigel,0740144456,,str odai jlilava if,Bucuresti / Ilfov,Birou,,Caretta,,,6483.0,Vandut,Stabilit masuratoare pentru astazi 18.05.2023,2025-10-06,2025-10-06,,Nu,,,19/5/2023,Nu
+8410,dragut tudor,0726418184,,vadu anei,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,,774.02,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/2/2023,Nu
+8409,IONUT POPA,0761306262,,VOLUNTARI,Bucuresti / Ilfov,Import CSV,,Fakro,,,2000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/3/2023,Nu
+8408,ADRIAN,0768130133,,SEBASTIAN SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,10315.0,Vandut,I-am transmis ofertele finale . astept raspuns pentru proforma,2025-10-06,2025-10-06,,Nu,,,31/3/2023,Nu
+8407,stelica trifan,0723334675,,tandarei ialomita,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,,5707.46,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/3/2023,Nu
+8406,ionut popa,0761306262,,voluntari,Bucuresti / Ilfov,Import CSV,,Caretta,,,473.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/3/2023,Nu
+8405,gheorghe robert,0749541304,,sector 4,Bucuresti / Ilfov,Birou,,Wetterbest,,,15271.66,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/3/2023,Nu
+8404,Tarlie Gheorghe,0724192439,,Cernica,Bucuresti / Ilfov,Pliant,,Zebra,,,3671.0,Vandut,Asteapta pret de la Ionut pentru porti.,2025-10-06,2025-10-06,,Nu,,,27/3/2023,Nu
+8403,CHIRIAC SILVIA,0731431150,,VALEA ARGOVEI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,20000.0,Vandut,DORESTE IN MAI PE DATA DE 4.05.2023 AVANS 1000,2025-10-06,2025-10-06,,Nu,,,2/5/2023,Nu
+8402,JIM,0740158888,,GANEASA,Bucuresti / Ilfov,Teren,,Wetterbest,,,23500.0,Vandut,Plata avans 5000 de lei . Folia livrata si montata .,2025-10-06,2025-10-06,,Nu,,,14/6/2023,Nu
+8401,CONSTANTINESCU CRISTIAN,0722913036,,BERCENI,Bucuresti / Ilfov,Import CSV,,Caretta,,,839.52,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/4/2023,Nu
+8400,ALEXANDRU DRAGOESCU,0744448462,,OTOPENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,6758.64,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/4/2023,Nu
+8399,ADRIAN IONUT,0731039964,,CIOROGARLA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,6147.41,Vandut,REVINE CU RASPUNS LUNI,2025-10-06,2025-10-06,,Nu,,,3/5/2023,Nu
+8398,CAVALERIA TRADE,0756201906,,OTOPENI,Bucuresti / Ilfov,Import CSV,,Caretta,,,593.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/5/2023,Nu
+8397,CRISTINA NECHITA,0743374616,,OTOPENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,3547.46,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/5/2023,Nu
+8396,BOGDAN OLAC,0756201906,,OTOPENI,Bucuresti / Ilfov,Import CSV,,Caretta,,,1327.62,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/5/2023,Nu
+8395,ANGHEL IOANA,0784458415,,STEFANESTI,Bucuresti / Ilfov,Montatori / Colaboratori,,Bilka,,,23750.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/5/2023,Nu
+8394,EMA CONSTRUCT MOTAJ,0766839544,,STR GRADINITEI NR 39 GREACA,Giurgiu,Telefon,,Caretta,,,1307.04,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/5/2023,Nu
+8393,BOBEICA,0723380273,,ST 23 AUGUST OTOPENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,6899.87,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/6/2023,Nu
+8392,CAROL STEFAN,0759338282,,SOS INDUSTRIILOR NR 20,Bucuresti / Ilfov,Birou,,Caretta,,,5841.34,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/5/2023,Nu
+8391,SPERIATU FLORIN,0753658573,,STR FRUMOASELOR BUDENI,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,2989.95,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/5/2023,Nu
+8390,MANESCU SPIRIDON,0731039946,,STR CASTANILOS CIOROGARLA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,5301.11,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/5/2023,Nu
+8389,IONITA CONSTANTIN,0720372093,,STR ODAI JLAVA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,26807.24,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/5/2023,Nu
+8388,TARLIE GHEORGHE,0724192439,,TANGANU,Bucuresti / Ilfov,Import CSV,,Zebra,,,1578.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/5/2023,Nu
+8387,DOROBANTU GABRIEL,0721781643,,VIDRA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,4519.42,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/5/2023,Nu
+8386,IONITA NINEL,0768193521,,VANATORI COM PETRACHIOAIA,Bucuresti / Ilfov,Import CSV,,Caretta,,,1759.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/5/2023,Nu
+8385,nicolar cristina,0765097859,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,17308.12,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/5/2023,Nu
+8384,crisstian copaci,0767103777,,domnesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,3951.04,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/5/2023,Nu
+8383,pantazi mihaela,0771488227,,sector 5,Bucuresti / Ilfov,Birou,,Caretta,,,9823.08,Vandut,la sfarsitul saptamani da avans,2025-10-06,2025-10-06,,Nu,,,12/6/2023,Nu
+8382,Dumitru Cristinel,0769134741,,Facau,Giurgiu,Client Vechi ( Completare ),,Bilka,,,15763.76,Vandut,oferta +- pana la finalizarea acoperisului,2025-10-06,2025-10-06,,Nu,,,1/6/2023,Nu
+8381,MIREA MIHAI,0724553261,,vidra,Bucuresti / Ilfov,Teren,,Caretta,,,31523.44,Vandut,de sunat maine dupa 10,2025-10-06,2025-10-06,,Nu,,,1/6/2023,Nu
+8380,PORUMBELU DANIEL,0763939751,,VIDRA,Bucuresti / Ilfov,Birou,,Zebra,,,3945.44,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/6/2023,Nu
+8379,DINCA IONEL,0722809583,,DARASTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,2725.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/6/2023,Nu
+8378,Dragne Adrian,0723301528,,glina,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,5100.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/6/2023,Nu
+8377,ROCON S.R.L.,0765266160,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,51000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/6/2023,Nu
+8376,Ionut Stemata,0734127192,,bucuresti,Bucuresti / Ilfov,Import CSV,,Wetterbest,,,1147.44,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/6/2023,Nu
+8375,CRISTIAN FLORIAN,0774955758,,sect4,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,21401.24,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/6/2023,Nu
+8374,iordache marian,0766884858,,darasti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,3199.97,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/6/2023,Nu
+8373,popescu marian,0765266160,,slatina,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,13600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/7/2023,Nu
+8372,florea mihaela,0727755166,,sohatu,Calarasi,Client Vechi ( Completare ),,Caretta,,,4054.61,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/6/2023,Nu
+8371,nicusor voinea,0762607724,,letca noua,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,7234.42,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/6/2023,Nu
+8370,Soldatu Silviu,7232017318,,pantelimon,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,21585.77,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/7/2023,Nu
+8369,florescu ionel,0765256160,,slatina,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,11727.17,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/7/2023,Nu
+8368,dorobantu,0765085012,,iepuresti,Giurgiu,Birou,,Caretta,,,18583.1,Vandut,4100 manoperra,2025-10-06,2025-10-06,,Nu,,,7/7/2023,Nu
+8367,minca aurel,,,iepuresti,Giurgiu,Birou,,Wetterbest,,,5400.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/7/2023,Nu
+8366,sc busines,0723877666,,bucsani,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,10250.55,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/7/2023,Nu
+8365,sc busines,,,bucsani,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,1329.18,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/7/2023,Nu
+8364,pena stelian,0720388016,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,8829.57,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/7/2023,Nu
+8363,hublea ionel,0744650223,,fundulea,Calarasi,Lead Caretta,,Caretta,,,28768.08,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/7/2023,Nu
+8362,ciuhat georgiana,0772054606,,sitaru,Ialomita,Cerere oferta site,,Wetterbest,,,9443.38,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/7/2023,Nu
+8361,grozea adrian,0761099702,,mihail cogalniceanu,Ialomita,Montatori / Colaboratori,,Bilka,,,17846.54,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/7/2023,Nu
+8360,cojocaru,0765235999,,sect5,Bucuresti / Ilfov,Import CSV,,Caretta,,,982.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/7/2023,Nu
+8359,mirea valentin,7213891222,,voluntari,Bucuresti / Ilfov,Montatori / Colaboratori,,Wetterbest,,,6494.46,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/7/2023,Nu
+8358,soldatu silviu,723.217.318,,pantelimon,Bucuresti / Ilfov,Import CSV,,Zebra,,,1660.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/7/2023,Nu
+8357,ionut stemata,0734127192,,bucuresti,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,,404.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/7/2023,Nu
+8356,cojocaru dorel,0765235999,,sect 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,215.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/7/2023,Nu
+8355,iordan niculae,0720892598,,dobroiesti,Bucuresti / Ilfov,Import CSV,,Wetterbest,,,652.91,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/8/2023,Nu
+8354,ivan romeo,0721938682,,bucuresti sect 4,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,178.56,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/8/2023,Nu
+8353,marian popescu,7755747704,,magurela,Bucuresti / Ilfov,Cerere oferta site,,Caretta,,,4926.01,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/8/2023,Nu
+8352,cristea gabriel,0745020214,,giulesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,27000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/8/2023,Nu
+8351,mihai ionel,0720696658,,crivat,Calarasi,Telefon,,Caretta,,,39678.23,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/8/2023,Nu
+8350,florin napoleon,0726546969,,glina,Bucuresti / Ilfov,Telefon,,Wetterbest,,,15000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/8/2023,Nu
+8349,marius dumitrescu,0722260689,,bucuresti,Bucuresti / Ilfov,Import CSV,,Caretta,,,3415.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/8/2023,Nu
+8348,ION ALEXANDRU,0733017600,,Fundeni,Bucuresti / Ilfov,Telefon,,"Zebra, Wetterbest",,,4220.0,Vandut,"Pret dimensiunu estimative , vrea sa mearga cineva la locatie , are stalpii de la gardul vechi , doreste pret pt manopera, redirectionat catre alexandru croitoru",2025-10-06,2025-10-06,,Nu,,,9/9/2023,Nu
+8347,parvu tudor,0720752010,,sect 5,Bucuresti / Ilfov,Birou,,Wetterbest,,,15000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/8/2023,Nu
+8346,ionut popa catalin,0761306262,,voluntari,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,14041.97,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/9/2023,Nu
+8345,SC INTERNATIONAL IMPEX,0771498534,,bragadiru,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,8526.7,Vandut,astept datele de facturare,2025-10-06,2025-10-06,,Nu,,,7/9/2023,Nu
+8344,arytrans srl,0770145044,,sector 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,17000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/8/2023,Nu
+8343,asociatia club sportiv celtic bucuresti,0746762097,,sector 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,13386.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/9/2023,Nu
+8342,radu hari,0724139931,,sector 5,Bucuresti / Ilfov,Birou,,Caretta,,,14500.0,Vandut,a venit la birou cu cantitatile dar sa efectuat si masuratoare la fat locului,2025-10-06,2025-10-06,,Nu,,,8/9/2023,Nu
+8341,gabi cristea,0745020214,,sector 6,Bucuresti / Ilfov,Import CSV,,Wetterbest,,,802.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/9/2023,Nu
+8340,MALCOM SRL,0747507668,,berceni,Bucuresti / Ilfov,Teren,,Bilka,,,21160.08,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/9/2023,Nu
+8339,remus godea,0724867861,,berceni,Bucuresti / Ilfov,Lead Caretta,,Bilka,,,10200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/9/2023,Nu
+8338,GHEORGHESCU FLORIN,0743027872,,BRAGADIRU,Bucuresti / Ilfov,Birou,,Caretta,,,8461.94,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/9/2023,Nu
+8337,dascalu ion,0733659296,,bucuresti sect 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,5452.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/9/2023,Nu
+8336,reveca,0724579041,,1 decembrie,Bucuresti / Ilfov,Birou,,Caretta,,,2277.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/9/2023,Nu
+8335,prunaru vasilica,0768310613,,dobroiesti,Bucuresti / Ilfov,Telefon,,Wetterbest,,,7771.39,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/9/2023,Nu
+8334,bogaciu nicolae,0728859770,,sect 3,Bucuresti / Ilfov,Telefon,,Zebra,,,1811.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/8/2023,Nu
+8333,elitte dev,0765266160,,dobroiesrti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,4070.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/9/2023,Nu
+8332,carol,0759338228,,sos industriilor nr 20,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,16000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/9/2023,Nu
+8331,ursei ionel,0723134322,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,2600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/9/2023,Nu
+8330,tudor marian,0768526081,,bragadiru,Bucuresti / Ilfov,Birou,,Wetterbest,,,3967.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/9/2023,Nu
+8329,ELITE DEVELOPMENT,0765266160,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,75000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/10/2023,Nu
+8328,VALENTINA,0763869538,,DARASTI VLASCA,Giurgiu,Telefon,,Bilka,,,23200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/10/2023,Nu
+8327,SC SERBAN IMOB,0763726788,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,,23184.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/10/2023,Nu
+8326,sugean dorin,0724005009,,vidra,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,,12250.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/10/2023,Nu
+8325,tanase adrian,0721126396,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,12100.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/10/2023,Nu
+8324,george zamfir,0768666399,,pantelimon,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,3100.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/10/2023,Nu
+8323,preda victor,0762649257,,giulesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,16767.0,Vandut,luni concretizam oferta  acoperisul nu este gata,2025-10-06,2025-10-06,,Nu,,,24/10/2023,Nu
+8322,vatafu vasile,0736280646,,voluntari,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,2347.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/10/2023,Nu
+8321,daniel,0756087880,,bragadiru,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,1002.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/10/2023,Nu
+8320,marian,0769130566,,popesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,2604.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/10/2023,Nu
+8319,constantin cristian,0722255236,,sec 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,9910.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/10/2023,Nu
+8318,iordache vasile,0790320614,,bucsani,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,17000.0,Vandut,maine da avans,2025-10-06,2025-10-06,,Nu,,,27/10/2023,Nu
+8317,trifan stelica,0761099702,,tandarei,Ialomita,Montatori / Colaboratori,,Caretta,,,10963.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/10/2023,Nu
+8316,vlad pistol,0764448661,,bucuresti sect 1,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,11687.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/11/2023,Nu
+8315,stan marian,0720990266,,bucuresti sect 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,,15500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/11/2023,Nu
+8314,topolos marius,0740142179,,sect 5,Bucuresti / Ilfov,Telefon,,Caretta,,,1152.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/11/2023,Nu
+8313,gheorghescu florin,,,breagadiru,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,1327.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/11/2023,Nu
+8312,marcu nicolae,0761779171,,adunati copaceni,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,,4800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+8311,MAERS,,,darasti vlasca,Giurgiu,Birou,,Caretta,,,3700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/11/2023,Nu
+8310,staicu costel,0792408988,,moldoveni,Ialomita,Client Vechi ( Completare ),,Wetterbest,,,10000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/11/2023,Nu
+8309,sandu,0721335167,,patru frati,Ialomita,Client Vechi ( Completare ),,Wetterbest,,,6194.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/11/2023,Nu
+8308,curt alexandru,0765406057,,sect 3,Bucuresti / Ilfov,Teren,,Wetterbest,,,20000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,30/11/2023,Nu
+8307,gheorghe mihai,0763016172,,sect 4,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,9300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/12/2023,Nu
+8306,nita viorel,0733703834,,posta,Bucuresti / Ilfov,Teren,,Bilka,,,12700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/12/2023,Nu
+8305,brica stefan,0720034163,,gligoveanu,Dambovita,Birou,,Zebra,,,6300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/12/2023,Nu
+8304,marysa,,,tunari,Bucuresti / Ilfov,Client Vechi ( Completare ),,"Bilka, Zebra",,,18000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/12/2023,Nu
+8303,rizea nicusor,0733654484,,sect 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,15500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/12/2023,Nu
+8302,esera residence,0736613149,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,2067.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/12/2023,Nu
+8301,stefan carol,,,sect 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,2761.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/12/2023,Nu
+8300,sorin ditoiu,,,tanganu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,19438.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+8299,Zica Alin,0721242062,,Magurele,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,110000.0,Pierdut,A ales lindab roca,2025-10-06,,,Nu,,,,Nu
+8298,Ilie Iordache,0787838730,,drumul cernica 120,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,,14940.0,Pierdut,a gasit cu 8700 lei oferta .,2025-10-06,,,Nu,,,,Nu
+8297,Boboc Cristian,0724394532,,str secerisului nr 22 sector 4,Bucuresti / Ilfov,Lead Caretta,,Caretta,,,17831.96,Pierdut,a avut recomandare de la lindab,2025-10-06,,,Nu,,,,Nu
+8296,Tiganasu Ionica,0767392966,,str marin paraschiv crivat(calarasi),Bucuresti / Ilfov,Teren,,Caretta,,,25264.0,Pierdut,nu are suma . nu doreste contract custodie . ne auzim mai la vara.,2025-10-06,,,Nu,,,,Nu
+8295,Silviu Mihaianu,0762175893,,str orhideelor magurele,Bucuresti / Ilfov,Birou,,"Wetterbest, Caretta",,,10024.45,Pierdut,A SEMNAT CU ALCINEVA,2025-10-06,,,Nu,,,,Nu
+8294,DL SORIN REGAL RESIDENCE,0765227286,,Magurele,Bucuresti / Ilfov,Teren,,Caretta,,,51000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8293,NUTU DANIEL,0741096197,,BERCENI,Bucuresti / Ilfov,Teren,,Wetterbest,,,22759.32,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8292,SANDU VASILE,0722296909,,VIDRA,Bucuresti / Ilfov,Pliant,,"Caretta , Wetterbest",,,33500.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8291,CALIN PETRE,0725836778,,FRUNZANESTI,Bucuresti / Ilfov,Pliant,,Caretta,,,20000.0,Pierdut,A TREIA SI DUPA PASTE EXECUTA LICRAREA SCHIMBA SI CAPRIORI LA CASA,2025-10-06,,,Nu,,,,Nu
+8290,mihalache vasile,0723410035,,FRUNZANESTI,Bucuresti / Ilfov,Pliant,,Caretta,,,8988.24,Pierdut,nu a rapsuns. nu a platit gazul de un an,2025-10-06,,,Nu,,,,Nu
+8289,FILIP GEORGETA,0722736476,,FRUNZANESTI,Bucuresti / Ilfov,Pliant,,Zebra,,,25000.0,Pierdut,asteapta rspuns de la banca,2025-10-06,,,Nu,,,,Nu
+8288,TARCA ILIE,0724552523,,FRUNZANESTI,Bucuresti / Ilfov,Pliant,,Zebra,,,,Pierdut,"interesat de gard, vrea masuratoare si oferta",2025-10-06,,,Nu,,,,Nu
+8287,Nae Mihai,0764441577,,com Fundeni,Bucuresti / Ilfov,Pliant,,Wetterbest,,,21497.23,Pierdut,Am sunat sotia . Nu a raspuns la telefondiscuta cu fratele pentru imprumut,2025-10-06,,,Nu,,,,Nu
+8286,Niculcea Victor,0733989259,,Plataresti Calarasi,Bucuresti / Ilfov,Pliant,,Caretta,,,15765.44,Pierdut,discuta cu sotia si revine cu tel,2025-10-06,,,Nu,,,,Nu
+8285,general dar &MAR,0755481636,,BERCENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,14000.0,Pierdut,i-am ofertat 14000 lei pe dimensiunile alea. De revenit 19.04,2025-10-06,,,Nu,,,,Nu
+8284,luchian gheorge,0723622122,,blv 1 mai berceni if,Bucuresti / Ilfov,Birou,,Caretta,,,20000.0,Pierdut,A FACUT CU ALCINEVA,2025-10-06,,,Nu,,,,Nu
+8283,jan doeobantu,0724147421,,plataresti,Bucuresti / Ilfov,Pliant,,Wetterbest,,,10680.36,Pierdut,nu poate rezolva cu banca . are credite si e in biroul de credit .,2025-10-06,,,Nu,,,,Nu
+8282,FLORIN VARGULICI,0723842423,,TANGANU,Bucuresti / Ilfov,Import CSV,,Caretta,,,29444.4,Pierdut,A GASIT ACELASI MATERIAL MAI IEFTIN,2025-10-06,,,Nu,,,,Nu
+8281,elite development,0766266160,,dobroiesti,Bucuresti / Ilfov,Import CSV,,Bilka,,,58000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8280,costea,0726470864,,voluntari,Bucuresti / Ilfov,Teren,,Wetterbest,,,14979.02,Pierdut,Nu raspunde.,2025-10-06,,,Nu,,,,Nu
+8279,edera residence,0799299600,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Zebra,,,54000.0,Pierdut,inca nu  a luat decizie,2025-10-06,,,Nu,,,,Nu
+8278,FLORIN 1,0771793553,,PANTELIMON,Bucuresti / Ilfov,Teren,,Wetterbest,,,12335.2,Pierdut,Recontactat . A zis ca,2025-10-06,,,Nu,,,,Nu
+8277,FLORIN 2,0727014424,,PANTELIMON,Bucuresti / Ilfov,Teren,,Wetterbest,,,19255.84,Pierdut,A avut oferta cu 13 500 de lei ...,2025-10-06,,,Nu,,,,Nu
+8276,marian cristea,0766300024,,lilieci,Bucuresti / Ilfov,Teren,,Wetterbest,,,20500.0,Pierdut,doretse doar tabla la promotie,2025-10-06,,,Nu,,,,Nu
+8275,Catalin,0768654422,,str mihai eminescu nr 26,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,13357.15,Pierdut,i-am trims oferta de pret actualizata,2025-10-06,,,Nu,,,,Nu
+8274,Gherghin cristina,0722627626,,str 23 august(otopeni),Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,1589.4,Pierdut,nu a raspuns la tel revin,2025-10-06,,,Nu,,,,Nu
+8273,Mihai lepus,0766455662,,str cetinei domnesti,Bucuresti / Ilfov,Telefon,,Wetterbest,,,118400.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8272,panait gigel,0740144456,,jlava,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,1397.0,Pierdut,scump,2025-10-06,,,Nu,,,,Nu
+8271,tanase gheorghe,0727842210,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,23000.0,Pierdut,bate palma cu tps,2025-10-06,,,Nu,,,,Nu
+8270,gabriel,0730076859,,popesti,Bucuresti / Ilfov,Birou,,Caretta,,,41953.08,Pierdut,a batut palma cu cei de la lindab,2025-10-06,,,Nu,,,,Nu
+8269,mihai avram,0722606636,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,243.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8268,florin,0721248635,,catelu,Bucuresti / Ilfov,Teren,,Caretta,,,29000.0,Pierdut,A luat de la TPS,2025-10-06,,,Nu,,,,Nu
+8267,Dan Cojocaru,0771453540,,Gostinari,Giurgiu,Import CSV,,,,,,Pierdut,nu se incadreaza in buget.are 20000 si este de schimbat tot acoperisul,2025-10-06,,,Nu,,,,Nu
+8266,mirel,0767769146,,fundeni,Bucuresti / Ilfov,Teren,,Wetterbest,,,38000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8265,laurentiu,0729565644,,frumusani,Calarasi,Import CSV,,,,,16217.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8264,rupita florin,0784900955,,adunati copaceni,Giurgiu,Birou,,Caretta,,,51000.0,Pierdut,nu raspunde,2025-10-06,,,Nu,,,,Nu
+8263,Marian Doicu,0730292123,,Glina,Bucuresti / Ilfov,Lead Caretta,,,,,15000.0,Pierdut,nu raspunde,2025-10-06,,,Nu,,,,Nu
+8262,ENCIU,0722159606,,GRUIU,Bucuresti / Ilfov,Pliant,,Caretta,,,,,de sunat dupa Paste,2025-10-06,,,Nu,,,,Nu
+8261,Miu Ilie,0732396753,,Vasilati str garii160,Bucuresti / Ilfov,Pliant,,Caretta,,,70000.0,,discuta cu fiu si revine interesat de fatada casetata. vorbeste cu fiul si revine,2025-10-06,,,Nu,,,,Nu
+8260,Radu Paul,0767161375,,Galbinasi,Bucuresti / Ilfov,Pliant,,,,,,,,2025-10-06,,,Nu,,,,Nu
+8259,George Nicolae,0786399397,,Vasilati,Bucuresti / Ilfov,Pliant,,Zebra,,,,,interesat de achizitie gard in rate,2025-10-06,,,Nu,,,,Nu
+8258,Gabriela Antonescu,0734096479,,Bucur / Obor,Bucuresti / Ilfov,Cerere oferta site,,Zebra,,,,,Contact redirectionat,2025-10-06,,,Nu,,,,Nu
+8257,ionica alexandru,0722880874,,berceni/vidra,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,,14000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/1/2024,Nu
+8256,marius iordache,0724312594,,clinceni,Bucuresti / Ilfov,Cerere oferta site,,Caretta,,,27000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/1/2024,Nu
+8255,adrian,0724132066,,alunis,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,,20000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8254,SIM PLAST,0726841388,,BERCENI,Bucuresti / Ilfov,Birou,,Wetterbest,,,20800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/2/2024,Nu
+8253,dea &mirela,0770518779,,sect 5,Bucuresti / Ilfov,Telefon,,Wetterbest,,,1536.7,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/2/2024,Nu
+8252,deea &miresla,0770518779,,com babaita,Teleorman,Telefon,,Wetterbest,,,7400.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/2/2024,Nu
+8251,nelu caravan,0787595842,,roata de jos,Giurgiu,Client Vechi ( Completare ),,Caretta,,,2400.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/4/2023,Nu
+8250,badiu,0726138527,,sect 5,Bucuresti / Ilfov,Birou,,Wetterbest,,8017,15435.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/3/2024,Nu
+8249,deira confort,0763012120,,sect 4,Bucuresti / Ilfov,Birou,,Caretta,,8004,24352.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/3/2024,Nu
+8248,rupita florin,33780358936,,adunati copaceni,Giurgiu,Client Vechi ( Completare ),,Caretta,,5008,58000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/3/2024,Nu
+8247,general dar&mar,0755481636,,berceni,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,8017,33000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/3/2024,Nu
+8246,catalin,0766497784,,glina,Bucuresti / Ilfov,Client Vechi ( Completare ),GARD,MX,MX 60,7016,9161.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/3/2024,Nu
+8245,valentin cristea,0766265980,,varteju,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,19800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/4/2024,Nu
+8244,dudau laurentiu,0755012780,,sect 4,Bucuresti / Ilfov,Telefon,,Caretta,,stejar auriu,2100.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/4/2024,Nu
+8243,basalau mihai,0767431073,,patru frati,Ialomita,Montatori / Colaboratori,,Caretta,,163,16261.7,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/4/2024,Nu
+8242,culcea gheorghe,0723299926,,cosereni,Ialomita,Client Vechi ( Completare ),,Wetterbest,,3011,4843.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/4/2024,Nu
+8241,viorel,0767390002,,cornetu,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,7024,72768.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8240,bucur  alexandra,0722697062,,ganeasa,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,7024,13600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/4/2024,Nu
+8239,luxurious body 4u srl,0766514114,,str maracineni  nr 25b,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,accesorii,8869.8,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/4/2024,Nu
+8238,anghel daniela,0734235846,,nucetu,Calarasi,Import CSV,,Caretta,,8004,8000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/4/2024,Nu
+8237,miroi irina,0722668343,,tudor gociu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,RAL 8017,2650.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/4/2024,Nu
+8236,dedu vasile,0733059943,,mitropolit nifon sect5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,3011,24000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/4/2024,Nu
+8235,sava ion,0721865650,,copaciu,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,8017,14592.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/4/2024,Nu
+8234,EDERA RESIDENCE,0799299600,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7024,23268.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/4/2024,Nu
+8233,PANAIT GIGEL,0740144456,,JILAVA,Bucuresti / Ilfov,Import CSV,,Caretta,,7016,796.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/4/2024,Nu
+8232,luxurious,0766514114,,bragadiru,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,9005,7500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/4/2024,Nu
+8231,encu catalin,0723345100,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8019,2770.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/4/2024,Nu
+8230,vlad marius,0727168114,,cretesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,20000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+8229,ionita necy=ulae,0760440413,,4 frati,Ialomita,Montatori / Colaboratori,,Caretta,,7024,6000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/5/2024,Nu
+8228,encu catalin,0723.3345100,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,8019,12304.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/5/2024,Nu
+8227,ariciu bogdan,0761440187,,bragadiru,Bucuresti / Ilfov,Birou,,Caretta,,7024,13000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/5/2024,Nu
+8226,eftime ion,0749114838,,vidra,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7016,10000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/5/2024,Nu
+8225,pana marian,0760365982,,moldoveni,Ialomita,Client Vechi ( Completare ),,Caretta,,905,25000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/5/2024,Nu
+8224,stoean mircea,0766486639,,sect 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,4170.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/5/2024,Nu
+8223,stroe cristian,0764273963,,gorneni,Giurgiu,Import CSV,,Caretta,,8019,6170.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/4/2024,Nu
+8222,gabriel dorobantu,0721781643,,vidra,Bucuresti / Ilfov,Client Vechi ( Completare ),GARD,MX,MX 60,8017,3730.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/5/2024,Nu
+8221,chirieciu sandu,0726371128,,magurele,Bucuresti / Ilfov,Birou,GARD,MX,MX 60,3005,2600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/5/2024,Nu
+8220,ilie maricel,0765492743,,berceni,Bucuresti / Ilfov,Teren,GARD,MX,MX 60,7016,20000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/5/2024,Nu
+8219,baloiu ioana,0722242580,,mihailesti,Bucuresti / Ilfov,Import CSV,,Caretta,,9005,4000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,3/6/2024,Nu
+8218,petre nitu,0726845755,,domnesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7024,33000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/5/2024,Nu
+8217,VLAD COSTEL,0766506218,,BERCENI,Bucuresti / Ilfov,Client Vechi ( Completare ),GARD,MX,MX 60,8017,3200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,31/5/2024,Nu
+8216,PETCU DANIEL,0722440199,,BUCURESTI SECT 5,Bucuresti / Ilfov,Birou,,Wetterbest,,8017,6000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,31/5/2024,Nu
+8215,teleanu,0766516335,,patru frati,Ialomita,Client Vechi ( Completare ),,Caretta,,7024,18500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/6/2023,Nu
+8214,AVE MUTUAL,0765492743,,BERCENI,Bucuresti / Ilfov,Import CSV,GARD,MX,MX 60,7016,9900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/6/2024,Nu
+8213,RUSU MARCEL,,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8017,13000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/6/2024,Nu
+8212,VLAD COSTEL,0766506563,,BERCENI,Bucuresti / Ilfov,Import CSV,GARD,MX,MX 60,8017,1900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/6/2024,Nu
+8211,CRESTEZ GEORGE,0724071992,,BERCENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,2916.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/6/2024,Nu
+8210,ABT SERVICE,0765540262,,BOLINTIN,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,RAL 8017,3900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/6/2024,Nu
+8209,VOICULESCU,0769662537,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8019,4512.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/6/2024,Nu
+8208,VOICULESCU,0769662357,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8019,10500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/6/2024,Nu
+8207,FLORINEL ANDREI,0736466818,,VADU LAT,Giurgiu,Client Vechi ( Completare ),,Wetterbest,,7016,12200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/6/2024,Nu
+8206,TANASE TRAIAN,0723012527,,CAMINEASCA,Giurgiu,Birou,,Caretta,,7016,7469.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/6/2024,Nu
+8205,STELIAN ALEXANDRU,0725223230,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,RAL,2900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/6/2024,Nu
+8204,STOICA ALEXANDRU,0725223230,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,RAL 274,28000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/6/2024,Nu
+8203,serban mihael,0766650092,,DUMITRANA,Bucuresti / Ilfov,Teren,,Caretta,,7016,17000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/7/2024,Nu
+8202,VESELA IONUT,0745987959,,SECT5,Bucuresti / Ilfov,Teren,,Caretta,,RAL 7016,19000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/7/2024,Nu
+8201,ROBY &HAUSE,0727696563,,DOMNESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,RAL 716,5900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/6/2024,Nu
+8200,GENERAL DAR & MAR,0755481636,,BERCENI,Bucuresti / Ilfov,Teren,,Bilka,,7024,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/7/2024,Nu
+8199,IONESCU LEONARD,0766456876,,BOLINTIN,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,RAL,2863.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,3/7/2024,Nu
+8198,PREVFLOR,0743436666,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,RAL,11749.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/7/2024,Nu
+8197,TOP BETON,,,CORNETU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,35000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/7/2024,Nu
+8196,basalau mihai,0760440413,,4 frati,Ialomita,Montatori / Colaboratori,,Caretta,,8017,9600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/7/2024,Nu
+8195,micica,,,afumati,Bucuresti / Ilfov,Montatori / Colaboratori,,Bilka,,7024,26630.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/7/2024,Nu
+8194,ionut toader,0727372723,,bragadiru,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,RAL,3000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/7/2024,Nu
+8193,STOEAN MIRCEA,0766486639,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),GARD,MX,MX 25 DUO,8017,6600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,30/7/2024,Nu
+8192,SORIN PERIANU,0724635346,,SECT4,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8019,2360.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/7/2024,Nu
+8191,STRADA LUX,0744500070,,,Prahova,Client Vechi ( Completare ),,Bilka,,RAL 3005,12000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/8/2024,Nu
+8190,RAZVAN MORARU,0744355725,,SECT 6,Bucuresti / Ilfov,Birou,GARD,MX,MC 105,8019,14850.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+8189,RAZVAN GHEORGHE,0766431700,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8017,9400.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/8/2024,Nu
+8188,ANGHELESCU ION,0732394158,,SECT5,Bucuresti / Ilfov,Birou,,Caretta,,3005,11525.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/8/2024,Nu
+8187,GIOLEA VALENTIN,0727210298,,CLINCENI,Bucuresti / Ilfov,Birou,,Caretta,,7016,22500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/8/2024,Nu
+8186,LAUTARESCU DUMITRU,0730788706,,SECT5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,3005,15550.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/8/2024,Nu
+8185,MAU RESIDECE,0720739181,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,16000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/8/2024,Nu
+8184,chinde mariana,0726219081,,teghes,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8019,12660.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/8/2024,Nu
+8183,raducu iris,0721208438,,sect3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7016,13852.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/8/2024,Nu
+8182,visan mihaela,0730575361,,sect 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,7300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/8/2024,Nu
+8181,D&D CELIFLOR,0765628245,,domnesti,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Wetterbest,,7016,8200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/8/2024,Nu
+8180,remus,0755841871,,corbeanca,Bucuresti / Ilfov,Telefon,,Wetterbest,,7016,12000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/8/2024,Nu
+8179,itsec,0722394436,,prunaru,Teleorman,Montatori / Colaboratori,,Caretta,,6020,20300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/8/2024,Nu
+8178,marin iulian,0760440413,,4 ftrati,Ialomita,Montatori / Colaboratori,,Wetterbest,,8017,1150.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/8/2024,Nu
+8177,budulache victor,0771348595,,palanca,Giurgiu,Client Vechi ( Completare ),,Caretta,,accesorii,3200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/8/2024,Nu
+8176,valentin preda,0743436666,,bucuresti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,8000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/8/2024,Nu
+8175,luca mihai,0748109900,,cornetu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,11646.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/8/2024,Nu
+8174,elite  development,0765266160,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,31000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/8/2024,Nu
+8173,litza,0727969563,,domnesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,RAL,2600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/8/2024,Nu
+8172,CAERTA CONSTRUCT SRL,0721579319,,SILISTEA SNAGOVULUI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/9/2024,Nu
+8171,GENERAL DAR &MAR,0755481636,,BERCENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,9321.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/9/2024,Nu
+8170,ALBEI SILVIU,0722669408,,CAMINEASCA,Giurgiu,Telefon,,Caretta,,9005,4150.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/9/2024,Nu
+8169,GEORGE NEAGU,0722878837,,BANESTI,Giurgiu,Client Vechi ( Completare ),,Caretta,,7016,16000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/9/2024,Nu
+8168,ADVANCE TEAN,0724881701,,OTOPENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,13652.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/9/2024,Nu
+8167,ADVANCE TEAM,0724881701,,OTOPENI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,9002,2182.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/9/2024,Nu
+8166,FLOREA EUGEN,0745017158,,COLIBASI,Bucuresti / Ilfov,Birou,,Caretta,,8017,21500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/9/2024,Nu
+8165,BCC CONSTRUCTII DEZVOLTARE,0741907446,,SAFTICA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,18600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/9/2024,Nu
+8164,ALEX,0769919490,,DOMNESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7016,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/9/2024,Nu
+8163,TUDORAN DANIEL,0734501335,,CAP ION BURLACU,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,3005,3316.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/9/2024,Nu
+8162,ristea victor,0724537098,,pantelimon,Bucuresti / Ilfov,Telefon,,Wetterbest,,7016,18000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/9/2024,Nu
+8161,georgescu liliana,0729044924,,cornetu,Bucuresti / Ilfov,Montatori / Colaboratori,,Wetterbest,,7016,2926.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/9/2024,Nu
+8160,elite development,0765266160,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7024,6449.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/9/2024,Nu
+8159,ASOCIATIA DE PROPRIETARI DRUMUL VALEA CRICOVULUI,0723190754,,,Bucuresti / Ilfov,Telefon,,MX,,RAL,3000.0,Ofertat,"OFERTA TRANSMISA , DORESTE SA FOLOSEASCA PT O PARCARE SUBTERANA MX 25",2025-10-06,,,Nu,,,,Nu
+8158,BUCUR CLAUDIU,0763630923,,STR FORTULUI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7016,22000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/9/2024,Nu
+8157,MANDA ALEXANDRINA,0755650079,,STR HERCULE,Bucuresti / Ilfov,Telefon,,Wetterbest,,7016,12000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/9/2024,Nu
+8156,CHIRITA ALINA,0763790170,,STR CAP GRIGORE PETRE,Bucuresti / Ilfov,Lead Caretta,,Caretta,,8017,25000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,30/9/2024,Nu
+8155,GHITA VASILE,0724388283,,TEGHES,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8004,3900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/9/2024,Nu
+8154,navi expert,0720739181,,str orhideei,Giurgiu,Client Vechi ( Completare ),,Caretta,,8004,12044.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/10/2024,Nu
+8153,marin luminita,0768006284,,cornetu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,3005,11704.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/10/2024,Nu
+8152,voicu george,0746762097,,str franceza,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,8017,5000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/10/2024,Nu
+8151,eremia vasile,0769146292,,str principala nr 30,Giurgiu,Birou,,Wetterbest,,8019,13000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/10/2024,Nu
+8150,petrache mirela virginia,0726884861,,str principala 119,Dambovita,Client Vechi ( Completare ),,Caretta,,6020,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/10/2024,Nu
+8149,ciupitu florin,0744357962,,cornetu,Bucuresti / Ilfov,Birou,,Caretta,,8017,4000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/10/2024,Nu
+8148,manolache adrian,0726092047,,pantelimon,Bucuresti / Ilfov,Birou,,Caretta,,7016,23000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/10/2024,Nu
+8147,pena marian,0784916961,,gorneni,Giurgiu,Client Vechi ( Completare ),,Bilka,,7024,21500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/10/2024,Nu
+8146,elite development,0765266616,,dobroiesti,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,2975.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/10/2024,Nu
+8145,luca mihai,,,cornetu,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,7016,7785.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/10/2024,Nu
+8144,popescu oana,0726095410,,afumati,Bucuresti / Ilfov,Birou,,Caretta,,6020,23000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/10/2024,Nu
+8143,popescu oana,0726609410,,afumati,Bucuresti / Ilfov,Birou,,Caretta,,6020,4000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/10/2024,Nu
+8142,calin valentin,0773866425,,teghes,Bucuresti / Ilfov,Teren,,Wetterbest,,8019,18736.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/10/2024,Nu
+8141,asociatia de propietari drumul valea oltului,0722452318,,sect 6,Bucuresti / Ilfov,Birou,GARD,MX,MX 25,8017,2735.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/10/2024,Nu
+8140,iudith,0769653260,,moara vlasiei,Bucuresti / Ilfov,Cerere oferta site,,Wetterbest,,7016,24900.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8139,STANCIU ELENA,0763352316,,SCOARTEI 31,Bucuresti / Ilfov,Telefon,,Wetterbest,,RAL 7016 MAT,12700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/10/2024,Nu
+8138,CRETU IOANA,0734376575,,TOPORASI NR 32,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8019,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/11/2024,Nu
+8137,SOLOMON GEORGETA,0727292982,,CLEJANI,Giurgiu,Client Vechi ( Completare ),,Caretta,,5010,13500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/11/2024,Nu
+8136,DUMITRU STEFAN,0771405385,,STR RUPEA NR 7,Bucuresti / Ilfov,Montatori / Colaboratori,,Caretta,,7016,9950.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/11/2024,Nu
+8135,MIHALCEA ADRIAN,0767108089,,LUNGULETU,Dambovita,Telefon,,Caretta,,8017,21800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/11/2024,Nu
+8134,BUSUIOC ADRIANA,0727377160,,BISERICA ALEXE NR 28,Bucuresti / Ilfov,Birou,,Caretta,,7024,24000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/11/2024,Nu
+8133,RADU ALEXANDRU,0756028649,,ARMISTITIULUI,Bucuresti / Ilfov,Birou,,Caretta,,8019,24376.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,25/11/2024,Nu
+8132,POPESCU STEFAN,0734162913,,ZORILE,Giurgiu,Client Vechi ( Completare ),,Caretta,,9005,18000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/11/2024,Nu
+8131,INCREASE,0722416611,,1 decembrie,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,11204.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,5/11/2024,Nu
+8130,SALI SORIN,0763472388,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,7000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/12/2024,Nu
+8129,ATOMEI ANTON,0757648240,,SECT 3,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,15000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/12/2024,Nu
+8128,MOCANU REBECA,0762938805,,GLINA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,7016,14750.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/12/2024,Nu
+8127,ADRIAN MANESCU,0731039946,,CIOROGARLA,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017,2000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/12/2024,Nu
+8126,MORARU RAZVAN,7221439426,,SECT 6,Bucuresti / Ilfov,Client Vechi ( Completare ),GARD,MX,MC 105,8019,2600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/12/2024,Nu
+8125,REMUS,0755841871,,BALOTESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,7016,10600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/12/2024,Nu
+8124,ASICI BENAMINA,0723251976,,BRAGADIRU,Bucuresti / Ilfov,Birou,,Wetterbest,,7016,1492.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/12/2024,Nu
+8123,NARBIG CONSTRUCT,0766428702,,VOLUNTARI,Bucuresti / Ilfov,Client Vechi ( Completare ),,Bilka,,7016,23800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/12/2024,Nu
+8122,YANIEV,0755481636,,CALEA VITAN,Bucuresti / Ilfov,Client Vechi ( Completare ),,Wetterbest,,5010,1777.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/12/2024,Nu
+8121,APRODU GICA,0770898480,,DOMNESTI,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,7016,16000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/1/2025,Nu
+8120,MAO DEVELOPMENT,0720739903,,BRAGADIRU,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,7016,3126.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/1/2025,Nu
+8119,VLAD BASARAB,0726195544,,STR PLEVNEI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,RAL,11798.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8118,ROBERT DUMITRESCU,0764836253,,STR CAPORALULUI NR 2,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,7016,15000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/1/2025,Nu
+8117,ATOMEI ANTON,0743707115,,STR NITA ELINESCU,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,8017,432.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/1/2025,Nu
+8116,CALIN GHEORGHE,0740316356,,STR ELEGIEI,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,7016,1033.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/1/2025,Nu
+8115,general dar & mar,0755481636,,berceni,Bucuresti / Ilfov,Import CSV,SISTEM PLUVIAL,Wetterbest,Clasic,RAL,1250.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/1/2025,Nu
+8114,tudor cristian,0726016515,,bolintin,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Clasic,8019,38000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+8113,elena gubernat,0726243396,,sect 3,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Click,RAL,14500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/1/2025,Nu
+8112,neacsu danut,0787298359,,cosereni,Ialomita,Recomandare,ACOPERIS,Wetterbest,Clasic,RAL,18000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8111,ALEXE FLORIN,0722441442,,SECT 4,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Daily,8017,6500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/1/2025,Nu
+8110,CONSTRUCTR,0723125420,,SECT 5,Bucuresti / Ilfov,Telefon,ACOPERIS,Caretta,Daily,7024,12000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8109,mao development,0720739181,,bragadiru,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,RAL,16000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,31/1/2025,Nu
+8108,mihaela,0725478202,,bragadiru,Bucuresti / Ilfov,Teren,ACOPERIS,Wetterbest,Clasic,RAL,14000.0,Ofertat,revine cu telefon luni,2025-10-06,,,Nu,,,,Nu
+8107,increase development,0722461611,,1decembrie,Bucuresti / Ilfov,Montatori / Colaboratori,ELEMENTE SPECIALE,MetallicGroup,,7016,9143.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/3/2025,Nu
+8106,OLTEANU MARIA,0721472770,,MIHAILESTI,Bucuresti / Ilfov,Birou,ACOPERIS,Caretta,Daily,8017,30000.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8105,BELL CONSTRUCTII SRL,0724207035,,DOMNESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8019,19500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,6/2/2025,Nu
+8104,DANALACHE MIHAI,0720438870,,buturugeni,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Clasic,7016,14500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/2/2025,Nu
+8103,CIUPITU MAGDALENA,0722616654,,DOBROIESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8019,27000.0,Custodie,,2025-10-06,,,Nu,,,28/2/2025,Nu
+8102,luxury body 4u,0766514114,,bragadiru,Bucuresti / Ilfov,Recomandare,"ACOPERIS, FERESTRE MANSARDA",Caretta,Canto,9005,14200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/2/2025,Nu
+8101,intern activ,0743333411,,sect 5,Bucuresti / Ilfov,Birou,ACOPERIS,Wetterbest,Cutata,RAL 7016,2350.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/2/2025,Nu
+8100,stancu adrian,0720470240,,1 decembrie,Bucuresti / Ilfov,Cerere oferta site,ACOPERIS,Caretta,Nobel,7016,10500.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8099,HARAGA IULIANA,0769247950,,DRIDU,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Canto,8017,5250.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,3/3/2025,Nu
+8098,LUIZA,0765833074,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,RAL,12000.0,Vandut,nu raspunde la apel,2025-10-06,2025-10-06,,Nu,,,20/5/2025,Nu
+8097,mirea rada,0766688232,,patru frati,Ialomita,Recomandare,ACOPERIS,Caretta,Daily,RAL,13500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/3/2025,Nu
+8096,Codrin,0740048100,,sect 1,Bucuresti / Ilfov,Telefon,ACOPERIS,Caretta,Daily,8019,17000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8095,marius duna,0728541201,,sect 5,Bucuresti / Ilfov,Teren,ACOPERIS,Caretta,Nobel,7016,30700.0,Pierdut,,2025-10-06,,,Nu,,,,Nu
+8094,general dar &mar,0755481636,,berceni,Bucuresti / Ilfov,Recomandare,GARD,MX,MX 25,7016,15000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8093,Preda Dumitru Catalin,0763757440,,Mihailesti,Giurgiu,Recomandare,ACOPERIS,Caretta,Bello,8019,27000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,13/3/2025,Nu
+8092,CEZAR MUNTEANU,0745538162,,GLINA,Bucuresti / Ilfov,Cerere oferta site,GARD,MX,MX 60,8017,6577.0,Vandut,,2025-10-06,2025-10-06,,Nu,,33.58,13/3/2025,Nu
+8091,GICA,0766711790,,SECT5,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,8017,11000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8090,NICULAE ALEXANDRU,0785125305,,BRAGADIRU,Bucuresti / Ilfov,Recomandare,ELEMENTE SPECIALE,Wetterbest,Cutata,3005,4500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/3/2025,Nu
+8089,REGEP BOGDAN,0721938682,,SECT 4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8017,6268.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/3/2025,Nu
+8088,DRAGOMIR STANGA,0720632472,,BUTIMANU,Dambovita,Recomandare,ACOPERIS,Caretta,Daily,8017,3900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,10/4/2025,Nu
+8087,LAURENTIU,0761613790,,VIDELE,Teleorman,Telefon,ACOPERIS,Caretta,Daily,7016,30000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8086,SARBU ROMICA,0721303750,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Canto,7016,1666.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/3/2025,Nu
+8085,ionescu catalin,0743030954,,domnesti,Bucuresti / Ilfov,Pliant,GARD,MX,MX 25,7016,34000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8084,NEMES OVIDIU GEORGE,0755570653,,OTOPENI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Canto,7016,54000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,20/3/2025,Nu
+8083,MAO DEVELOPER,0720739181,,BRAGADIRU,Bucuresti / Ilfov,Montatori / Colaboratori,GARD,MX,MX 25,7016,4270.0,Vandut,,2025-10-06,2025-10-06,,Nu,,20.27,24/3/2025,Nu
+8082,PREDA STEFAN,0723195148,,MIHAILESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,8000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8081,PAVELESCU IRINEL,0740215178,,SECT3,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,7016,15000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8080,CATALIN,0763757440,,MIHAILESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8019,17000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8079,MARIAN,0729809765,,MIHAILESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,28000.0,Ofertat,dupa 10 mai,2025-10-06,,,Nu,,,,Nu
+8078,COSTEL,0757507011,,DOBROIESTI,Bucuresti / Ilfov,Montatori / Colaboratori,ELEMENTE SPECIALE,Wetterbest,,8019,320.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/3/2025,Nu
+8077,GEORGE STAN,0766527798,,23 august,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8019,27000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/4/2025,Nu
+8076,dinu dorel,0769441996,,DARASTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,9000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/4/2025,Nu
+8075,CRISTEA MARIANA,0799298862,,GRADINARI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,7016,28333.0,Vandut,"achita avans vineri, 11.04.2025",2025-10-06,2025-10-06,,Nu,,,14/4/2025,Nu
+8074,DINU,0762321190,,DARASTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,14750.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/4/2025,Nu
+8073,CHIRU CONSTANTIN,0722374646,,BUCURESTI SECT 5,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,3011,5700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,31/3/2025,Nu
+8072,DRAGOS BEBELASA,0730157618,,CORNETU,Bucuresti / Ilfov,Recomandare,SISTEM PLUVIAL,Caretta,,8019,2711.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,4/4/2025,Nu
+8071,preda marius,0799298862,,DOMNESTI,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,3011,11900.0,Vandut,termina zidaria,2025-10-06,2025-10-06,,Nu,,,8/5/2025,Nu
+8070,RADOX SRL,0724396715,,DOMNESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Cutata,7001,20300.0,Vandut,astept raspuns,2025-10-06,2025-10-06,,Nu,,,16/4/2025,Nu
+8069,ADRIAN ALEXANDRESCU,0758118118,,MAGURELE,Bucuresti / Ilfov,Telefon,ELEMENTE SPECIALE,Wetterbest,,9005,6000.0,Ofertat,trimte datele,2025-10-06,,,Nu,,,,Nu
+8068,MIHAI IANCU,0728800531,,BERCENI,Bucuresti / Ilfov,Recomandare,GARD,MX,MX 60,7016,21232.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8067,NELU DRAGHICI,0763965839,,BUCURESTI,Bucuresti / Ilfov,Birou,GARD,MX,MX 25 DUO,8017,4753.0,Vandut,,2025-10-06,2025-10-06,,Nu,,27.82,8/4/2025,Nu
+8066,catalin predoiu,0733988959,,mogosoaia,Bucuresti / Ilfov,Teren,ACOPERIS,Caretta,Canto,7016,4317.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,8/4/2025,Nu
+8065,gabriel sivu,0724396715,,fierbinti,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,7024,5600.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8064,dyl construct,0769240028,,domnesti,Bucuresti / Ilfov,Telefon,ACOPERIS,Bilka,Balcanic,7016,10000.0,Vandut,doreste masuratoare azi 09.04.dupa ora 17,2025-10-06,2025-10-06,,Nu,,,9/4/2025,Nu
+8063,costel,0757507011,,dobroiesti,Bucuresti / Ilfov,Montatori / Colaboratori,ELEMENTE SPECIALE,Caretta,,8019,880.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,9/4/2025,Nu
+8062,Dragna Catalin,0762162096,,Titu,Dambovita,TikTok Campanie,,,,RAL,,Pierdut,a rezolva cu invelitoarea,2025-10-06,,,Nu,,,,Nu
+8061,Cernica Cornel,0745094252,,Snagov,Bucuresti / Ilfov,TikTok Campanie,,,,RAL,,,,2025-10-06,,,Nu,,,,Nu
+8060,cristi copaci,0767103777,,domnesti,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,8017,6000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8059,yrinel,0766328318,,valcea,Bucuresti / Ilfov,Montatori / Colaboratori,GARD,MX,MX 60,8017,6000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8058,COSTAND MARILENA,0766751355,,DOBRENI,Bucuresti / Ilfov,Birou,ACOPERIS,Bilka,Clasic,8019,10500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/4/2025,Nu
+8057,muscalu gabriel,0723265343,,darasti,Bucuresti / Ilfov,Birou,ACOPERIS,Caretta,Daily,8017,30000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8056,elena chirilici,0722516147,,dobroiest,Bucuresti / Ilfov,Facebook,GARD,MX,MX 25,stejar auriu,7425.0,Pierdut,a gasit cu 27000 sistem complet cu montaj sipca cuie,2025-10-06,,,Nu,,,,Nu
+8055,ionel fleican,0765515474,,deobroiesti,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,7024,7000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/4/2025,Nu
+8054,SAMES TUDOREL,0723494830,,DOBROIESTI,Bucuresti / Ilfov,Montatori / Colaboratori,SAGEAC,Wetterbest,Cutata,7016,4200.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/4/2025,Nu
+8053,SAINOR DTA,0723494830,,DOBROIEST,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,7016,24150.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/5/2025,Nu
+8052,grigori danut,0765551198,,chiselet,Calarasi,Recomandare,ACOPERIS,Caretta,Daily,8004,12000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/4/2025,Nu
+8051,SC PRO NEXT BUSINES,0723877666,,bucsani,Giurgiu,Recomandare,ACOPERIS,Bilka,Click,7016,17973.0,Vandut,are oerta mai mica iam facut o contra oferta si revine maine cu un tel,2025-10-06,2025-10-06,,Nu,,,29/4/2025,Nu
+8050,daria,0720434648,,berceni,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Click,8019,11800.0,Ofertat,inca nu este finalizat acoperisul mai dureaza 2saptamani,2025-10-06,,,Nu,,,30/4/2025,Nu
+8049,florin,0723195767,,bolintin,Bucuresti / Ilfov,Cerere oferta site,GARD,MX,MX 25,7016,,Ofertat,inca nu este hotarat,2025-10-06,,,Nu,,,,Nu
+8048,stanca vasile,0728493619,,bolintin,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,8017,28500.0,Ofertat,este plecat cu o lucrare in spania revine in 3 saptamani,2025-10-06,,,Nu,,,,Nu
+8047,ionut fratea,0755949188,,buturugeni,Bucuresti / Ilfov,Telefon,ACOPERIS,Bilka,Balcanic,7016,28000.0,Ofertat,inca nu este hotarat de mode,2025-10-06,,,Nu,,,,Nu
+8046,costache adrian,0728381753,,posta,Bucuresti / Ilfov,Lead Caretta,ACOPERIS,Wetterbest,Clasic,7016,28900.0,Ofertat,deocamdat nu se incadreaza in buget,2025-10-06,,,Nu,,,,Nu
+8045,toma marian,0760659188,,cosereni,Bucuresti / Ilfov,Recomandare,ACOPERIS,Bilka,Clasic,7016,19800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/4/2025,Nu
+8044,valy construct,0747776691,,bragadiru,Bucuresti / Ilfov,Birou,ACOPERIS,Wetterbest,Canto,7016,5900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/4/2025,Nu
+8043,mao developer,0720739181,,bragadiru,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,7016,7245.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/4/2025,Nu
+8042,toader georgica,0736761928,,sect 5,Bucuresti / Ilfov,Cerere oferta site,ACOPERIS,Caretta,Clasic,RAL,11230.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,7/5/2025,Nu
+8041,panait ion,0739753190,,dobroiesti,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Caretta,Clasic,7016,32600.0,Vandut,pe 19 da avans,2025-10-06,2025-10-06,,Nu,,,26/5/2025,Nu
+8040,BASALAU MIHAI,0760440413,,4 FRATI,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,8017,4300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/5/2025,Nu
+8039,STANCU ADRIAN,0723692567,,FUMUSANI,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Nobel,8019,5418.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/5/2025,Nu
+8038,AGRI COSAD SRL,0784557525,,GIULESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,7016,35762.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/5/2025,Nu
+8037,MIHAI IONEL,0720696658,,CRIVAT,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Wetterbest,Clasic,8017,11000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/5/2025,Nu
+8036,VALENTIN PREDA,0743436666,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),SISTEM PLUVIAL,Wetterbest,Clasic,8019,330.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,12/5/2025,Nu
+8035,EDUARD MARIAN,0785961713,,CLINCENI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Gladiator,8017,15000.0,Pierdut,a rezolvat cu altcineva,2025-10-06,,,Nu,,,,Nu
+8034,ENCIU VLAD,0744380807,,DOMNESTI,Bucuresti / Ilfov,Birou,GARD,MX,MX 60 DUO,8017,8573.0,Vandut,,2025-10-06,2025-10-06,,Nu,,41.15,15/5/2025,Nu
+8033,VIOREL FLOREA,0751891547,,BREAZA,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Click,7016,31000.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+8032,MARIAN DUMiTRU,0720518072,,DOMNESTI,Bucuresti / Ilfov,Recomandare,GARD,Wetterbest,Clasic,RAL 8019,22000.0,Vandut,"avans si contract facut de radu, a incasat 14.000 ron, contract marian, 50-50 comisionul de la contract si montaj, asa i-am promis lui radu, ii mai dau si 100 de lei bonus pentru ajutor ca s-a ocupat de clientul meu cat timp eu eram la campionatul national de pescuit",2025-10-06,2025-10-06,,Nu,,,22/5/2025,Nu
+8031,FLORIN DICU,0786872178,,MIHILESTI,Bucuresti / Ilfov,Birou,GARD,Caretta,Daily,8019,21000.0,Pierdut,a gasit cu 25000 sistem complet manopera sipca cuie,2025-10-06,,,Nu,,,,Nu
+8030,PREDA MARIUS,0724172542,,DOMNESTI,Bucuresti / Ilfov,Montatori / Colaboratori,ACOPERIS,Wetterbest,Clasic,3005,11900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/5/2025,Nu
+8029,MARES SORIN,0768415841,,STR PAUSA,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,RAL,17000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,27/5/2025,Nu
+8028,SARBU MARIAN,0721833159,,DIMIENI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Nobel,RAL,20500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/5/2025,Nu
+8027,MIRELA GHERGHISOR,0716170334,,PATRU FRATI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,3011,22570.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,30/5/2025,Nu
+8026,STOICA MARINEL,0722850011,,MOGOSOAIA,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Cutata,7016,4500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/5/2025,Nu
+8025,MARIAN DUMITRU,0720518072,,DOMNESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Cutata,RAL,2600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/5/2025,Nu
+8024,MAU PREMIUM DEVELOPMENT,0720739181,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),,MX,MX 25,7016,2908.0,Vandut,,2025-10-06,2025-10-06,,Nu,,13.79,11/6/2025,Nu
+8023,MAO PREMIUM DEVELOPER,0720739181,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Wetterbest,Clasic,7026,7245.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/6/2025,Nu
+8022,MARIN STEFAN,0724492740,,4 FRATI,Ialomita,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,8017,21788.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/6/2025,Nu
+8021,IOAN CATALIN,0722648635,,TEGHES,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Canto,8004,16973.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/6/2025,Nu
+8020,NICOLAE DANIEL,0768682979,,4 FRATI,Ialomita,Recomandare,ACOPERIS,Caretta,Daily,9005,25665.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/6/2025,Nu
+8019,IONUT HARLESTEANU,0724943472,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Daily,8019,4930.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/6/2025,Nu
+8018,PREDUNA VALENTIN,0765483945,,SECT 4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,7016,18000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/6/2025,Nu
+8017,GHERGUT COSTEL,0722977144,,SECT 1,Bucuresti / Ilfov,Birou,ACOPERIS,Caretta,Canto,7016,3716.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/6/2025,Nu
+8016,FLORIN BACU,0722265930,,SECT5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8019,3250.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/6/2025,Nu
+8015,giolea ion,0722627875,,cosereni,Ialomita,Recomandare,ACOPERIS,Caretta,Daily,7016,53000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/6/2025,Nu
+8014,spyder,0764273963,,gorneni,Giurgiu,Recomandare,ACOPERIS,Caretta,Daily,8019,12800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/6/2025,Nu
+8013,CIUPITU,0722616654,,DOBROIESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Daily,8019,680.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/6/2025,Nu
+8012,RADOX STILE,0722626770,,FIERBINTI,Ialomita,Recomandare,ACOPERIS,Wetterbest,Clasic,7016,12000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/6/2025,Nu
+8011,general dar,0755481636,,berceni,Bucuresti / Ilfov,PARTENER,ACOPERIS,Caretta,Canto,7016,21500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/6/2025,Nu
+8010,nemes,0755570653,,otopeni,Bucuresti / Ilfov,Recomandare,ELEMENTE SPECIALE,Caretta,,7016,6800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/6/2025,Nu
+8009,URLEA AUREL,0723049172,,SECT 4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Canto,8017,7000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,25/6/2025,Nu
+8008,GEORGE BADULESCU,,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,18500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/6/2025,Nu
+8007,CORNEL BELU,0724207035,,DOMNESTI,Bucuresti / Ilfov,Client Vechi ( Completare ),SAGEAC,Wetterbest,,8019,2127.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,30/6/2025,Nu
+8006,CERNE ZENCO,0721215248,,CORNETU,Bucuresti / Ilfov,Birou,GARD,MX,MC 75,7016,2937.0,Vandut,,2025-10-06,2025-10-06,,Nu,,18.51,15/7/2025,Nu
+8005,FRIENDLY,0721614694,,BRAGADIRU,Bucuresti / Ilfov,Birou,GARD,MX,MX 60 DUO,8017,2321.0,Vandut,,2025-10-06,2025-10-06,,Nu,,13.64,14/7/2025,Nu
+8004,MIVAL SRL,0724061368,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8017,12127.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/7/2025,Nu
+8003,GIUSCA FLORIN,0740112376,,MAGURELE,Bucuresti / Ilfov,Teren,GARD,Caretta,MX 25,7016,11510.0,Vandut,,2025-10-06,2025-10-06,,Nu,,32.8,15/7/2025,Nu
+8002,GRIGORI DANUT,0765551198,,KHISELET,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,8004,3948.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/7/2025,Nu
+8001,STOEAN MIRCEA,0764486639,,SECT 5,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,8017,4707.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/7/2025,Nu
+8000,ALBES MARIUS,0722156525,,CIOROGARLA,Bucuresti / Ilfov,Recomandare,GARD,Caretta,MX 25,8019,5930.0,Vandut,,2025-10-06,2025-10-06,,Nu,,30.31,14/7/2025,Nu
+7999,DAN DANIEL,0733342513,,SECT 3,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Canto,8019,11600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/7/2025,Nu
+7998,VAL CONSTRUCT,0763108746,,BRAGADIRU,Bucuresti / Ilfov,Birou,GARD,MX,MX 60,8017,10920.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/7/2025,Nu
+7997,MAO DEVELOPMENT,0720739181,,BRAGADIRU,Bucuresti / Ilfov,PARTENER,ACOPERIS,Wetterbest,Clasic,RAL,2480.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/7/2025,Nu
+7996,barbu marius,0723227078,,sect 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,12300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/7/2025,Nu
+7995,elit developer,0765266160,,dobroiesti,Bucuresti / Ilfov,PARTENER,ACOPERIS,Wetterbest,Clasic,7016,36382.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/7/2025,Nu
+7994,POPA MARIANA,0724733994,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8017,5874.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,22/7/2025,Nu
+7993,BALASI FILIP ANDREI,0764836253,,BRAGADIRU,Bucuresti / Ilfov,PARTENER,ACOPERIS,Caretta,Daily,7016,15855.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/7/2025,Nu
+7992,NEXT LEVEL,0732209315,,BRAGADIRU,Bucuresti / Ilfov,Birou,ACOPERIS,Caretta,Daily,7016,5176.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/7/2025,Nu
+7991,POPA MIHAELA ALEXANDRA,0723282155,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,9005,22000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,25/7/2025,Nu
+7990,MARIAN MIHAI,0730759148,,SECT 5,Bucuresti / Ilfov,Recomandare,FATADA,Caretta,Cutata,RAL,1900.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/7/2025,Nu
+7989,EMIL BALACEANU,0722686402,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8017,7250.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,24/7/2025,Nu
+7988,cerne zenco,0721215248,,cornetu,Bucuresti / Ilfov,Birou,GARD,MX,MC 75,RAL,2937.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/7/2025,Nu
+7987,ony company,0762242750,,dobroiesti,Bucuresti / Ilfov,Recomandare,ELEMENTE SPECIALE,Caretta,0.5,7016,800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,28/7/2025,Nu
+7986,pasareh larisa,,,chiajna-,Bucuresti / Ilfov,Client Vechi ( Completare ),,Caretta,,8017-,902.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,29/7/2025,Nu
+7985,VITION MADALIN,0765278792,,BRAGADIRU,Bucuresti / Ilfov,Birou,GARD,MX,MX 60 DUO,7016,6721.0,Vandut,,2025-10-06,2025-10-06,,Nu,,39.28,4/8/2025,Nu
+7984,Grigore Ion,,,,Bucuresti / Ilfov,Import CSV,,,,RAL,,,,2025-10-06,,,Nu,,,,Nu
+7983,MUSTAFA FLOAREA,0727125033,,TEGHES,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,9005,8862.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,25/8/2025,Nu
+7982,GHEORGHE NICOLETA,0722434095,,VARLAAM,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Nobel,8017,8330.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,25/8/2025,Nu
+7981,DOBRE CRISTIAN,0724577999,,SECT 4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Clasic,7016,16955.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,,Nu
+7980,SOARE CONSTATNIN,0799987269,,CASCIOARELE,Bucuresti / Ilfov,Telefon,ACOPERIS,Caretta,Daily,8017,8600.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,21/8/2025,Nu
+7979,BADEANU ALEXANDRU,0723530115,,PASAREA,Bucuresti / Ilfov,Telefon,ACOPERIS,Wetterbest,Clasic,7016,7500.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,18/8/2025,Nu
+7978,VALENTIN STANGA,0763012120,,SECT 4,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Caretta,Canto,8004,5590.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/9/2025,Nu
+7977,ADOCHITEI PAUL,0749070836,,SECT4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8017,17470.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/9/2025,Nu
+7976,IONESCU TUDOREL,0761725367,,SECT3,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,7016,14888.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/9/2025,Nu
+7975,FLOREA FLORIN,0723261183,,CIOCANESTI,Dambovita,Recomandare,ACOPERIS,Wetterbest,Cutata,7016,6000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/9/2025,Nu
+7974,CAPATANA TUDOREL,0773958254,,BRAGADIRU,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Wetterbest,Canto,7016,1700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/9/2025,Nu
+7973,LUCONI PROD,0722524717,,SECT 4,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8017,4300.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,2/9/2025,Nu
+7972,GICA PAUL,0771174422,,STR IACOBENI  SECT5,Bucuresti / Ilfov,Birou,ACOPERIS,Caretta,Daily,8017,4700.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,3/9/2025,Nu
+7971,Mirabela Iriciuc,0726396597,,sector 5,Bucuresti / Ilfov,Lead Caretta,ACOPERIS,Caretta,,RAL,,Ofertat,"acoperis si manopera/ doreste masuratoare , redirectionat catre MARIAN COSTACHE",2025-10-06,,,Nu,,,,Nu
+7970,STAN GHEORGHE,0760440413,,DRIDU,Ialomita,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,7016,15800.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/9/2025,Nu
+7969,BREZEANU CORNEL,0760440413,,4 FRATI,Ialomita,Montatori / Colaboratori,ACOPERIS,Caretta,Daily,7016,3244.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,11/9/2025,Nu
+7968,NASTASE EUGEN,0767434359,,4 FRATI,Ialomita,Montatori / Colaboratori,ELEMENTE SPECIALE,Wetterbest,,3005,860.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,14/9/2025,Nu
+7967,IONESCU TUDOREL,0761275367,,CATELU,Bucuresti / Ilfov,Montatori / Colaboratori,SAGEAC,Wetterbest,,7016,2287.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,15/9/2025,Nu
+7966,EMIL PARNALIU,0768330964,,SECT5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,7016,3775.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,16/9/2025,Nu
+7965,DINU CONSTANTIN,0720169890,,COLENTINA,Bucuresti / Ilfov,Recomandare,GARD,MX,MX 60,7016,3718.0,Vandut,,2025-10-06,2025-10-06,,Nu,,19.11,14/9/2025,Nu
+7964,GERORGE DOROBANTU,0725680117,,FACAU,Bucuresti / Ilfov,Cerere oferta site,ACOPERIS,Caretta,Daily,8017,15400.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+7963,MANEA,0773310679,,DOMNESTI,Bucuresti / Ilfov,Recomandare,ACOPERIS,Wetterbest,Clasic,8019,16500.0,Ofertat,,2025-10-06,,,Nu,,,,Nu
+7962,ANDREI MAZILU,0723608151,,BUCURESTI SEC 5,Bucuresti / Ilfov,Cerere oferta site,ACOPERIS,Caretta,Daily,7016,15000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/9/2025,Nu
+7961,DORIN CONSTRUCT SRL,0742275612,,TEGHES,Bucuresti / Ilfov,Birou,GARD,MX,MX 25,8017,17966.0,Vandut,,2025-10-06,2025-10-06,,Nu,,127.0,29/9/2025,Nu
+7960,TABO MASTERS,0787807073,,BRAGADIRU,Bucuresti / Ilfov,Birou,SISTEM PLUVIAL,Caretta,Daily,RAL7016,1186.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,23/9/2025,Nu
+7959,BOTEA CRISTIAN,0784170690,,SECT 5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,RAL,17320.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,26/9/2025,Nu
+7958,MUSTATA FLOAREA,0727125033,,TEGHES,Bucuresti / Ilfov,Client Vechi ( Completare ),ACOPERIS,Wetterbest,Clasic,3005,1755.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,17/9/2025,Nu
+7957,MINCON,7690982015,,SECT5,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Nobel,5008,19866.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,1/9/2025,Nu
+7956,MARCEL PAVEL,0771389396,,CATELU,Bucuresti / Ilfov,Recomandare,ACOPERIS,Caretta,Daily,8019,14000.0,Vandut,,2025-10-06,2025-10-06,,Nu,,,19/9/2025,Nu
+5187,BOTEA CRISTIAN,0748170690,,BUCURESTI,,Telefon,ACOPERIS,Caretta,Daily,RAL7016,18500.0,Vandut,,2025-10-03,2025-09-29,2025-10-03,Nu,555.0,,comandat,Nu
+5197,STOICA IONEL,0722236427,,TANGANU,,Telefon,ACOPERIS,Caretta,Daily,RAL8017,6500.0,Vandut,,2025-10-03,2025-09-25,2025-10-01,Nu,195.0,,comandat,Nu
+5185,DORIN DC CONSTRUCT,0742275612,,TEGES,,Birou,GARD,MetallicGroup,MX 25,RAL8017,13000.0,Vandut,,2025-09-29,2025-09-29,2025-10-17,Nu,390.0,,comandat,Nu
+5196,DORIN DC CONSTRUCT,0742275612,,TEGES,,Birou,GARD,MX,MX 25 DUO,RAL8017,3870.0,Vandut,,2025-09-29,2025-09-29,2025-10-29,Nu,116.1,,comandat,Nu
+5168,TABO MASTETRS,0787807073,,BRAGADIRU,,Montatori / Colaboratori,SISTEM PLUVIAL,Caretta,Daily,RAL7016,1186.0,Vandut,,2025-09-26,2025-09-23,2025-09-30,Nu,35.58,,comandat,Nu
+5169,DECU SORIN,0766480915,,BERCENI,,Client Vechi (Completare),ELEMENTE SPECIALE,Caretta,Nobel,RAL7004,684.0,Vandut,,2025-09-26,2025-09-23,2025-09-25,Nu,20.52,,comandat,Nu
+5170,MAT ADRIAN,0730192198,,BUCURESTI,,Client Vechi (Completare),SAGEAC,Wetterbest,Cutata,RAL9016,2100.0,Vandut,,2025-09-26,2025-09-22,2025-09-23,Nu,63.0,,comandat,Nu
+5127,NELU PEPENEL,0724594852,,CORNETU,,Client Vechi (Completare),ACOPERIS,Caretta,Daily,,7635.0,Vandut,,2025-09-22,2025-09-19,2025-09-25,Nu,229.05,,comandat,Nu
+5126,ANDREI MAZILU,0723 608 151,,BUCURESTI,,Lead Caretta,ACOPERIS,Caretta,Daily,,15300.0,Vandut,,2025-09-22,2025-09-19,2025-09-25,Nu,459.0,,comandat,Nu
+5123,PAVEL MIRCEA,0771389396,,CATELU,,Recomandare,ACOPERIS,Caretta,Daily,,13400.0,Vandut,,2025-09-22,2025-09-21,2025-09-26,Nu,402.0,,comandat,Nu
