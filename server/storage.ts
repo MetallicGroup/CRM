@@ -152,6 +152,10 @@ export interface IStorage {
     consumabile: number;
     alteCheltuieli: number;
     total: number;
+    cheltuieliAgenti: number;
+    salarii: number;
+    combustibil: number;
+    auto: number;
   }>>;
 }
 
@@ -1540,15 +1544,33 @@ export class DatabaseStorage implements IStorage {
     consumabile: number;
     alteCheltuieli: number;
     total: number;
+    cheltuieliAgenti: number;
+    salarii: number;
+    combustibil: number;
+    auto: number;
   }>> {
     // Get all showrooms
     const allSedii = await db.select().from(sedii);
     
-    // Get all expenses for this month/year
-    const expenses = await db.select().from(cheltuieliSediu).where(
+    // Get all showroom expenses for this month/year
+    const sediuExpenses = await db.select().from(cheltuieliSediu).where(
       and(
         eq(cheltuieliSediu.luna, luna),
         eq(cheltuieliSediu.an, an)
+      )
+    );
+
+    // Get all agent expenses for this month/year with agent info
+    const agentExpenses = await db.select({
+      id: cheltuieliAgent.id,
+      suma: cheltuieliAgent.suma,
+      sediuId: cheltuieliAgent.sediuId,
+      subcategoryId: cheltuieliAgent.subcategoryId,
+      agentId: cheltuieliAgent.agentId,
+    }).from(cheltuieliAgent).where(
+      and(
+        eq(cheltuieliAgent.luna, luna),
+        eq(cheltuieliAgent.an, an)
       )
     );
 
@@ -1570,6 +1592,10 @@ export class DatabaseStorage implements IStorage {
       consumabile: number;
       alteCheltuieli: number;
       total: number;
+      cheltuieliAgenti: number;
+      salarii: number;
+      combustibil: number;
+      auto: number;
     }> = {};
 
     for (const sediu of allSedii) {
@@ -1581,11 +1607,15 @@ export class DatabaseStorage implements IStorage {
         consumabile: 0,
         alteCheltuieli: 0,
         total: 0,
+        cheltuieliAgenti: 0,
+        salarii: 0,
+        combustibil: 0,
+        auto: 0,
       };
     }
 
-    // Aggregate expenses by showroom and category
-    for (const expense of expenses) {
+    // Aggregate showroom expenses by showroom and category
+    for (const expense of sediuExpenses) {
       const sediuId = expense.sediuId;
       if (!result[sediuId]) continue;
 
@@ -1604,6 +1634,27 @@ export class DatabaseStorage implements IStorage {
         result[sediuId].alteCheltuieli += suma;
       }
       result[sediuId].total += suma;
+    }
+
+    // Aggregate agent expenses by showroom
+    for (const expense of agentExpenses) {
+      const sediuId = expense.sediuId;
+      if (!sediuId || !result[sediuId]) continue;
+
+      const suma = parseFloat(expense.suma?.toString() || "0");
+      const subcategoryName = expense.subcategoryId ? (subcategoryNames[expense.subcategoryId] || "") : "";
+
+      result[sediuId].cheltuieliAgenti += suma;
+      result[sediuId].total += suma;
+
+      // Categorize agent expenses
+      if (subcategoryName.includes("salar") || subcategoryName.includes("comision") || subcategoryName.includes("bonuri")) {
+        result[sediuId].salarii += suma;
+      } else if (subcategoryName.includes("combustibil")) {
+        result[sediuId].combustibil += suma;
+      } else if (subcategoryName.includes("leasing") || subcategoryName.includes("asigur") || subcategoryName.includes("revizi") || subcategoryName.includes("rovin")) {
+        result[sediuId].auto += suma;
+      }
     }
 
     return result;

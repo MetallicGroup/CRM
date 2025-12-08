@@ -17,6 +17,10 @@ interface ShowroomCosts {
   consumabile: number;
   alteCheltuieli: number;
   total: number;
+  cheltuieliAgenti: number;
+  salarii: number;
+  combustibil: number;
+  auto: number;
 }
 
 export default function ShowroomRegional() {
@@ -92,6 +96,7 @@ export default function ShowroomRegional() {
           {showrooms.map(showroom => {
             const costs = showroom.costs;
             const isBucuresti = showroom.name.toLowerCase().includes('bucurești');
+            const cheltuieliShowroom = costs.chirie + costs.utilitati + costs.marketing + costs.consumabile + costs.alteCheltuieli;
             const costDistribuit = isBucuresti ? costs.total * 0.20 : costs.total;
             const costIndirecte = isBucuresti ? costs.total * 0.80 : 0;
             
@@ -111,39 +116,87 @@ export default function ShowroomRegional() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
+                          <TableRow className="bg-blue-50/50">
+                            <TableCell colSpan={2} className="font-semibold text-blue-700">
+                              Cheltuieli Showroom
+                            </TableCell>
+                          </TableRow>
                           <TableRow>
-                            <TableCell>Chirii / Cota parte showroom</TableCell>
+                            <TableCell className="pl-6">Chirii / Cota parte</TableCell>
                             <TableCell className="text-right font-medium">
                               {costs.chirie.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>Utilități</TableCell>
+                            <TableCell className="pl-6">Utilități</TableCell>
                             <TableCell className="text-right font-medium">
                               {costs.utilitati.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>Marketing</TableCell>
+                            <TableCell className="pl-6">Marketing</TableCell>
                             <TableCell className="text-right font-medium">
                               {costs.marketing.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>Consumabile / Materiale</TableCell>
+                            <TableCell className="pl-6">Consumabile / Materiale</TableCell>
                             <TableCell className="text-right font-medium">
                               {costs.consumabile.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell>Alte cheltuieli</TableCell>
+                            <TableCell className="pl-6">Alte cheltuieli showroom</TableCell>
                             <TableCell className="text-right font-medium">
                               {costs.alteCheltuieli.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
-                          <TableRow className="bg-muted/50 font-bold">
-                            <TableCell>TOTAL</TableCell>
-                            <TableCell className="text-right text-primary">
+                          <TableRow className="bg-blue-100/50">
+                            <TableCell className="font-semibold">Subtotal Showroom</TableCell>
+                            <TableCell className="text-right font-bold text-blue-700">
+                              {cheltuieliShowroom.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          
+                          <TableRow className="bg-green-50/50">
+                            <TableCell colSpan={2} className="font-semibold text-green-700">
+                              Cheltuieli Agenți
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="pl-6">Salarii / Comisioane</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {(costs.salarii || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="pl-6">Combustibil</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {(costs.combustibil || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="pl-6">Auto (Leasing, Asigurări, Revizii)</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {(costs.auto || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="pl-6">Alte cheltuieli agenți</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {((costs.cheltuieliAgenti || 0) - (costs.salarii || 0) - (costs.combustibil || 0) - (costs.auto || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow className="bg-green-100/50">
+                            <TableCell className="font-semibold">Subtotal Agenți</TableCell>
+                            <TableCell className="text-right font-bold text-green-700">
+                              {(costs.cheltuieliAgenti || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow className="bg-primary/10 font-bold">
+                            <TableCell className="text-lg">TOTAL CHELTUIELI</TableCell>
+                            <TableCell className="text-right text-lg text-primary">
                               {costs.total.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
@@ -164,8 +217,24 @@ export default function ShowroomRegional() {
                         </div>
                       </div>
                       
+                      <div className="grid grid-cols-2 gap-2 text-sm border-t pt-4">
+                        <div>
+                          <span className="text-muted-foreground">Showroom:</span>
+                          <div className="font-bold text-blue-600">
+                            {cheltuieliShowroom.toLocaleString('ro-RO', { maximumFractionDigits: 0 })} RON
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Agenți:</span>
+                          <div className="font-bold text-green-600">
+                            {(costs.cheltuieliAgenti || 0).toLocaleString('ro-RO', { maximumFractionDigits: 0 })} RON
+                          </div>
+                        </div>
+                      </div>
+                      
                       {isBucuresti && costs.total > 0 && (
                         <div className="space-y-2 border-t pt-4">
+                          <p className="text-xs text-muted-foreground font-medium">Distribuție București:</p>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">20% → Agenți:</span>
                             <span className="font-bold text-blue-600">{costDistribuit.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
