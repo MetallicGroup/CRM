@@ -42,6 +42,11 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // ============ HEALTH CHECK ============
+  app.get("/api/health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // ============ AUTH ROUTES ============
 
   // Login
