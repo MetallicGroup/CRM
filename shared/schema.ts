@@ -28,7 +28,8 @@ export const productCategoryEnum = pgEnum("product_category", [
   "STORE_EXTERIOARE",
   "JALUZELE_INTERIOARE",
   "ROLETE",
-  "PLISEE"
+  "PLISEE",
+  "VENTILATII"
 ]);
 
 export const offerStatusEnum = pgEnum("offer_status", [
@@ -282,7 +283,7 @@ export const createClientSchema = z.object({
   partnerId: z.string().optional(),
   
   // Secțiunea 3: Detalii produs
-  categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE"]).optional(),
+  categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE", "VENTILATII"]).optional(),
   brand: z.string().optional(),
   model: z.string().optional(),
   suprafataMp: z.string().optional(),
