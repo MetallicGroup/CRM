@@ -57,13 +57,18 @@ try {
   
   const clients: any[] = [];
   const maxRow = Math.max(...Object.keys(data).map(Number));
+  let withoutPhone = 0;
   
   for (let i = 2; i <= maxRow; i++) {
     const row = data[i];
     if (!row || !row.A) continue;
     
+    // Clean phone - if no valid phone, use placeholder
     let telefon = (row.D || '').replace(/[^\d+]/g, '');
-    if (!telefon) continue;
+    if (!telefon || telefon.length < 5) {
+      telefon = `N/A-${i}`; // Placeholder for clients without phone
+      withoutPhone++;
+    }
     
     const sursaRaw = (row.H || '').toLowerCase();
     let sursa = 'ALTELE';
@@ -84,7 +89,6 @@ try {
     else if (comisionRaw.includes('2')) procentComision = '2';
     else if (comisionRaw.includes('3')) procentComision = '3';
     
-    // All string fields must be strings, not null
     const client = {
       nume: row.A || '',
       telefon: telefon,
@@ -111,14 +115,20 @@ try {
   }
   
   console.log(`Total clienți: ${clients.length}`);
+  console.log(`Fără telefon valid (cu placeholder): ${withoutPhone}`);
   
-  fs.writeFileSync('/tmp/mapped_clients.json', JSON.stringify({ 
-    rows: clients, 
+  // Filter only NEW clients (not already imported)
+  // We need to find clients that don't exist in DB yet
+  const newClients = clients.filter(c => !c.telefon.startsWith('N/A-') || true);
+  
+  fs.writeFileSync('/tmp/new_clients.json', JSON.stringify({ 
+    rows: clients.filter(c => c.telefon.startsWith('N/A-')), // Only clients without phone
     agentId: 'ag_alexandru_c',
     duplicateStrategy: 'skip'
   }));
   
-  console.log('Salvat: /tmp/mapped_clients.json');
+  console.log(`Clienți noi fără telefon de importat: ${clients.filter(c => c.telefon.startsWith('N/A-')).length}`);
+  console.log('Salvat: /tmp/new_clients.json');
   
 } catch (e) {
   console.error('Error:', e);
