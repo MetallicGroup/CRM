@@ -139,16 +139,13 @@ export default function Angajati() {
     });
   }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed]);
   
-  const filteredEmployees = filterType === 'ALL' 
-    ? employeesWithAggregatedData 
-    : employeesWithAggregatedData.filter(e => e.type === filterType);
-  
-  // Calculate totals from aggregated data
-  const totals = useMemo(() => {
+  // Calculate totals and distribute production/indirect costs to agents
+  const { totals, employeesWithDistributedCosts } = useMemo(() => {
     const agents = employeesWithAggregatedData.filter(e => e.type === 'AGENT');
     const productie = employeesWithAggregatedData.filter(e => e.type === 'PRODUCTIE');
     const indirect = employeesWithAggregatedData.filter(e => e.type === 'INDIRECT');
     
+    // Calculate totals
     const totalVenitGard = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitGard, 0);
     const totalVenitAcoperis = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitAcoperis, 0);
     const totalVenitFirma = totalVenitGard + totalVenitAcoperis;
@@ -156,13 +153,50 @@ export default function Angajati() {
     const totalProductionCosts = productie.reduce((sum, p) => sum + p.aggregatedMetrics.costuriProprii, 0);
     const totalIndirectCosts = indirect.reduce((sum, i) => sum + i.aggregatedMetrics.costuriProprii, 0);
     
+    // Distribute production costs proportionally based on fence (Gard) revenue
+    // Distribute indirect costs proportionally based on total revenue
+    const employeesWithDistributedCosts = employeesWithAggregatedData.map(emp => {
+      if (emp.type !== 'AGENT') return emp;
+      
+      const m = emp.aggregatedMetrics;
+      
+      // Production cost distribution (based on Gard revenue percentage)
+      const gardRevenuePercent = totalVenitGard > 0 ? m.venitGard / totalVenitGard : 0;
+      const costProductie = totalProductionCosts * gardRevenuePercent;
+      
+      // Indirect cost distribution (based on total revenue percentage)
+      const totalRevenuePercent = totalVenitFirma > 0 ? (m.venitGard + m.venitAcoperis) / totalVenitFirma : 0;
+      const costIndirecte = totalIndirectCosts * totalRevenuePercent;
+      
+      // Recalculate profit with distributed costs
+      const profitFinal = m.adaosFaraTVA - m.valoareComision - m.costuriProprii - m.costShowroom - costProductie - costIndirecte;
+      
+      return {
+        ...emp,
+        aggregatedMetrics: {
+          ...m,
+          costProductie,
+          costIndirecte,
+          profitFinal
+        }
+      };
+    });
+    
     return {
-      totalVenitFirma,
-      totalVenitGardFirma: totalVenitGard,
-      totalProductionCosts,
-      totalIndirectCosts
+      totals: {
+        totalVenitFirma,
+        totalVenitGardFirma: totalVenitGard,
+        totalProductionCosts,
+        totalIndirectCosts
+      },
+      employeesWithDistributedCosts
     };
   }, [employeesWithAggregatedData]);
+  
+  // Filter employees based on type selection
+  const filteredEmployees = filterType === 'ALL' 
+    ? employeesWithDistributedCosts 
+    : employeesWithDistributedCosts.filter(e => e.type === filterType);
   
   const handleRefreshData = () => {
     refetchExpenses();
@@ -512,14 +546,71 @@ export default function Angajati() {
                         </TableCell>
                         <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
                         
-                        {/* Cheltuieli Proprii - readonly în range mode */}
-                        <TableCell>{m.salariu.toFixed(0)}</TableCell>
-                        <TableCell>{m.amortizareAuto.toFixed(0)}</TableCell>
-                        <TableCell>{m.combustibil.toFixed(0)}</TableCell>
-                        <TableCell>{m.revizii.toFixed(0)}</TableCell>
-                        <TableCell>{m.alteCheltuieliAuto.toFixed(0)}</TableCell>
-                        <TableCell>{m.abonamente.toFixed(0)}</TableCell>
-                        <TableCell>{m.diurne.toFixed(0)}</TableCell>
+                        {/* Cheltuieli Proprii - TOȚI angajații au cheltuieli editabile */}
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.salariu.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.salariu} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { salariu: Number(e.target.value) })} 
+                              data-testid={`input-salariu-${emp.id}`} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.amortizareAuto.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.amortizareAuto} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { amortizareAuto: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.combustibil.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.combustibil} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { combustibil: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.revizii.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.revizii} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { revizii: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.alteCheltuieliAuto.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.alteCheltuieliAuto} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { alteCheltuieliAuto: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.abonamente.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.abonamente} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { abonamente: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isRangeMode ? (
+                            <span>{m.diurne.toFixed(0)}</span>
+                          ) : (
+                            <Input type="number" className="w-20 h-8" value={m.diurne} 
+                              onChange={(e) => updateEmployeeData(emp.id, selectedMonthName, { diurne: Number(e.target.value) })} 
+                            />
+                          )}
+                        </TableCell>
                         <TableCell className="font-bold text-red-600">{m.costuriProprii.toFixed(0)}</TableCell>
                         
                         {/* Distributed Costs (Read Only) - doar pentru AGENT */}
