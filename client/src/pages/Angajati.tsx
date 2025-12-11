@@ -12,6 +12,7 @@ import { Employee, EmployeeType, MONTHS, Month } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { useAllAgentsExpenseCosts, useShowroomCostsDistributed, useAgentsExpenseCostsRange, useShowroomCostsDistributedRange } from "@/hooks/useAgentExpenseCosts";
 import { useAgentSalesProfitabilityForMonth, useAgentSalesProfitabilityRange, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
+import { useAgentManualAchizitiiForMonth, useAgentManualAchizitiiRange } from "@/hooks/useManualAchizitii";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -52,16 +53,22 @@ export default function Angajati() {
   const { data: salesProfitabilityRange = {}, isLoading: isLoadingSalesRange, refetch: refetchSalesRange } = useAgentSalesProfitabilityRange(startMonth, endMonth, selectedYear);
   const { data: showroomCostsDistributedRange = {}, isLoading: isLoadingShowroomCostsRange, refetch: refetchShowroomCostsRange } = useShowroomCostsDistributedRange(startMonth, endMonth, selectedYear);
   
+  // Manual acquisitions hooks
+  const { data: manualAchizitiiSingle = {}, refetch: refetchManualAchizitiiSingle } = useAgentManualAchizitiiForMonth(selectedMonthName, selectedYear);
+  const { data: manualAchizitiiRange = {}, refetch: refetchManualAchizitiiRange } = useAgentManualAchizitiiRange(startMonth, endMonth, selectedYear);
+  
   // Use the appropriate data based on mode
   const expenseCosts = isRangeMode ? expenseCostsRange : expenseCostsSingle;
   const salesProfitability = isRangeMode ? salesProfitabilityRange : salesProfitabilitySingle;
   const showroomCostsDistributed = isRangeMode ? showroomCostsDistributedRange : showroomCostsDistributedSingle;
+  const manualAchizitii = isRangeMode ? manualAchizitiiRange : manualAchizitiiSingle;
   const isLoadingExpenses = isRangeMode ? isLoadingExpensesRange : isLoadingExpensesSingle;
   const isLoadingSales = isRangeMode ? isLoadingSalesRange : isLoadingSalesSingle;
   const isLoadingShowroomCosts = isRangeMode ? isLoadingShowroomCostsRange : isLoadingShowroomCostsSingle;
   const refetchExpenses = isRangeMode ? refetchExpensesRange : refetchExpensesSingle;
   const refetchSales = isRangeMode ? refetchSalesRange : refetchSalesSingle;
   const refetchShowroomCosts = isRangeMode ? refetchShowroomCostsRange : refetchShowroomCostsSingle;
+  const refetchManualAchizitii = isRangeMode ? refetchManualAchizitiiRange : refetchManualAchizitiiSingle;
   
   // Number of months in selected range
   const monthsCount = Math.max(1, endMonth - startMonth + 1);
@@ -83,6 +90,7 @@ export default function Angajati() {
     return employees.map(emp => {
       const expenseData = expenseCosts[emp.id];
       const salesData = salesProfitability[emp.id];
+      const manualAchData = manualAchizitii[emp.id];
       const showroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
       const isAgent = emp.type === 'AGENT';
       
@@ -116,11 +124,16 @@ export default function Angajati() {
         alteCheltuieli = fixedTotals.alteCheltuieli;
       }
       
-      // Calculate aggregated metrics from API sales data
+      // Calculate aggregated metrics from API sales data + manual acquisitions
       const venitGard = salesData ? parseFloat(salesData.venitGard) : 0;
-      const achizitieGard = salesData ? parseFloat(salesData.achizitieGard) : 0;
+      const achizitieGardFromSales = salesData ? parseFloat(salesData.achizitieGard) : 0;
+      const achizitieGardManual = manualAchData ? parseFloat(manualAchData.achizitieGard || "0") : 0;
+      const achizitieGard = achizitieGardFromSales + achizitieGardManual;
+      
       const venitAcoperis = salesData ? parseFloat(salesData.venitAcoperis) : 0;
-      const achizitieAcoperis = salesData ? parseFloat(salesData.achizitieAcoperis) : 0;
+      const achizitieAcoperisFromSales = salesData ? parseFloat(salesData.achizitieAcoperis) : 0;
+      const achizitieAcoperisManual = manualAchData ? parseFloat(manualAchData.achizitieAcoperis || "0") : 0;
+      const achizitieAcoperis = achizitieAcoperisFromSales + achizitieAcoperisManual;
       const venitTVA = salesData ? parseFloat(salesData.venitTvaTotal || "0") : 0;
       const comisionPercent = salesData ? parseFloat(salesData.comisionPercentMediu || "0") : 0;
       const comisionGard = salesData ? parseFloat(salesData.comisionGard || "0") : 0;
@@ -172,7 +185,7 @@ export default function Angajati() {
         }
       };
     });
-  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed, monthsCount]);
+  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed, manualAchizitii, monthsCount]);
   
   // Calculate totals and distribute production/indirect costs to agents
   const { totals, employeesWithDistributedCosts } = useMemo(() => {
