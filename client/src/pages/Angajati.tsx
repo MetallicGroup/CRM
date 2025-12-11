@@ -143,6 +143,27 @@ export default function Angajati() {
     ? employeesWithAggregatedData 
     : employeesWithAggregatedData.filter(e => e.type === filterType);
   
+  // Calculate totals from aggregated data
+  const totals = useMemo(() => {
+    const agents = employeesWithAggregatedData.filter(e => e.type === 'AGENT');
+    const productie = employeesWithAggregatedData.filter(e => e.type === 'PRODUCTIE');
+    const indirect = employeesWithAggregatedData.filter(e => e.type === 'INDIRECT');
+    
+    const totalVenitGard = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitGard, 0);
+    const totalVenitAcoperis = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitAcoperis, 0);
+    const totalVenitFirma = totalVenitGard + totalVenitAcoperis;
+    
+    const totalProductionCosts = productie.reduce((sum, p) => sum + p.aggregatedMetrics.costuriProprii, 0);
+    const totalIndirectCosts = indirect.reduce((sum, i) => sum + i.aggregatedMetrics.costuriProprii, 0);
+    
+    return {
+      totalVenitFirma,
+      totalVenitGardFirma: totalVenitGard,
+      totalProductionCosts,
+      totalIndirectCosts
+    };
+  }, [employeesWithAggregatedData]);
+  
   const handleRefreshData = () => {
     refetchExpenses();
     refetchSales();
