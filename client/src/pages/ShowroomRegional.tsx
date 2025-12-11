@@ -44,6 +44,20 @@ interface CheltuialaSediu {
   firma: string | null;
 }
 
+interface CheltuialaAgent {
+  id: string;
+  agentId: string;
+  sediuId: string;
+  categoryId: string;
+  subcategoryId: string;
+  suma: string;
+  descriere: string | null;
+  dataCheltuiala: string;
+  luna: number;
+  an: number;
+  firma: string | null;
+}
+
 interface Sediu {
   id: string;
   nume: string;
@@ -110,6 +124,17 @@ export default function ShowroomRegional() {
       if (!selectedShowroomId) return [];
       const res = await fetch(`/api/cheltuieli-sediu?sediuId=${selectedShowroomId}&luna=${lunaNumar}&an=${selectedYear}`);
       if (!res.ok) throw new Error("Eroare la încărcarea cheltuielilor");
+      return res.json();
+    },
+    enabled: !!selectedShowroomId,
+  });
+
+  const { data: cheltuieliAgenti = [] } = useQuery<CheltuialaAgent[]>({
+    queryKey: ["cheltuieli-agent-showroom", selectedShowroomId, lunaNumar, selectedYear],
+    queryFn: async () => {
+      if (!selectedShowroomId) return [];
+      const res = await fetch(`/api/cheltuieli-agent?sediuId=${selectedShowroomId}&luna=${lunaNumar}&an=${selectedYear}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea cheltuielilor agenți");
       return res.json();
     },
     enabled: !!selectedShowroomId,
@@ -516,60 +541,107 @@ export default function ShowroomRegional() {
                       <div className="flex justify-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin" />
                       </div>
-                    ) : cheltuieliSediu.length === 0 ? (
+                    ) : cheltuieliSediu.length === 0 && cheltuieliAgenti.length === 0 ? (
                       <p className="text-center py-8 text-muted-foreground">
                         Nu există cheltuieli înregistrate pentru această lună.
                       </p>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Tip</TableHead>
-                            <TableHead>Descriere</TableHead>
-                            <TableHead>Firmă</TableHead>
-                            <TableHead className="text-right">Suma (RON)</TableHead>
-                            <TableHead className="text-right">Acțiuni</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {cheltuieliSediu.map((c) => (
-                            <TableRow key={c.id} data-testid={`row-expense-${c.id}`}>
-                              <TableCell>{format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  {getExpenseTypeName(c.categoryId, c.subcategoryId)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{c.descriere || "-"}</TableCell>
-                              <TableCell>{c.firma || "-"}</TableCell>
-                              <TableCell className="text-right font-medium">
-                                {parseFloat(c.suma).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleOpenDialog(c)}
-                                    data-testid={`btn-edit-${c.id}`}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setDeleteExpense(c)}
-                                    data-testid={`btn-delete-${c.id}`}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="space-y-6">
+                        {cheltuieliSediu.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                              <Building2 className="h-4 w-4" />
+                              Cheltuieli Showroom ({cheltuieliSediu.length})
+                            </h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Data</TableHead>
+                                  <TableHead>Tip</TableHead>
+                                  <TableHead>Descriere</TableHead>
+                                  <TableHead>Firmă</TableHead>
+                                  <TableHead className="text-right">Suma (RON)</TableHead>
+                                  <TableHead className="text-right">Acțiuni</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {cheltuieliSediu.map((c) => (
+                                  <TableRow key={c.id} data-testid={`row-expense-${c.id}`}>
+                                    <TableCell>{format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className="bg-blue-50">
+                                        {getExpenseTypeName(c.categoryId, c.subcategoryId)}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>{c.descriere || "-"}</TableCell>
+                                    <TableCell>{c.firma || "-"}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {parseFloat(c.suma).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex justify-end gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleOpenDialog(c)}
+                                          data-testid={`btn-edit-${c.id}`}
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setDeleteExpense(c)}
+                                          data-testid={`btn-delete-${c.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                        
+                        {cheltuieliAgenti.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                              <span className="h-4 w-4">👤</span>
+                              Cheltuieli Agenți ({cheltuieliAgenti.length})
+                            </h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Data</TableHead>
+                                  <TableHead>Tip</TableHead>
+                                  <TableHead>Descriere</TableHead>
+                                  <TableHead>Firmă</TableHead>
+                                  <TableHead className="text-right">Suma (RON)</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {cheltuieliAgenti.map((c) => (
+                                  <TableRow key={c.id} data-testid={`row-agent-expense-${c.id}`}>
+                                    <TableCell>{format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className="bg-green-50">
+                                        Agent
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>{c.descriere || "-"}</TableCell>
+                                    <TableCell>{c.firma || "-"}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {parseFloat(c.suma).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
