@@ -155,14 +155,12 @@ export default function Angajati() {
       const comisionPercent = salesData ? parseFloat(salesData.comisionPercentMediu || "0") : 0;
       const comisionGard = salesData ? parseFloat(salesData.comisionGard || "0") : 0;
       const comisionAcoperis = salesData ? parseFloat(salesData.comisionAcoperis || "0") : 0;
-      // DEZACTIVAT TEMPORAR: Acoperiș exclus din comision
-      const valoareComision = comisionGard; // + comisionAcoperis;
+      const valoareComision = comisionGard + comisionAcoperis;
       
       // Calculate derived metrics
       const adaosTVAGard = venitGard - achizitieGard;
       const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-      // DEZACTIVAT TEMPORAR: Acoperiș exclus din calcul
-      const adaosTotalCuTVA = adaosTVAGard; // + adaosTVAAcoperis;
+      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
       const tvaTotal = adaosTotalCuTVA * 0.21;
       const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
       
@@ -345,8 +343,7 @@ export default function Angajati() {
     const headers = [
       "Angajat", "Tip", "Showroom",
       "Venit Gard", "Achiziție Gard", "Adaos Gard",
-      // DEZACTIVAT TEMPORAR: Acoperiș
-      // "Venit Acoperiș", "Achiziție Acoperiș", "Adaos Acoperiș",
+      "Venit Acoperiș", "Achiziție Acoperiș", "Adaos Acoperiș",
       "ADAOS CU TVA", "ADAOS FĂRĂ TVA", "Venit TVA", "Comision %", "Valoare Comision",
       "Salariu", "Amortizare Auto", "Combustibil", "Revizii", "Alte Chelt.", "Abonamente", "Diurne", "Total Cheltuieli",
       "Cost Showroom", "Cost Producție", "Cost Indirecte",
@@ -358,8 +355,7 @@ export default function Angajati() {
       return [
         emp.name, emp.type, emp.showroomId || '-',
         m.venitGard.toFixed(2), m.achizitieGard.toFixed(2), m.adaosTVAGard.toFixed(2),
-        // DEZACTIVAT TEMPORAR: Acoperiș
-        // m.venitAcoperis.toFixed(2), m.achizitieAcoperis.toFixed(2), m.adaosTVAAcoperis.toFixed(2),
+        m.venitAcoperis.toFixed(2), m.achizitieAcoperis.toFixed(2), m.adaosTVAAcoperis.toFixed(2),
         m.adaosTotalCuTVA.toFixed(2), m.adaosFaraTVA.toFixed(2), m.venitTVA.toFixed(2), m.comisionPercent.toFixed(2), m.valoareComision.toFixed(2),
         m.salariu.toFixed(2), m.amortizareAuto.toFixed(2), m.combustibil.toFixed(2), m.revizii.toFixed(2), m.alteCheltuieliAuto.toFixed(2), m.abonamente.toFixed(2), m.diurne.toFixed(2), m.costuriProprii.toFixed(2),
         m.costShowroom.toFixed(2), m.costProductie.toFixed(2), m.costIndirecte.toFixed(2),
@@ -558,11 +554,10 @@ export default function Angajati() {
                     <TableHead className="min-w-[100px] bg-blue-50 dark:bg-blue-950">Achiz. Gard</TableHead>
                     <TableHead className="min-w-[100px] bg-blue-100 dark:bg-blue-900 font-bold">Adaos Gard</TableHead>
                     
-                    {/* ACOPERISURI - DEZACTIVAT TEMPORAR
+                    {/* ACOPERISURI */}
                     <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950 border-l-2 border-amber-500">Venit Acop</TableHead>
                     <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950">Achiz. Acop</TableHead>
                     <TableHead className="min-w-[100px] bg-amber-100 dark:bg-amber-900 font-bold">Adaos Acop</TableHead>
-                    */}
 
                     {/* ADAOS CU TVA și FĂRĂ TVA */}
                     <TableHead className="min-w-[120px] bg-indigo-100 dark:bg-indigo-900 font-bold border-l-2 border-indigo-500">ADAOS CU TVA</TableHead>
@@ -629,11 +624,10 @@ export default function Angajati() {
                         <TableCell>{isAgent ? m.achizitieGard.toFixed(0) : '-'}</TableCell>
                         <TableCell className="font-bold">{isAgent ? m.adaosTVAGard.toFixed(0) : '-'}</TableCell>
                         
-                        {/* ACOPERISURI - DEZACTIVAT TEMPORAR
+                        {/* ACOPERISURI */}
                         <TableCell className="font-semibold text-amber-600">{isAgent ? m.venitAcoperis.toFixed(0) : '-'}</TableCell>
                         <TableCell>{isAgent ? m.achizitieAcoperis.toFixed(0) : '-'}</TableCell>
                         <TableCell className="font-bold">{isAgent ? m.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
-                        */}
 
                         {/* ADAOS CU TVA și FĂRĂ TVA */}
                         <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? m.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
