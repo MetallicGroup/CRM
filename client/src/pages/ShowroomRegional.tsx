@@ -12,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Pencil, Trash2, Building2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { MONTHS } from "@/lib/types";
 
 interface ShowroomCosts {
   sediuName: string;
@@ -61,6 +62,10 @@ const SHOWROOM_EXPENSE_TYPES = [
 export default function ShowroomRegional() {
   const { selectedMonth } = useStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  const lunaNumar = useMemo(() => {
+    return MONTHS.indexOf(selectedMonth) + 1;
+  }, [selectedMonth]);
   const [selectedShowroomId, setSelectedShowroomId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<CheltuialaSediu | null>(null);
@@ -91,19 +96,19 @@ export default function ShowroomRegional() {
   }, [sedii, selectedShowroomId]);
 
   const { data: showroomCosts = {}, isLoading } = useQuery<Record<string, ShowroomCosts>>({
-    queryKey: ["showroom-costs", selectedMonth, selectedYear],
+    queryKey: ["showroom-costs", lunaNumar, selectedYear],
     queryFn: async () => {
-      const res = await fetch(`/api/profitabilitate/showroom-costs?luna=${selectedMonth}&an=${selectedYear}`);
+      const res = await fetch(`/api/profitabilitate/showroom-costs?luna=${lunaNumar}&an=${selectedYear}`);
       if (!res.ok) throw new Error("Eroare la încărcarea costurilor");
       return res.json();
     },
   });
 
   const { data: cheltuieliSediu = [], isLoading: loadingCheltuieli } = useQuery<CheltuialaSediu[]>({
-    queryKey: ["cheltuieli-sediu-showroom", selectedShowroomId, selectedMonth, selectedYear],
+    queryKey: ["cheltuieli-sediu-showroom", selectedShowroomId, lunaNumar, selectedYear],
     queryFn: async () => {
       if (!selectedShowroomId) return [];
-      const res = await fetch(`/api/cheltuieli-sediu?sediuId=${selectedShowroomId}&luna=${selectedMonth}&an=${selectedYear}`);
+      const res = await fetch(`/api/cheltuieli-sediu?sediuId=${selectedShowroomId}&luna=${lunaNumar}&an=${selectedYear}`);
       if (!res.ok) throw new Error("Eroare la încărcarea cheltuielilor");
       return res.json();
     },
