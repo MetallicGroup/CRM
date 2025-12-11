@@ -1,13 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useStore } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface ShowroomCosts {
   sediuName: string;
@@ -23,9 +30,65 @@ interface ShowroomCosts {
   auto: number;
 }
 
+interface CheltuialaSediu {
+  id: string;
+  sediuId: string;
+  categoryId: string;
+  subcategoryId: string;
+  suma: string;
+  descriere: string | null;
+  dataCheltuiala: string;
+  luna: number;
+  an: number;
+  firma: string | null;
+}
+
+interface Sediu {
+  id: string;
+  nume: string;
+  judet: string;
+}
+
+const SHOWROOM_EXPENSE_TYPES = [
+  { id: "chirie", name: "Chirie / Cota parte showroom", categoryId: "cat-generale", subcategoryId: "c3b11246-7867-40f5-ba0b-511dad776321" },
+  { id: "utilitati", name: "Utilități (curent, gaz, apă)", categoryId: "cat-generale", subcategoryId: "sub-alte", keywords: "utilit" },
+  { id: "marketing", name: "Marketing / Publicitate", categoryId: "cat-generale", subcategoryId: "eb6d1178-49ee-43ee-8d27-3c704182cb0f" },
+  { id: "consumabile", name: "Consumabile / Materiale", categoryId: "cat-generale", subcategoryId: "sub-materiale" },
+  { id: "investitii", name: "Investiții / Amenajări showroom", categoryId: "cat-generale", subcategoryId: "aec333c7-bb7a-4854-b029-7cd83be18a3a" },
+  { id: "alte", name: "Alte cheltuieli showroom", categoryId: "cat-generale", subcategoryId: "sub-alte" },
+];
+
 export default function ShowroomRegional() {
   const { selectedMonth } = useStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedShowroomId, setSelectedShowroomId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<CheltuialaSediu | null>(null);
+  const [deleteExpense, setDeleteExpense] = useState<CheltuialaSediu | null>(null);
+  const queryClient = useQueryClient();
+  
+  const [formData, setFormData] = useState({
+    expenseType: "",
+    suma: "",
+    descriere: "",
+    dataCheltuiala: format(new Date(), "yyyy-MM-dd"),
+    firma: "METALLIC GROUP SRL",
+  });
+
+  const { data: sedii = [] } = useQuery<Sediu[]>({
+    queryKey: ["sedii"],
+    queryFn: async () => {
+      const res = await fetch("/api/sedii");
+      if (!res.ok) throw new Error("Eroare la încărcarea sediilor");
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (sedii.length > 0 && !selectedShowroomId) {
+      setSelectedShowroomId(sedii[0].id);
+    }
+  }, [sedii, selectedShowroomId]);
 
   const { data: showroomCosts = {}, isLoading } = useQuery<Record<string, ShowroomCosts>>({
     queryKey: ["showroom-costs", selectedMonth, selectedYear],
@@ -36,11 +99,171 @@ export default function ShowroomRegional() {
     },
   });
 
+  const { data: cheltuieliSediu = [], isLoading: loadingCheltuieli } = useQuery<CheltuialaSediu[]>({
+    queryKey: ["cheltuieli-sediu-showroom", selectedShowroomId, selectedMonth, selectedYear],
+    queryFn: async () => {
+      if (!selectedShowroomId) return [];
+      const res = await fetch(`/api/cheltuieli-sediu?sediuId=${selectedShowroomId}&luna=${selectedMonth}&an=${selectedYear}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea cheltuielilor");
+      return res.json();
+    },
+    enabled: !!selectedShowroomId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/cheltuieli-sediu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cheltuieli-sediu-showroom"] });
+      queryClient.invalidateQueries({ queryKey: ["showroom-costs"] });
+      toast.success("Cheltuială adăugată cu succes");
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/cheltuieli-sediu/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cheltuieli-sediu-showroom"] });
+      queryClient.invalidateQueries({ queryKey: ["showroom-costs"] });
+      toast.success("Cheltuială actualizată cu succes");
+      setIsDialogOpen(false);
+      setEditingExpense(null);
+      resetForm();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/cheltuieli-sediu/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cheltuieli-sediu-showroom"] });
+      queryClient.invalidateQueries({ queryKey: ["showroom-costs"] });
+      toast.success("Cheltuială ștearsă cu succes");
+      setDeleteExpense(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      expenseType: "",
+      suma: "",
+      descriere: "",
+      dataCheltuiala: format(new Date(), "yyyy-MM-dd"),
+      firma: "METALLIC GROUP SRL",
+    });
+  };
+
+  const handleOpenDialog = (expense?: CheltuialaSediu) => {
+    if (expense) {
+      setEditingExpense(expense);
+      const expType = SHOWROOM_EXPENSE_TYPES.find(t => 
+        t.categoryId === expense.categoryId && t.subcategoryId === expense.subcategoryId
+      );
+      setFormData({
+        expenseType: expType?.id || "",
+        suma: expense.suma,
+        descriere: expense.descriere || "",
+        dataCheltuiala: format(new Date(expense.dataCheltuiala), "yyyy-MM-dd"),
+        firma: expense.firma || "METALLIC GROUP SRL",
+      });
+    } else {
+      resetForm();
+      setEditingExpense(null);
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const expenseType = SHOWROOM_EXPENSE_TYPES.find(t => t.id === formData.expenseType);
+    if (!expenseType || !selectedShowroomId) return;
+    
+    const date = new Date(formData.dataCheltuiala);
+    const payload = {
+      sediuId: selectedShowroomId,
+      categoryId: expenseType.categoryId,
+      subcategoryId: expenseType.subcategoryId,
+      suma: formData.suma,
+      descriere: formData.descriere || expenseType.name,
+      dataCheltuiala: formData.dataCheltuiala,
+      luna: date.getMonth() + 1,
+      an: date.getFullYear(),
+      firma: formData.firma,
+    };
+    
+    if (editingExpense) {
+      updateMutation.mutate({ id: editingExpense.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  const getExpenseTypeName = (categoryId: string, subcategoryId: string) => {
+    const expType = SHOWROOM_EXPENSE_TYPES.find(t => 
+      t.categoryId === categoryId && t.subcategoryId === subcategoryId
+    );
+    return expType?.name || "Altele";
+  };
+
   const showrooms = Object.entries(showroomCosts).map(([id, data]) => ({
     id,
     name: data.sediuName,
     costs: data,
   }));
+
+  const allShowrooms = sedii.map(s => {
+    const existing = showrooms.find(sh => sh.id === s.id);
+    return existing || {
+      id: s.id,
+      name: s.nume,
+      costs: {
+        sediuName: s.nume,
+        chirie: 0, utilitati: 0, marketing: 0, consumabile: 0, alteCheltuieli: 0,
+        total: 0, cheltuieliAgenti: 0, salarii: 0, combustibil: 0, auto: 0,
+      },
+    };
+  });
 
   if (isLoading) {
     return (
@@ -72,20 +295,25 @@ export default function ShowroomRegional() {
         </div>
       </div>
 
-      {showrooms.length === 0 ? (
+      {allShowrooms.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Nu există cheltuieli pentru această lună.
+            Nu există showroom-uri configurate.
           </CardContent>
         </Card>
       ) : (
-        <Tabs defaultValue={showrooms[0]?.id}>
+        <Tabs 
+          defaultValue={allShowrooms[0]?.id} 
+          value={selectedShowroomId || allShowrooms[0]?.id}
+          onValueChange={setSelectedShowroomId}
+        >
           <TabsList className="flex-wrap">
-            {showrooms.map(s => (
-              <TabsTrigger key={s.id} value={s.id}>
+            {allShowrooms.map(s => (
+              <TabsTrigger key={s.id} value={s.id} className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
                 {s.name}
                 {s.costs.total > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-1">
                     {s.costs.total.toLocaleString('ro-RO', { maximumFractionDigits: 0 })}
                   </Badge>
                 )}
@@ -93,22 +321,24 @@ export default function ShowroomRegional() {
             ))}
           </TabsList>
           
-          {showrooms.map(showroom => {
+          {allShowrooms.map(showroom => {
             const costs = showroom.costs;
             const isBucuresti = showroom.name.toLowerCase().includes('bucurești');
             const cheltuieliShowroom = costs.chirie + costs.utilitati + costs.marketing + costs.consumabile + costs.alteCheltuieli;
-            // Regula 20/80 se aplică doar la cheltuieli showroom, nu și la cele ale agenților
             const costShowroomDistribuit = isBucuresti ? cheltuieliShowroom * 0.20 : cheltuieliShowroom;
             const costShowroomIndirect = isBucuresti ? cheltuieliShowroom * 0.80 : 0;
-            // Cheltuielile agenților sunt 100% ale agenților individuali
             const totalDistribuitAgenti = costShowroomDistribuit + (costs.cheltuieliAgenti || 0);
             
             return (
               <TabsContent key={showroom.id} value={showroom.id} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-3">
                   <Card className="md:col-span-2">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle>Cheltuieli {showroom.name}</CardTitle>
+                      <Button onClick={() => handleOpenDialog()} data-testid="btn-add-expense">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adaugă Cheltuială
+                      </Button>
                     </CardHeader>
                     <CardContent>
                       <Table>
@@ -271,11 +501,197 @@ export default function ShowroomRegional() {
                     </CardContent>
                   </Card>
                 </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Istoric Cheltuieli - Luna {selectedMonth}/{selectedYear}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCheltuieli ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : cheltuieliSediu.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">
+                        Nu există cheltuieli înregistrate pentru această lună.
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Tip</TableHead>
+                            <TableHead>Descriere</TableHead>
+                            <TableHead>Firmă</TableHead>
+                            <TableHead className="text-right">Suma (RON)</TableHead>
+                            <TableHead className="text-right">Acțiuni</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cheltuieliSediu.map((c) => (
+                            <TableRow key={c.id} data-testid={`row-expense-${c.id}`}>
+                              <TableCell>{format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {getExpenseTypeName(c.categoryId, c.subcategoryId)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{c.descriere || "-"}</TableCell>
+                              <TableCell>{c.firma || "-"}</TableCell>
+                              <TableCell className="text-right font-medium">
+                                {parseFloat(c.suma).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleOpenDialog(c)}
+                                    data-testid={`btn-edit-${c.id}`}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setDeleteExpense(c)}
+                                    data-testid={`btn-delete-${c.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
             );
           })}
         </Tabs>
       )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingExpense ? "Editează Cheltuială" : "Adaugă Cheltuială Showroom"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tip Cheltuială *</Label>
+              <Select
+                value={formData.expenseType}
+                onValueChange={(val) => setFormData({ ...formData, expenseType: val })}
+              >
+                <SelectTrigger data-testid="select-expense-type">
+                  <SelectValue placeholder="Selectează tipul" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SHOWROOM_EXPENSE_TYPES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="suma">Suma (RON) *</Label>
+                <Input
+                  id="suma"
+                  type="number"
+                  step="0.01"
+                  value={formData.suma}
+                  onChange={(e) => setFormData({ ...formData, suma: e.target.value })}
+                  required
+                  data-testid="input-suma"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dataCheltuiala">Data *</Label>
+                <Input
+                  id="dataCheltuiala"
+                  type="date"
+                  value={formData.dataCheltuiala}
+                  onChange={(e) => setFormData({ ...formData, dataCheltuiala: e.target.value })}
+                  required
+                  data-testid="input-data"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descriere">Descriere (opțional)</Label>
+              <Input
+                id="descriere"
+                value={formData.descriere}
+                onChange={(e) => setFormData({ ...formData, descriere: e.target.value })}
+                placeholder="Ex: Chirie decembrie 2025"
+                data-testid="input-descriere"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Firmă</Label>
+              <Select
+                value={formData.firma}
+                onValueChange={(val) => setFormData({ ...formData, firma: val })}
+              >
+                <SelectTrigger data-testid="select-firma">
+                  <SelectValue placeholder="Selectează firma" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="METALLIC GROUP SRL">METALLIC GROUP SRL</SelectItem>
+                  <SelectItem value="MM ROOF INTERMED SRL">MM ROOF INTERMED SRL</SelectItem>
+                  <SelectItem value="ROOFERS RO">ROOFERS RO</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Anulează
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!formData.expenseType || !formData.suma || createMutation.isPending || updateMutation.isPending}
+                data-testid="btn-submit"
+              >
+                {createMutation.isPending || updateMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {editingExpense ? "Salvează" : "Adaugă"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteExpense} onOpenChange={() => setDeleteExpense(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ești sigur că vrei să ștergi această cheltuială? Acțiunea nu poate fi anulată.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulează</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteExpense && deleteMutation.mutate(deleteExpense.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Șterge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
