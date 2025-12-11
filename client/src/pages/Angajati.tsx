@@ -10,9 +10,20 @@ import { useStore } from "@/lib/store";
 import { Download, Plus, Trash2, RefreshCw, Calendar } from "lucide-react";
 import { Employee, EmployeeType, MONTHS, Month } from "@/lib/types";
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAllAgentsExpenseCosts, useShowroomCostsDistributed, useAgentsExpenseCostsRange, useShowroomCostsDistributedRange } from "@/hooks/useAgentExpenseCosts";
 import { useAgentSalesProfitabilityForMonth, useAgentSalesProfitabilityRange, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 import { useAgentManualAchizitiiForMonth, useAgentManualAchizitiiRange } from "@/hooks/useManualAchizitii";
+
+interface DbUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  active: boolean;
+  sediuId?: string;
+}
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -29,7 +40,17 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
 const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
 
 export default function Angajati() {
-  const { employees = [], showrooms = [], addEmployee, removeEmployee, updateEmployee, updateEmployeeData, selectedMonth } = useStore();
+  const { employees: zustandEmployees = [], showrooms = [], addEmployee, removeEmployee, updateEmployee, updateEmployeeData, selectedMonth } = useStore();
+  
+  // Fetch agents from database API - these have the correct IDs that match expense/sales data
+  const { data: dbUsers = [] } = useQuery<DbUser[]>({
+    queryKey: ["/api/users"],
+  });
+  const dbAgents = dbUsers.filter(u => u.role === "AGENT" && u.active);
+  
+  // Get PRODUCTIE and INDIRECT from Zustand store (for cost distribution)
+  const productieEmployees = zustandEmployees.filter(e => e.type === 'PRODUCTIE');
+  const indirectEmployees = zustandEmployees.filter(e => e.type === 'INDIRECT');
   
   const [filterType, setFilterType] = useState<EmployeeType | 'ALL'>('ALL');
   
@@ -73,8 +94,8 @@ export default function Angajati() {
   // Number of months in selected range
   const monthsCount = Math.max(1, endMonth - startMonth + 1);
   
-  // Helper: Calculate fixed costs × number of months
-  const getFixedTotals = (fixedCosts: typeof employees[0]['fixedCosts'], months: number) => ({
+  // Helper: Calculate fixed costs × number of months from Zustand employee
+  const getFixedTotals = (fixedCosts: Employee['fixedCosts'], months: number) => ({
     salariu: (fixedCosts?.salariuLunar ?? 0) * months,
     amortizareAuto: (fixedCosts?.amortizareAutoLunar ?? 0) * months,
     combustibil: (fixedCosts?.combustibilLunar ?? 0) * months,
@@ -85,44 +106,40 @@ export default function Angajati() {
     alteCheltuieli: (fixedCosts?.alteCheltuieliLunar ?? 0) * months,
   });
   
-  // Create aggregated employee data for display
-  const employeesWithAggregatedData = useMemo(() => {
-    return employees.map(emp => {
-      const expenseData = expenseCosts[emp.id];
-      const salesData = salesProfitability[emp.id];
-      const manualAchData = manualAchizitii[emp.id];
-      const showroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
-      const isAgent = emp.type === 'AGENT';
+  // Calculate total production and indirect costs from Zustand employees
+  const totalProductionCosts = useMemo(() => {
+    return productieEmployees.reduce((sum, emp) => {
+      const fixed = getFixedTotals(emp.fixedCosts, monthsCount);
+      return sum + fixed.salariu + fixed.amortizareAuto + fixed.combustibil + fixed.revizii + 
+             fixed.alteCheltuieliAuto + fixed.abonamente + fixed.diurne + fixed.alteCheltuieli;
+    }, 0);
+  }, [productieEmployees, monthsCount]);
+  
+  const totalIndirectCosts = useMemo(() => {
+    return indirectEmployees.reduce((sum, emp) => {
+      const fixed = getFixedTotals(emp.fixedCosts, monthsCount);
+      return sum + fixed.salariu + fixed.amortizareAuto + fixed.combustibil + fixed.revizii + 
+             fixed.alteCheltuieliAuto + fixed.abonamente + fixed.diurne + fixed.alteCheltuieli;
+    }, 0);
+  }, [indirectEmployees, monthsCount]);
+  
+  // Create agent data using API agents (with correct IDs)
+  const agentsWithMetrics = useMemo(() => {
+    return dbAgents.map(agent => {
+      const expenseData = expenseCosts[agent.id];
+      const salesData = salesProfitability[agent.id];
+      const manualAchData = manualAchizitii[agent.id];
+      const showroomCost = showroomCostsDistributed[agent.id]?.costuriShowroomDistribuite ?? 0;
       
-      // Calculate fixed costs × months
-      const fixedTotals = getFixedTotals(emp.fixedCosts, monthsCount);
-      
-      // For PRODUCTIE and INDIRECT: use only fixed costs
-      // For AGENT: use API expenses if available, otherwise fall back to fixed costs
-      let salariu: number, amortizareAuto: number, combustibil: number, revizii: number;
-      let alteCheltuieliAuto: number, abonamente: number, diurne: number, alteCheltuieli: number;
-      
-      if (isAgent) {
-        // Agents: prefer API data from Cheltuieli, fall back to fixed costs
-        salariu = expenseData?.salariu ?? fixedTotals.salariu;
-        amortizareAuto = expenseData?.amortizareAuto ?? fixedTotals.amortizareAuto;
-        combustibil = expenseData?.combustibil ?? fixedTotals.combustibil;
-        revizii = expenseData?.revizii ?? fixedTotals.revizii;
-        alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? fixedTotals.alteCheltuieliAuto;
-        abonamente = expenseData?.abonamente ?? fixedTotals.abonamente;
-        diurne = expenseData?.diurne ?? fixedTotals.diurne;
-        alteCheltuieli = expenseData?.alteCheltuieli ?? fixedTotals.alteCheltuieli;
-      } else {
-        // PRODUCTIE and INDIRECT: use fixed costs × months (no API)
-        salariu = fixedTotals.salariu;
-        amortizareAuto = fixedTotals.amortizareAuto;
-        combustibil = fixedTotals.combustibil;
-        revizii = fixedTotals.revizii;
-        alteCheltuieliAuto = fixedTotals.alteCheltuieliAuto;
-        abonamente = fixedTotals.abonamente;
-        diurne = fixedTotals.diurne;
-        alteCheltuieli = fixedTotals.alteCheltuieli;
-      }
+      // Agent costs from API expenses
+      const salariu = expenseData?.salariu ?? 0;
+      const amortizareAuto = expenseData?.amortizareAuto ?? 0;
+      const combustibil = expenseData?.combustibil ?? 0;
+      const revizii = expenseData?.revizii ?? 0;
+      const alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? 0;
+      const abonamente = expenseData?.abonamente ?? 0;
+      const diurne = expenseData?.diurne ?? 0;
+      const alteCheltuieli = expenseData?.alteCheltuieli ?? 0;
       
       // Calculate aggregated metrics from API sales data + manual acquisitions
       const venitGard = salesData ? parseFloat(salesData.venitGard) : 0;
@@ -149,13 +166,11 @@ export default function Angajati() {
       
       const costuriProprii = salariu + amortizareAuto + combustibil + revizii + alteCheltuieliAuto + abonamente + diurne + alteCheltuieli;
       
-      // For agents, calculate profit (costs will be added in distribution phase)
-      const profitFinal = isAgent 
-        ? adaosFaraTVA - valoareComision - costuriProprii - showroomCost
-        : 0;
-      
       return {
-        ...emp,
+        id: agent.id,
+        name: `${agent.firstName} ${agent.lastName}`,
+        type: 'AGENT' as EmployeeType,
+        showroomId: agent.sediuId || null,
         aggregatedMetrics: {
           venitGard,
           achizitieGard,
@@ -180,33 +195,23 @@ export default function Angajati() {
           costShowroom: showroomCost,
           costProductie: 0,
           costIndirecte: 0,
-          profitFinal,
-          contributionType: emp.type
+          profitFinal: 0,
+          contributionType: 'AGENT' as EmployeeType
         }
       };
     });
-  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed, manualAchizitii, monthsCount]);
+  }, [dbAgents, expenseCosts, salesProfitability, showroomCostsDistributed, manualAchizitii]);
   
   // Calculate totals and distribute production/indirect costs to agents
-  const { totals, employeesWithDistributedCosts } = useMemo(() => {
-    const agents = employeesWithAggregatedData.filter(e => e.type === 'AGENT');
-    const productie = employeesWithAggregatedData.filter(e => e.type === 'PRODUCTIE');
-    const indirect = employeesWithAggregatedData.filter(e => e.type === 'INDIRECT');
-    
-    // Calculate totals
-    const totalVenitGard = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitGard, 0);
-    const totalVenitAcoperis = agents.reduce((sum, a) => sum + a.aggregatedMetrics.venitAcoperis, 0);
+  const { totals, agentsWithDistributedCosts } = useMemo(() => {
+    // Calculate totals from agents
+    const totalVenitGard = agentsWithMetrics.reduce((sum, a) => sum + a.aggregatedMetrics.venitGard, 0);
+    const totalVenitAcoperis = agentsWithMetrics.reduce((sum, a) => sum + a.aggregatedMetrics.venitAcoperis, 0);
     const totalVenitFirma = totalVenitGard + totalVenitAcoperis;
     
-    const totalProductionCosts = productie.reduce((sum, p) => sum + p.aggregatedMetrics.costuriProprii, 0);
-    const totalIndirectCosts = indirect.reduce((sum, i) => sum + i.aggregatedMetrics.costuriProprii, 0);
-    
-    // Distribute production costs proportionally based on fence (Gard) revenue
-    // Distribute indirect costs proportionally based on total revenue
-    const employeesWithDistributedCosts = employeesWithAggregatedData.map(emp => {
-      if (emp.type !== 'AGENT') return emp;
-      
-      const m = emp.aggregatedMetrics;
+    // Distribute costs proportionally to agents
+    const agentsWithDistributedCosts = agentsWithMetrics.map(agent => {
+      const m = agent.aggregatedMetrics;
       
       // Production cost distribution (based on Gard revenue percentage)
       const gardRevenuePercent = totalVenitGard > 0 ? m.venitGard / totalVenitGard : 0;
@@ -220,7 +225,7 @@ export default function Angajati() {
       const profitFinal = m.adaosFaraTVA - m.valoareComision - m.costuriProprii - m.costShowroom - costProductie - costIndirecte;
       
       return {
-        ...emp,
+        ...agent,
         aggregatedMetrics: {
           ...m,
           costProductie,
@@ -237,14 +242,72 @@ export default function Angajati() {
         totalProductionCosts,
         totalIndirectCosts
       },
-      employeesWithDistributedCosts
+      agentsWithDistributedCosts
     };
-  }, [employeesWithAggregatedData]);
+  }, [agentsWithMetrics, totalProductionCosts, totalIndirectCosts]);
   
-  // Filter employees based on type selection
+  // Filter agents based on type selection (now only agents from API)
+  const filteredAgents = filterType === 'ALL' || filterType === 'AGENT'
+    ? agentsWithDistributedCosts 
+    : [];
+  
+  // Combine production and indirect employees from Zustand for display if needed
+  const productieForDisplay = productieEmployees.map(emp => ({
+    id: emp.id,
+    name: emp.name,
+    type: emp.type,
+    showroomId: emp.showroomId,
+    aggregatedMetrics: {
+      venitGard: 0, achizitieGard: 0, adaosTVAGard: 0,
+      venitAcoperis: 0, achizitieAcoperis: 0, adaosTVAAcoperis: 0,
+      adaosTotalCuTVA: 0, adaosFaraTVA: 0, venitTVA: 0,
+      comisionPercent: 0, valoareComision: 0,
+      ...getFixedTotals(emp.fixedCosts, monthsCount),
+      costuriProprii: getFixedTotals(emp.fixedCosts, monthsCount).salariu + 
+                      getFixedTotals(emp.fixedCosts, monthsCount).amortizareAuto +
+                      getFixedTotals(emp.fixedCosts, monthsCount).combustibil +
+                      getFixedTotals(emp.fixedCosts, monthsCount).revizii +
+                      getFixedTotals(emp.fixedCosts, monthsCount).alteCheltuieliAuto +
+                      getFixedTotals(emp.fixedCosts, monthsCount).abonamente +
+                      getFixedTotals(emp.fixedCosts, monthsCount).diurne +
+                      getFixedTotals(emp.fixedCosts, monthsCount).alteCheltuieli,
+      costShowroom: 0, costProductie: 0, costIndirecte: 0, profitFinal: 0,
+      contributionType: 'PRODUCTIE' as EmployeeType
+    }
+  }));
+  
+  const indirectForDisplay = indirectEmployees.map(emp => ({
+    id: emp.id,
+    name: emp.name,
+    type: emp.type,
+    showroomId: emp.showroomId,
+    aggregatedMetrics: {
+      venitGard: 0, achizitieGard: 0, adaosTVAGard: 0,
+      venitAcoperis: 0, achizitieAcoperis: 0, adaosTVAAcoperis: 0,
+      adaosTotalCuTVA: 0, adaosFaraTVA: 0, venitTVA: 0,
+      comisionPercent: 0, valoareComision: 0,
+      ...getFixedTotals(emp.fixedCosts, monthsCount),
+      costuriProprii: getFixedTotals(emp.fixedCosts, monthsCount).salariu + 
+                      getFixedTotals(emp.fixedCosts, monthsCount).amortizareAuto +
+                      getFixedTotals(emp.fixedCosts, monthsCount).combustibil +
+                      getFixedTotals(emp.fixedCosts, monthsCount).revizii +
+                      getFixedTotals(emp.fixedCosts, monthsCount).alteCheltuieliAuto +
+                      getFixedTotals(emp.fixedCosts, monthsCount).abonamente +
+                      getFixedTotals(emp.fixedCosts, monthsCount).diurne +
+                      getFixedTotals(emp.fixedCosts, monthsCount).alteCheltuieli,
+      costShowroom: 0, costProductie: 0, costIndirecte: 0, profitFinal: 0,
+      contributionType: 'INDIRECT' as EmployeeType
+    }
+  }));
+  
+  // Combined filtered list based on filter type
   const filteredEmployees = filterType === 'ALL' 
-    ? employeesWithDistributedCosts 
-    : employeesWithDistributedCosts.filter(e => e.type === filterType);
+    ? [...filteredAgents, ...productieForDisplay, ...indirectForDisplay]
+    : filterType === 'AGENT' 
+      ? filteredAgents 
+      : filterType === 'PRODUCTIE'
+        ? productieForDisplay
+        : indirectForDisplay;
   
   const handleRefreshData = () => {
     refetchExpenses();
@@ -532,12 +595,16 @@ export default function Angajati() {
                     return (
                       <TableRow key={emp.id} className={!isAgent ? 'bg-muted/30' : ''} data-testid={`row-employee-${emp.id}`}>
                         <TableCell className="sticky left-0 bg-background z-10 font-medium border-r">
-                          <Input 
-                            value={emp.name} 
-                            onChange={(e) => updateEmployee(emp.id, { name: e.target.value })}
-                            className="h-8 w-full"
-                            data-testid={`input-name-${emp.id}`}
-                          />
+                          {isAgent ? (
+                            <span data-testid={`text-name-${emp.id}`}>{emp.name}</span>
+                          ) : (
+                            <Input 
+                              value={emp.name} 
+                              onChange={(e) => updateEmployee(emp.id, { name: e.target.value })}
+                              className="h-8 w-full"
+                              data-testid={`input-name-${emp.id}`}
+                            />
+                          )}
                         </TableCell>
                         
                         <TableCell>
@@ -546,19 +613,9 @@ export default function Angajati() {
                         
                         <TableCell>
                           {isAgent ? (
-                            <Select 
-                              value={emp.showroomId || ''} 
-                              onValueChange={(v) => updateEmployee(emp.id, { showroomId: v })}
-                            >
-                              <SelectTrigger className="h-8 w-28" data-testid={`select-showroom-${emp.id}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {showrooms.map(s => (
-                                  <SelectItem key={s.id} value={s.id}>{s.name.replace('Showroom ', '')}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <span className="text-sm" data-testid={`text-showroom-${emp.id}`}>
+                              {showrooms.find(s => s.id === emp.showroomId)?.name?.replace('Showroom ', '') || '-'}
+                            </span>
                           ) : <span className="text-muted-foreground text-sm">-</span>}
                         </TableCell>
                         
@@ -594,9 +651,9 @@ export default function Angajati() {
                         </TableCell>
                         <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
                         
-                        {/* Cheltuieli Proprii - TOȚI angajații au cheltuieli editabile */}
+                        {/* Cheltuieli Proprii - read-only pentru AGENT (vin din Cheltuieli), editabile pentru PRODUCTIE/INDIRECT */}
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.salariu.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.salariu} 
@@ -606,7 +663,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.amortizareAuto.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.amortizareAuto} 
@@ -615,7 +672,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.combustibil.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.combustibil} 
@@ -624,7 +681,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.revizii.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.revizii} 
@@ -633,7 +690,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.alteCheltuieliAuto.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.alteCheltuieliAuto} 
@@ -642,7 +699,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.abonamente.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.abonamente} 
@@ -651,7 +708,7 @@ export default function Angajati() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {isRangeMode ? (
+                          {isAgent || isRangeMode ? (
                             <span>{m.diurne.toFixed(0)}</span>
                           ) : (
                             <Input type="number" className="w-20 h-8" value={m.diurne} 
@@ -671,9 +728,11 @@ export default function Angajati() {
                         </TableCell>
                         
                         <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => removeEmployee(emp.id)} data-testid={`button-delete-${emp.id}`}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {!isAgent && (
+                            <Button variant="ghost" size="icon" onClick={() => removeEmployee(emp.id)} data-testid={`button-delete-${emp.id}`}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
