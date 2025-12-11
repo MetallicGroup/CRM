@@ -35,6 +35,7 @@ export interface EmployeeMonthlyData {
   achizitieAcoperis: number;
   
   comisionPercent: number;
+  valoareComision?: number; // Optional - comes from API (comisionGard + comisionAcoperis)
   
   // Costuri directe (Input per month) - toți angajații au
   salariu: number;

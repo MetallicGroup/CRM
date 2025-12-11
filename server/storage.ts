@@ -1441,7 +1441,16 @@ export class DatabaseStorage implements IStorage {
     for (const client of soldClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
-      const comision = parseFloat(client.comisionOferta || "0");
+      
+      // Calculate comision: use comisionOferta if available, otherwise calculate from procentComision
+      let comision = parseFloat(client.comisionOferta || "0");
+      if (comision === 0 && client.procentComision) {
+        // procentComision is stored as 1, 2, 3 etc (meaning 1%, 2%, 3%)
+        const procentValue = parseFloat(client.procentComision.toString());
+        if (!isNaN(procentValue) && procentValue > 0) {
+          comision = valoare * (procentValue / 100);
+        }
+      }
       
       // Track totals for weighted average commission
       totalValoareOferta += valoare;

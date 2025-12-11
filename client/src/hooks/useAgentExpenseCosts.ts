@@ -107,3 +107,76 @@ export function useShowroomCostsDistributed(month: Month, year: number = new Dat
     refetchOnWindowFocus: true,
   });
 }
+
+// Hook for fetching expense costs for a range of months
+export function useAgentsExpenseCostsRange(startMonth: number, endMonth: number, year: number = new Date().getFullYear()) {
+  return useQuery<AllAgentsCosts>({
+    queryKey: ["all-agents-expense-costs-range", startMonth, endMonth, year],
+    queryFn: async () => {
+      // Fetch data for each month in range and aggregate
+      const promises = [];
+      for (let m = startMonth; m <= endMonth; m++) {
+        promises.push(
+          fetch(`/api/profitabilitate/all-agents-costs?luna=${m}&an=${year}`)
+            .then(res => res.ok ? res.json() : {})
+        );
+      }
+      const monthlyData = await Promise.all(promises);
+      
+      // Aggregate across months
+      const aggregated: AllAgentsCosts = {};
+      for (const monthData of monthlyData) {
+        for (const [agentId, costs] of Object.entries(monthData as AllAgentsCosts)) {
+          if (!aggregated[agentId]) {
+            aggregated[agentId] = { ...costs };
+          } else {
+            aggregated[agentId].salariu += costs.salariu;
+            aggregated[agentId].amortizareAuto += costs.amortizareAuto;
+            aggregated[agentId].combustibil += costs.combustibil;
+            aggregated[agentId].revizii += costs.revizii;
+            aggregated[agentId].alteCheltuieliAuto += costs.alteCheltuieliAuto;
+            aggregated[agentId].abonamente += costs.abonamente;
+            aggregated[agentId].diurne += costs.diurne;
+            aggregated[agentId].alteCheltuieli += costs.alteCheltuieli;
+          }
+        }
+      }
+      return aggregated;
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+}
+
+// Hook for fetching showroom costs distributed for a range of months
+export function useShowroomCostsDistributedRange(startMonth: number, endMonth: number, year: number = new Date().getFullYear()) {
+  return useQuery<AllShowroomCostsDistributed>({
+    queryKey: ["showroom-costs-distributed-range", startMonth, endMonth, year],
+    queryFn: async () => {
+      // Fetch data for each month in range and aggregate
+      const promises = [];
+      for (let m = startMonth; m <= endMonth; m++) {
+        promises.push(
+          fetch(`/api/profitabilitate/showroom-costs-distributed?luna=${m}&an=${year}`)
+            .then(res => res.ok ? res.json() : {})
+        );
+      }
+      const monthlyData = await Promise.all(promises);
+      
+      // Aggregate across months
+      const aggregated: AllShowroomCostsDistributed = {};
+      for (const monthData of monthlyData) {
+        for (const [agentId, costs] of Object.entries(monthData as AllShowroomCostsDistributed)) {
+          if (!aggregated[agentId]) {
+            aggregated[agentId] = { ...costs };
+          } else {
+            aggregated[agentId].costuriShowroomDistribuite += costs.costuriShowroomDistribuite;
+          }
+        }
+      }
+      return aggregated;
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+}

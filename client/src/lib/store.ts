@@ -226,7 +226,10 @@ export const calculateEmployeeMetrics = (emp: Employee, month: Month, totals: Re
   const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
 
   const venitTVA = data.venitTVA || 0;
-  const valoareComision = venitTVA * ((data.comisionPercent || 0) / 100);
+  // Use valoareComision from API if available, otherwise calculate from percent
+  const valoareComision = data.valoareComision !== undefined 
+    ? data.valoareComision 
+    : venitTVA * ((data.comisionPercent || 0) / 100);
   
   // Costuri proprii ale agentului
   const costuriProprii = (data.salariu || 0) + (data.amortizareAuto || 0) + (data.combustibil || 0) + 

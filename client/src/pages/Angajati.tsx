@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useStore, getTotalsForMonth, calculateEmployeeMetrics } from "@/lib/store";
-import { MonthSelector } from "@/components/ui/month-selector";
-import { Download, Plus, Trash2, RefreshCw } from "lucide-react";
-import { Employee, EmployeeType, MONTHS } from "@/lib/types";
+import { Label } from "@/components/ui/label";
+import { useStore } from "@/lib/store";
+import { Download, Plus, Trash2, RefreshCw, Calendar } from "lucide-react";
+import { Employee, EmployeeType, MONTHS, Month } from "@/lib/types";
 import { useState, useMemo } from "react";
-import { useAllAgentsExpenseCosts, useShowroomCostsDistributed } from "@/hooks/useAgentExpenseCosts";
-import { useAgentSalesProfitabilityForMonth, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
+import { useAllAgentsExpenseCosts, useShowroomCostsDistributed, useAgentsExpenseCostsRange, useShowroomCostsDistributedRange } from "@/hooks/useAgentExpenseCosts";
+import { useAgentSalesProfitabilityForMonth, useAgentSalesProfitabilityRange, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 
 const TYPE_LABELS: Record<EmployeeType, string> = {
   'AGENT': 'Agent',
@@ -25,60 +25,123 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
   'INDIRECT': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
 };
 
+const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
+
 export default function Angajati() {
-  const { employees = [], showrooms = [], distributors = [], updateEmployeeData, updateEmployee, addEmployee, removeEmployee, selectedMonth } = useStore();
-  const fullStore = useStore();
-  const baseTotals = getTotalsForMonth(fullStore, selectedMonth);
+  const { employees = [], showrooms = [], addEmployee, removeEmployee, updateEmployee, updateEmployeeData, selectedMonth } = useStore();
   
   const [filterType, setFilterType] = useState<EmployeeType | 'ALL'>('ALL');
   
   const currentYear = new Date().getFullYear();
-  const { data: expenseCosts = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAllAgentsExpenseCosts(selectedMonth, currentYear);
-  const { data: salesProfitability = {}, isLoading: isLoadingSales, refetch: refetchSales } = useAgentSalesProfitabilityForMonth(selectedMonth, currentYear);
-  const { data: showroomCostsDistributed = {}, isLoading: isLoadingShowroomCosts, refetch: refetchShowroomCosts } = useShowroomCostsDistributed(selectedMonth, currentYear);
+  const currentMonthNum = new Date().getMonth() + 1;
   
-  const employeesWithExpensesAndSales = useMemo(() => {
+  // Date range state
+  const [startMonth, setStartMonth] = useState(currentMonthNum);
+  const [endMonth, setEndMonth] = useState(currentMonthNum);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const isRangeMode = startMonth !== endMonth;
+  
+  // Single month hooks (when startMonth === endMonth)
+  const selectedMonthName = MONTHS[startMonth - 1] as Month;
+  const { data: expenseCostsSingle = {}, isLoading: isLoadingExpensesSingle, refetch: refetchExpensesSingle } = useAllAgentsExpenseCosts(selectedMonthName, selectedYear);
+  const { data: salesProfitabilitySingle = {}, isLoading: isLoadingSalesSingle, refetch: refetchSalesSingle } = useAgentSalesProfitabilityForMonth(selectedMonthName, selectedYear);
+  const { data: showroomCostsDistributedSingle = {}, isLoading: isLoadingShowroomCostsSingle, refetch: refetchShowroomCostsSingle } = useShowroomCostsDistributed(selectedMonthName, selectedYear);
+  
+  // Range hooks (when startMonth !== endMonth)
+  const { data: expenseCostsRange = {}, isLoading: isLoadingExpensesRange, refetch: refetchExpensesRange } = useAgentsExpenseCostsRange(startMonth, endMonth, selectedYear);
+  const { data: salesProfitabilityRange = {}, isLoading: isLoadingSalesRange, refetch: refetchSalesRange } = useAgentSalesProfitabilityRange(startMonth, endMonth, selectedYear);
+  const { data: showroomCostsDistributedRange = {}, isLoading: isLoadingShowroomCostsRange, refetch: refetchShowroomCostsRange } = useShowroomCostsDistributedRange(startMonth, endMonth, selectedYear);
+  
+  // Use the appropriate data based on mode
+  const expenseCosts = isRangeMode ? expenseCostsRange : expenseCostsSingle;
+  const salesProfitability = isRangeMode ? salesProfitabilityRange : salesProfitabilitySingle;
+  const showroomCostsDistributed = isRangeMode ? showroomCostsDistributedRange : showroomCostsDistributedSingle;
+  const isLoadingExpenses = isRangeMode ? isLoadingExpensesRange : isLoadingExpensesSingle;
+  const isLoadingSales = isRangeMode ? isLoadingSalesRange : isLoadingSalesSingle;
+  const isLoadingShowroomCosts = isRangeMode ? isLoadingShowroomCostsRange : isLoadingShowroomCostsSingle;
+  const refetchExpenses = isRangeMode ? refetchExpensesRange : refetchExpensesSingle;
+  const refetchSales = isRangeMode ? refetchSalesRange : refetchSalesSingle;
+  const refetchShowroomCosts = isRangeMode ? refetchShowroomCostsRange : refetchShowroomCostsSingle;
+  
+  // Create aggregated employee data for display
+  const employeesWithAggregatedData = useMemo(() => {
     return employees.map(emp => {
       const expenseData = expenseCosts[emp.id];
       const salesData = salesProfitability[emp.id];
+      const showroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
       
-      const updatedMonthlyData = { ...emp.monthlyData };
-      if (updatedMonthlyData[selectedMonth]) {
-        updatedMonthlyData[selectedMonth] = {
-          ...updatedMonthlyData[selectedMonth],
-          salariu: expenseData?.salariu ?? updatedMonthlyData[selectedMonth].salariu,
-          amortizareAuto: expenseData?.amortizareAuto ?? updatedMonthlyData[selectedMonth].amortizareAuto,
-          combustibil: expenseData?.combustibil ?? updatedMonthlyData[selectedMonth].combustibil,
-          revizii: expenseData?.revizii ?? updatedMonthlyData[selectedMonth].revizii,
-          alteCheltuieliAuto: expenseData?.alteCheltuieliAuto ?? updatedMonthlyData[selectedMonth].alteCheltuieliAuto,
-          abonamente: expenseData?.abonamente ?? updatedMonthlyData[selectedMonth].abonamente,
-          diurne: expenseData?.diurne ?? updatedMonthlyData[selectedMonth].diurne,
-          alteCheltuieli: expenseData?.alteCheltuieli ?? updatedMonthlyData[selectedMonth].alteCheltuieli ?? 0,
-          venitGard: salesData ? parseFloat(salesData.venitGard) : updatedMonthlyData[selectedMonth].venitGard,
-          achizitieGard: salesData ? parseFloat(salesData.achizitieGard) : updatedMonthlyData[selectedMonth].achizitieGard,
-          venitAcoperis: salesData ? parseFloat(salesData.venitAcoperis) : updatedMonthlyData[selectedMonth].venitAcoperis,
-          achizitieAcoperis: salesData ? parseFloat(salesData.achizitieAcoperis) : updatedMonthlyData[selectedMonth].achizitieAcoperis,
-          venitTVA: salesData ? parseFloat(salesData.venitTvaTotal || "0") : updatedMonthlyData[selectedMonth].venitTVA,
-          comisionPercent: salesData ? parseFloat(salesData.comisionPercentMediu || "0") : updatedMonthlyData[selectedMonth].comisionPercent,
-        };
-      }
+      // Calculate aggregated metrics directly from API data
+      const venitGard = salesData ? parseFloat(salesData.venitGard) : 0;
+      const achizitieGard = salesData ? parseFloat(salesData.achizitieGard) : 0;
+      const venitAcoperis = salesData ? parseFloat(salesData.venitAcoperis) : 0;
+      const achizitieAcoperis = salesData ? parseFloat(salesData.achizitieAcoperis) : 0;
+      const venitTVA = salesData ? parseFloat(salesData.venitTvaTotal || "0") : 0;
+      const comisionPercent = salesData ? parseFloat(salesData.comisionPercentMediu || "0") : 0;
+      const comisionGard = salesData ? parseFloat(salesData.comisionGard || "0") : 0;
+      const comisionAcoperis = salesData ? parseFloat(salesData.comisionAcoperis || "0") : 0;
+      const valoareComision = comisionGard + comisionAcoperis;
       
-      return { ...emp, monthlyData: updatedMonthlyData };
+      // Expenses from API
+      const salariu = expenseData?.salariu ?? 0;
+      const amortizareAuto = expenseData?.amortizareAuto ?? 0;
+      const combustibil = expenseData?.combustibil ?? 0;
+      const revizii = expenseData?.revizii ?? 0;
+      const alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? 0;
+      const abonamente = expenseData?.abonamente ?? 0;
+      const diurne = expenseData?.diurne ?? 0;
+      const alteCheltuieli = expenseData?.alteCheltuieli ?? 0;
+      
+      // Calculate derived metrics
+      const adaosTVAGard = venitGard - achizitieGard;
+      const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
+      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
+      const tvaTotal = adaosTotalCuTVA * 0.21;
+      const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
+      
+      const costuriProprii = salariu + amortizareAuto + combustibil + revizii + alteCheltuieliAuto + abonamente + diurne + alteCheltuieli;
+      
+      // For agents, calculate profit
+      const isAgent = emp.type === 'AGENT';
+      const profitFinal = isAgent 
+        ? adaosFaraTVA - valoareComision - costuriProprii - showroomCost
+        : 0;
+      
+      return {
+        ...emp,
+        aggregatedMetrics: {
+          venitGard,
+          achizitieGard,
+          adaosTVAGard,
+          venitAcoperis,
+          achizitieAcoperis,
+          adaosTVAAcoperis,
+          adaosTotalCuTVA,
+          adaosFaraTVA,
+          venitTVA,
+          comisionPercent,
+          valoareComision,
+          salariu,
+          amortizareAuto,
+          combustibil,
+          revizii,
+          alteCheltuieliAuto,
+          abonamente,
+          diurne,
+          alteCheltuieli,
+          costuriProprii,
+          costShowroom: showroomCost,
+          costProductie: 0,
+          costIndirecte: 0,
+          profitFinal,
+          contributionType: emp.type
+        }
+      };
     });
-  }, [employees, expenseCosts, salesProfitability, selectedMonth]);
+  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed]);
   
-  const totals = useMemo(() => {
-    const agents = employeesWithExpensesAndSales.filter(e => e.type === 'AGENT');
-    const totalVenitAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[selectedMonth]?.venitTVA || 0), 0);
-    const totalVenitDistribuitori = distributors.reduce((sum, d) => sum + (d.monthlyData[selectedMonth]?.venitTVA || 0), 0);
-    const totalVenitGardAgenti = agents.reduce((sum, a) => sum + (a.monthlyData[selectedMonth]?.venitGard || 0), 0);
-    
-    return {
-      ...baseTotals,
-      totalVenitFirma: totalVenitAgenti + totalVenitDistribuitori,
-      totalVenitGardFirma: totalVenitGardAgenti + totalVenitDistribuitori,
-    };
-  }, [employeesWithExpensesAndSales, distributors, selectedMonth, baseTotals]);
+  const filteredEmployees = filterType === 'ALL' 
+    ? employeesWithAggregatedData 
+    : employeesWithAggregatedData.filter(e => e.type === filterType);
   
   const handleRefreshData = () => {
     refetchExpenses();
@@ -87,10 +150,6 @@ export default function Angajati() {
   };
   
   const isLoadingData = isLoadingExpenses || isLoadingSales || isLoadingShowroomCosts;
-
-  const filteredEmployees = filterType === 'ALL' 
-    ? employeesWithExpensesAndSales 
-    : employeesWithExpensesAndSales.filter(e => e.type === filterType);
 
   const handleAddEmployee = (type: EmployeeType) => {
     const newEmp: Employee = {
@@ -126,20 +185,15 @@ export default function Angajati() {
     ];
 
     const rows = filteredEmployees.map(emp => {
-      const m = calculateEmployeeMetrics(emp, selectedMonth, totals);
-      const isAgent = emp.type === 'AGENT';
-      const apiShowroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
-      const finalCostShowroom = isAgent && apiShowroomCost > 0 ? apiShowroomCost : m.costShowroom;
-      const costShowroomDiff = finalCostShowroom - m.costShowroom;
-      const adjustedProfitFinal = m.profitFinal - costShowroomDiff;
+      const m = emp.aggregatedMetrics;
       return [
         emp.name, emp.type, emp.showroomId || '-',
-        m.venitGard, m.achizitieGard, m.adaosTVAGard,
-        m.venitAcoperis, m.achizitieAcoperis, m.adaosTVAAcoperis,
-        m.adaosTotalCuTVA, m.adaosFaraTVA, m.venitTVA, m.comisionPercent, m.valoareComision,
-        m.salariu, m.amortizareAuto, m.combustibil, m.revizii, m.alteCheltuieliAuto, m.abonamente, m.diurne, m.costuriProprii,
-        finalCostShowroom.toFixed(2), m.costProductie, m.costIndirecte,
-        adjustedProfitFinal.toFixed(2)
+        m.venitGard.toFixed(2), m.achizitieGard.toFixed(2), m.adaosTVAGard.toFixed(2),
+        m.venitAcoperis.toFixed(2), m.achizitieAcoperis.toFixed(2), m.adaosTVAAcoperis.toFixed(2),
+        m.adaosTotalCuTVA.toFixed(2), m.adaosFaraTVA.toFixed(2), m.venitTVA.toFixed(2), m.comisionPercent.toFixed(2), m.valoareComision.toFixed(2),
+        m.salariu.toFixed(2), m.amortizareAuto.toFixed(2), m.combustibil.toFixed(2), m.revizii.toFixed(2), m.alteCheltuieliAuto.toFixed(2), m.abonamente.toFixed(2), m.diurne.toFixed(2), m.costuriProprii.toFixed(2),
+        m.costShowroom.toFixed(2), m.costProductie.toFixed(2), m.costIndirecte.toFixed(2),
+        m.profitFinal.toFixed(2)
       ].join(",");
     });
 
@@ -147,7 +201,7 @@ export default function Angajati() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `raport_angajati_${selectedMonth}.csv`);
+    link.setAttribute("download", `raport_angajati_${isRangeMode ? `${startMonth}-${endMonth}` : selectedMonthName}_${selectedYear}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -173,9 +227,82 @@ export default function Angajati() {
           <Button variant="outline" onClick={handleExportCSV} data-testid="button-export-csv">
             <Download className="mr-2 h-4 w-4" /> Export CSV
           </Button>
-          <MonthSelector />
         </div>
       </div>
+      
+      {/* Date Range Selector */}
+      <Card className="mb-4">
+        <CardContent className="pt-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium">Perioada:</Label>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">De la:</Label>
+              <Select 
+                value={startMonth.toString()} 
+                onValueChange={(v) => {
+                  const val = parseInt(v);
+                  setStartMonth(val);
+                  if (val > endMonth) setEndMonth(val);
+                }}
+              >
+                <SelectTrigger className="w-36" data-testid="select-start-month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_OPTIONS.map((m) => (
+                    <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">Până la:</Label>
+              <Select 
+                value={endMonth.toString()} 
+                onValueChange={(v) => {
+                  const val = parseInt(v);
+                  setEndMonth(val);
+                  if (val < startMonth) setStartMonth(val);
+                }}
+              >
+                <SelectTrigger className="w-36" data-testid="select-end-month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_OPTIONS.map((m) => (
+                    <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">An:</Label>
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-24" data-testid="select-year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {isRangeMode && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Interval: {MONTHS[startMonth - 1]} - {MONTHS[endMonth - 1]} {selectedYear}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters and Add buttons */}
       <div className="flex items-center gap-4">
@@ -296,16 +423,8 @@ export default function Angajati() {
                 </TableHeader>
                 <TableBody>
                   {filteredEmployees.map((emp) => {
-                    const metrics = calculateEmployeeMetrics(emp, selectedMonth, totals);
+                    const m = emp.aggregatedMetrics;
                     const isAgent = emp.type === 'AGENT';
-                    
-                    // Get API showroom cost distributed, fall back to calculated if not available
-                    const apiShowroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
-                    const finalCostShowroom = isAgent && apiShowroomCost > 0 ? apiShowroomCost : metrics.costShowroom;
-                    
-                    // Recalculate profit with API showroom cost
-                    const costShowroomDiff = finalCostShowroom - metrics.costShowroom;
-                    const adjustedProfitFinal = metrics.profitFinal - costShowroomDiff;
                     
                     return (
                       <TableRow key={emp.id} className={!isAgent ? 'bg-muted/30' : ''} data-testid={`row-employee-${emp.id}`}>
@@ -341,51 +460,23 @@ export default function Angajati() {
                         </TableCell>
                         
                         {/* GARDURI - doar pentru AGENT */}
-                        <TableCell>
-                          {isAgent ? (
-                            <Input type="number" className="w-24 h-8" value={metrics.venitGard} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { venitGard: Number(e.target.value) })} 
-                              data-testid={`input-venit-gard-${emp.id}`}
-                            />
-                          ) : <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                        <TableCell>
-                          {isAgent ? (
-                            <Input type="number" className="w-24 h-8" value={metrics.achizitieGard} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { achizitieGard: Number(e.target.value) })} 
-                              data-testid={`input-achizitie-gard-${emp.id}`}
-                            />
-                          ) : <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                        <TableCell className="font-bold">{isAgent ? metrics.adaosTVAGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-semibold text-blue-600">{isAgent ? m.venitGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell>{isAgent ? m.achizitieGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold">{isAgent ? m.adaosTVAGard.toFixed(0) : '-'}</TableCell>
                         
                         {/* ACOPERISURI */}
-                        <TableCell>
-                          {isAgent ? (
-                            <Input type="number" className="w-24 h-8" value={metrics.venitAcoperis} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { venitAcoperis: Number(e.target.value) })} 
-                              data-testid={`input-venit-acoperis-${emp.id}`}
-                            />
-                          ) : <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                        <TableCell>
-                          {isAgent ? (
-                            <Input type="number" className="w-24 h-8" value={metrics.achizitieAcoperis} 
-                              onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { achizitieAcoperis: Number(e.target.value) })} 
-                              data-testid={`input-achizitie-acoperis-${emp.id}`}
-                            />
-                          ) : <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                        <TableCell className="font-bold">{isAgent ? metrics.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-semibold text-amber-600">{isAgent ? m.venitAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell>{isAgent ? m.achizitieAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold">{isAgent ? m.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
 
                         {/* ADAOS CU TVA și FĂRĂ TVA */}
-                        <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? metrics.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900">{isAgent ? metrics.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? m.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900">{isAgent ? m.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
 
                         <TableCell className="bg-blue-50 dark:bg-blue-950">
                           {isAgent ? (
                             <span className="font-semibold text-blue-600" data-testid={`text-venit-tva-${emp.id}`}>
-                              {metrics.venitTVA.toFixed(0)}
+                              {m.venitTVA.toFixed(0)}
                             </span>
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
@@ -394,29 +485,29 @@ export default function Angajati() {
                         <TableCell className="bg-green-50 dark:bg-green-950">
                           {isAgent ? (
                             <span className="font-semibold text-green-600" data-testid={`text-comision-${emp.id}`}>
-                              {metrics.comisionPercent.toFixed(2)}%
+                              {m.comisionPercent.toFixed(2)}%
                             </span>
                           ) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
-                        <TableCell className="font-bold text-green-600">{isAgent ? metrics.valoareComision.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
                         
-                        {/* Cheltuieli Proprii - TOȚI angajații au */}
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.salariu} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { salariu: Number(e.target.value) })} data-testid={`input-salariu-${emp.id}`} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.amortizareAuto} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { amortizareAuto: Number(e.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.combustibil} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { combustibil: Number(e.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.revizii} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { revizii: Number(e.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.alteCheltuieliAuto} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { alteCheltuieliAuto: Number(e.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.abonamente} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { abonamente: Number(e.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" className="w-20 h-8" value={metrics.diurne} onChange={(e) => updateEmployeeData(emp.id, selectedMonth, { diurne: Number(e.target.value) })} /></TableCell>
-                        <TableCell className="font-bold text-red-600">{metrics.costuriProprii.toFixed(0)}</TableCell>
+                        {/* Cheltuieli Proprii - readonly în range mode */}
+                        <TableCell>{m.salariu.toFixed(0)}</TableCell>
+                        <TableCell>{m.amortizareAuto.toFixed(0)}</TableCell>
+                        <TableCell>{m.combustibil.toFixed(0)}</TableCell>
+                        <TableCell>{m.revizii.toFixed(0)}</TableCell>
+                        <TableCell>{m.alteCheltuieliAuto.toFixed(0)}</TableCell>
+                        <TableCell>{m.abonamente.toFixed(0)}</TableCell>
+                        <TableCell>{m.diurne.toFixed(0)}</TableCell>
+                        <TableCell className="font-bold text-red-600">{m.costuriProprii.toFixed(0)}</TableCell>
                         
                         {/* Distributed Costs (Read Only) - doar pentru AGENT */}
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? finalCostShowroom.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? metrics.costProductie.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? metrics.costIndirecte.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costShowroom.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costProductie.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costIndirecte.toFixed(0) : '-'}</TableCell>
                         
-                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (adjustedProfitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-muted-foreground border-gray-300'}`}>
-                          {isAgent ? adjustedProfitFinal.toFixed(0) : '-'}
+                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (m.profitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-muted-foreground border-gray-300'}`}>
+                          {isAgent ? m.profitFinal.toFixed(0) : '-'}
                         </TableCell>
                         
                         <TableCell>
