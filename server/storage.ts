@@ -1438,34 +1438,33 @@ export class DatabaseStorage implements IStorage {
     let totalComisionOferta = 0;
 
     // Aggregate sales by category
+    // NOTE: Clients without commission (comisionOferta = null/0) are included in revenue totals
+    // but excluded from commission calculations (per user request - can't calculate expense from 0)
     for (const client of soldClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
       
-      // Calculate comision: use comisionOferta if available, otherwise calculate from procentComision
-      let comision = parseFloat(client.comisionOferta || "0");
-      if (comision === 0 && client.procentComision) {
-        // procentComision is stored as 1, 2, 3 etc (meaning 1%, 2%, 3%)
-        const procentValue = parseFloat(client.procentComision.toString());
-        if (!isNaN(procentValue) && procentValue > 0) {
-          comision = valoare * (procentValue / 100);
-        }
-      }
+      // Only use comisionOferta - clients without it are excluded from commission totals
+      // They are still included in revenue (valoare) and achizitie calculations
+      const hasComision = client.comisionOferta && parseFloat(client.comisionOferta) > 0;
+      const comision = hasComision ? parseFloat(client.comisionOferta!) : 0;
       
-      // Track totals for weighted average commission
-      totalValoareOferta += valoare;
-      totalComisionOferta += comision;
+      // Track totals for weighted average commission (only from clients WITH commission)
+      if (hasComision) {
+        totalValoareOferta += valoare;
+        totalComisionOferta += comision;
+      }
       
       if (client.categorieProdus === "GARD") {
         venitGard += valoare;
         achizitieGard += achizitie;
-        comisionGard += comision;
+        if (hasComision) comisionGard += comision;
         nrVanzariGard++;
       } else {
         // All other categories go to Acoperis (ACOPERIS, RULOURI_EXTERIOARE, FATADA, SISTEM_PLUVIAL, etc.)
         venitAcoperis += valoare;
         achizitieAcoperis += achizitie;
-        comisionAcoperis += comision;
+        if (hasComision) comisionAcoperis += comision;
         nrVanzariAcoperis++;
       }
     }
