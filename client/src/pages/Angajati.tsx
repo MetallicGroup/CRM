@@ -63,14 +63,60 @@ export default function Angajati() {
   const refetchSales = isRangeMode ? refetchSalesRange : refetchSalesSingle;
   const refetchShowroomCosts = isRangeMode ? refetchShowroomCostsRange : refetchShowroomCostsSingle;
   
+  // Number of months in selected range
+  const monthsCount = Math.max(1, endMonth - startMonth + 1);
+  
+  // Helper: Calculate fixed costs × number of months
+  const getFixedTotals = (fixedCosts: typeof employees[0]['fixedCosts'], months: number) => ({
+    salariu: (fixedCosts?.salariuLunar ?? 0) * months,
+    amortizareAuto: (fixedCosts?.amortizareAutoLunar ?? 0) * months,
+    combustibil: (fixedCosts?.combustibilLunar ?? 0) * months,
+    revizii: (fixedCosts?.reviziiLunar ?? 0) * months,
+    alteCheltuieliAuto: (fixedCosts?.alteCheltuieliAutoLunar ?? 0) * months,
+    abonamente: (fixedCosts?.abonamenteLunar ?? 0) * months,
+    diurne: (fixedCosts?.diurneLunar ?? 0) * months,
+    alteCheltuieli: (fixedCosts?.alteCheltuieliLunar ?? 0) * months,
+  });
+  
   // Create aggregated employee data for display
   const employeesWithAggregatedData = useMemo(() => {
     return employees.map(emp => {
       const expenseData = expenseCosts[emp.id];
       const salesData = salesProfitability[emp.id];
       const showroomCost = showroomCostsDistributed[emp.id]?.costuriShowroomDistribuite ?? 0;
+      const isAgent = emp.type === 'AGENT';
       
-      // Calculate aggregated metrics directly from API data
+      // Calculate fixed costs × months
+      const fixedTotals = getFixedTotals(emp.fixedCosts, monthsCount);
+      
+      // For PRODUCTIE and INDIRECT: use only fixed costs
+      // For AGENT: use API expenses if available, otherwise fall back to fixed costs
+      let salariu: number, amortizareAuto: number, combustibil: number, revizii: number;
+      let alteCheltuieliAuto: number, abonamente: number, diurne: number, alteCheltuieli: number;
+      
+      if (isAgent) {
+        // Agents: prefer API data from Cheltuieli, fall back to fixed costs
+        salariu = expenseData?.salariu ?? fixedTotals.salariu;
+        amortizareAuto = expenseData?.amortizareAuto ?? fixedTotals.amortizareAuto;
+        combustibil = expenseData?.combustibil ?? fixedTotals.combustibil;
+        revizii = expenseData?.revizii ?? fixedTotals.revizii;
+        alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? fixedTotals.alteCheltuieliAuto;
+        abonamente = expenseData?.abonamente ?? fixedTotals.abonamente;
+        diurne = expenseData?.diurne ?? fixedTotals.diurne;
+        alteCheltuieli = expenseData?.alteCheltuieli ?? fixedTotals.alteCheltuieli;
+      } else {
+        // PRODUCTIE and INDIRECT: use fixed costs × months (no API)
+        salariu = fixedTotals.salariu;
+        amortizareAuto = fixedTotals.amortizareAuto;
+        combustibil = fixedTotals.combustibil;
+        revizii = fixedTotals.revizii;
+        alteCheltuieliAuto = fixedTotals.alteCheltuieliAuto;
+        abonamente = fixedTotals.abonamente;
+        diurne = fixedTotals.diurne;
+        alteCheltuieli = fixedTotals.alteCheltuieli;
+      }
+      
+      // Calculate aggregated metrics from API sales data
       const venitGard = salesData ? parseFloat(salesData.venitGard) : 0;
       const achizitieGard = salesData ? parseFloat(salesData.achizitieGard) : 0;
       const venitAcoperis = salesData ? parseFloat(salesData.venitAcoperis) : 0;
@@ -81,16 +127,6 @@ export default function Angajati() {
       const comisionAcoperis = salesData ? parseFloat(salesData.comisionAcoperis || "0") : 0;
       const valoareComision = comisionGard + comisionAcoperis;
       
-      // Expenses from API
-      const salariu = expenseData?.salariu ?? 0;
-      const amortizareAuto = expenseData?.amortizareAuto ?? 0;
-      const combustibil = expenseData?.combustibil ?? 0;
-      const revizii = expenseData?.revizii ?? 0;
-      const alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? 0;
-      const abonamente = expenseData?.abonamente ?? 0;
-      const diurne = expenseData?.diurne ?? 0;
-      const alteCheltuieli = expenseData?.alteCheltuieli ?? 0;
-      
       // Calculate derived metrics
       const adaosTVAGard = venitGard - achizitieGard;
       const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
@@ -100,8 +136,7 @@ export default function Angajati() {
       
       const costuriProprii = salariu + amortizareAuto + combustibil + revizii + alteCheltuieliAuto + abonamente + diurne + alteCheltuieli;
       
-      // For agents, calculate profit
-      const isAgent = emp.type === 'AGENT';
+      // For agents, calculate profit (costs will be added in distribution phase)
       const profitFinal = isAgent 
         ? adaosFaraTVA - valoareComision - costuriProprii - showroomCost
         : 0;
@@ -137,7 +172,7 @@ export default function Angajati() {
         }
       };
     });
-  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed]);
+  }, [employees, expenseCosts, salesProfitability, showroomCostsDistributed, monthsCount]);
   
   // Calculate totals and distribute production/indirect costs to agents
   const { totals, employeesWithDistributedCosts } = useMemo(() => {

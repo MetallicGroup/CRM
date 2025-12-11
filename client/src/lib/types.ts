@@ -54,11 +54,24 @@ export interface EmployeeMonthlyData {
   transportIntern: number;
 }
 
+// Cheltuieli fixe lunare (se aplică automat la fiecare lună)
+export interface EmployeeFixedCosts {
+  salariuLunar: number;
+  amortizareAutoLunar: number;
+  combustibilLunar: number;
+  reviziiLunar: number;
+  alteCheltuieliAutoLunar: number;
+  abonamenteLunar: number;
+  diurneLunar: number;
+  alteCheltuieliLunar: number;
+}
+
 export interface Employee {
   id: string;
   name: string;
   type: EmployeeType; // AGENT, PRODUCTIE, sau INDIRECT
   showroomId: string | null; // null pentru PRODUCTIE și INDIRECT
+  fixedCosts?: EmployeeFixedCosts; // Cheltuieli fixe lunare (opțional - dacă nu e setat, se folosesc valorile din monthlyData)
   monthlyData: Record<Month, EmployeeMonthlyData>;
 }
 
