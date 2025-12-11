@@ -611,6 +611,28 @@ export type InsertCheltuialaSediu = z.infer<typeof insertCheltuialaSediuSchema>;
 export type CreateCheltuialaSediu = z.infer<typeof createCheltuialaSediuSchema>;
 export type UpdateCheltuialaSediu = z.infer<typeof updateCheltuialaSediuSchema>;
 
+// ============ AGENT MANUAL ACQUISITIONS (Achiziții manuale pe lună) ============
+
+export const agentManualAchizitii = pgTable("agent_manual_achizitii", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  achizitieGard: decimal("achizitie_gard", { precision: 12, scale: 2 }).default("0"),
+  achizitieAcoperis: decimal("achizitie_acoperis", { precision: 12, scale: 2 }).default("0"),
+  
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertAgentManualAchizitiiSchema = createInsertSchema(agentManualAchizitii).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type AgentManualAchizitii = typeof agentManualAchizitii.$inferSelect;
+export type InsertAgentManualAchizitii = z.infer<typeof insertAgentManualAchizitiiSchema>;
+
 // ============ AGENT SALES PROFITABILITY ============
 
 export const agentSalesProfitability = pgTable("agent_sales_profitability", {
