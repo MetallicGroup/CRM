@@ -1532,6 +1532,56 @@ export async function registerRoutes(
     }
   });
 
+  // ============ MANUAL ACQUISITIONS ROUTES ============
+
+  // Get all manual acquisitions for a year
+  app.get("/api/profitabilitate/achizitii-manuale", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const data = await storage.getAllAgentsManualAchizitii(an);
+      res.json(data);
+    } catch (error) {
+      console.error("Get manual acquisitions error:", error);
+      res.status(500).json({ message: "Eroare la obținerea achizițiilor manuale" });
+    }
+  });
+
+  // Get manual acquisitions for a specific agent
+  app.get("/api/profitabilitate/achizitii-manuale/:agentId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const data = await storage.getAgentManualAchizitii(agentId, an);
+      res.json(data);
+    } catch (error) {
+      console.error("Get agent manual acquisitions error:", error);
+      res.status(500).json({ message: "Eroare la obținerea achizițiilor manuale" });
+    }
+  });
+
+  // Upsert manual acquisition (create or update)
+  app.post("/api/profitabilitate/achizitii-manuale", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an, achizitieGard, achizitieAcoperis } = req.body;
+      
+      if (!agentId || !luna || !an) {
+        return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
+      }
+      
+      const result = await storage.upsertAgentManualAchizitii({
+        agentId,
+        luna,
+        an,
+        achizitieGard,
+        achizitieAcoperis
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Upsert manual acquisition error:", error);
+      res.status(500).json({ message: "Eroare la salvarea achiziției manuale" });
+    }
+  });
+
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
   // Get upload URL for a file

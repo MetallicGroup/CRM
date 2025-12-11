@@ -8,6 +8,7 @@ import {
   cheltuieliAgent,
   cheltuieliSediu,
   agentSalesProfitability,
+  agentManualAchizitii,
   type User, 
   type InsertUser, 
   type SafeUser, 
@@ -34,7 +35,8 @@ import {
   type CheltuialaSediu,
   type CreateCheltuialaSediu,
   type UpdateCheltuialaSediu,
-  type AgentSalesProfitability
+  type AgentSalesProfitability,
+  type AgentManualAchizitii
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -166,6 +168,11 @@ export interface IStorage {
     sediuName: string;
     costuriShowroomDistribuite: number;
   }>>;
+  
+  // Agent Manual Acquisitions methods
+  getAgentManualAchizitii(agentId: string, an: number): Promise<AgentManualAchizitii[]>;
+  getAllAgentsManualAchizitii(an: number): Promise<AgentManualAchizitii[]>;
+  upsertAgentManualAchizitii(data: { agentId: string; luna: number; an: number; achizitieGard?: string; achizitieAcoperis?: string }): Promise<AgentManualAchizitii>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1793,6 +1800,58 @@ export class DatabaseStorage implements IStorage {
     }
 
     return result;
+  }
+
+  // Agent Manual Acquisitions methods
+  async getAgentManualAchizitii(agentId: string, an: number): Promise<AgentManualAchizitii[]> {
+    return db.select().from(agentManualAchizitii).where(
+      and(
+        eq(agentManualAchizitii.agentId, agentId),
+        eq(agentManualAchizitii.an, an)
+      )
+    );
+  }
+
+  async getAllAgentsManualAchizitii(an: number): Promise<AgentManualAchizitii[]> {
+    return db.select().from(agentManualAchizitii).where(
+      eq(agentManualAchizitii.an, an)
+    );
+  }
+
+  async upsertAgentManualAchizitii(data: { agentId: string; luna: number; an: number; achizitieGard?: string; achizitieAcoperis?: string }): Promise<AgentManualAchizitii> {
+    // Check if exists
+    const [existing] = await db.select().from(agentManualAchizitii).where(
+      and(
+        eq(agentManualAchizitii.agentId, data.agentId),
+        eq(agentManualAchizitii.luna, data.luna),
+        eq(agentManualAchizitii.an, data.an)
+      )
+    );
+
+    if (existing) {
+      const [updated] = await db
+        .update(agentManualAchizitii)
+        .set({
+          achizitieGard: data.achizitieGard ?? existing.achizitieGard,
+          achizitieAcoperis: data.achizitieAcoperis ?? existing.achizitieAcoperis,
+          updatedAt: new Date()
+        })
+        .where(eq(agentManualAchizitii.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(agentManualAchizitii)
+        .values({
+          agentId: data.agentId,
+          luna: data.luna,
+          an: data.an,
+          achizitieGard: data.achizitieGard ?? "0",
+          achizitieAcoperis: data.achizitieAcoperis ?? "0"
+        })
+        .returning();
+      return created;
+    }
   }
 }
 
