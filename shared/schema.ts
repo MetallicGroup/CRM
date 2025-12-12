@@ -661,3 +661,31 @@ export const agentSalesProfitability = pgTable("agent_sales_profitability", {
 });
 
 export type AgentSalesProfitability = typeof agentSalesProfitability.$inferSelect;
+
+// ============ AGENT FIXED COSTS (Cheltuieli fixe lunare pentru agenți) ============
+
+export const agentFixedCosts = pgTable("agent_fixed_costs", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  salariu: decimal("salariu", { precision: 12, scale: 2 }).default("0"),
+  amortizareAuto: decimal("amortizare_auto", { precision: 12, scale: 2 }).default("0"),
+  combustibil: decimal("combustibil", { precision: 12, scale: 2 }).default("0"),
+  revizii: decimal("revizii", { precision: 12, scale: 2 }).default("0"),
+  alteCheltuieliAuto: decimal("alte_cheltuieli_auto", { precision: 12, scale: 2 }).default("0"),
+  abonamente: decimal("abonamente", { precision: 12, scale: 2 }).default("0"),
+  diurne: decimal("diurne", { precision: 12, scale: 2 }).default("0"),
+  alteCheltuieli: decimal("alte_cheltuieli", { precision: 12, scale: 2 }).default("0"),
+  
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertAgentFixedCostsSchema = createInsertSchema(agentFixedCosts).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type AgentFixedCosts = typeof agentFixedCosts.$inferSelect;
+export type InsertAgentFixedCosts = z.infer<typeof insertAgentFixedCostsSchema>;
