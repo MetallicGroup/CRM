@@ -1582,6 +1582,62 @@ export async function registerRoutes(
     }
   });
 
+  // ============ AGENT FIXED COSTS ROUTES ============
+
+  // Get all agents fixed costs for a year
+  app.get("/api/profitabilitate/cheltuieli-fixe", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const data = await storage.getAllAgentsFixedCosts(an);
+      res.json(data);
+    } catch (error) {
+      console.error("Get fixed costs error:", error);
+      res.status(500).json({ message: "Eroare la obținerea cheltuielilor fixe" });
+    }
+  });
+
+  // Get fixed costs for a specific agent
+  app.get("/api/profitabilitate/cheltuieli-fixe/:agentId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const data = await storage.getAgentFixedCosts(agentId, an);
+      res.json(data);
+    } catch (error) {
+      console.error("Get agent fixed costs error:", error);
+      res.status(500).json({ message: "Eroare la obținerea cheltuielilor fixe" });
+    }
+  });
+
+  // Upsert fixed costs (create or update)
+  app.post("/api/profitabilitate/cheltuieli-fixe", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli } = req.body;
+      
+      if (!agentId || !luna || !an) {
+        return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
+      }
+      
+      const result = await storage.upsertAgentFixedCosts({
+        agentId,
+        luna,
+        an,
+        salariu,
+        amortizareAuto,
+        combustibil,
+        revizii,
+        alteCheltuieliAuto,
+        abonamente,
+        diurne,
+        alteCheltuieli
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Upsert fixed costs error:", error);
+      res.status(500).json({ message: "Eroare la salvarea cheltuielilor fixe" });
+    }
+  });
+
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
   // Get upload URL for a file

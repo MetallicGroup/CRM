@@ -9,6 +9,7 @@ import {
   cheltuieliSediu,
   agentSalesProfitability,
   agentManualAchizitii,
+  agentFixedCosts,
   type User, 
   type InsertUser, 
   type SafeUser, 
@@ -36,7 +37,8 @@ import {
   type CreateCheltuialaSediu,
   type UpdateCheltuialaSediu,
   type AgentSalesProfitability,
-  type AgentManualAchizitii
+  type AgentManualAchizitii,
+  type AgentFixedCosts
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -173,6 +175,23 @@ export interface IStorage {
   getAgentManualAchizitii(agentId: string, an: number): Promise<AgentManualAchizitii[]>;
   getAllAgentsManualAchizitii(an: number): Promise<AgentManualAchizitii[]>;
   upsertAgentManualAchizitii(data: { agentId: string; luna: number; an: number; achizitieGard?: string; achizitieAcoperis?: string }): Promise<AgentManualAchizitii>;
+  
+  // Agent Fixed Costs methods
+  getAgentFixedCosts(agentId: string, an: number): Promise<AgentFixedCosts[]>;
+  getAllAgentsFixedCosts(an: number): Promise<AgentFixedCosts[]>;
+  upsertAgentFixedCosts(data: { 
+    agentId: string; 
+    luna: number; 
+    an: number; 
+    salariu?: string;
+    amortizareAuto?: string;
+    combustibil?: string;
+    revizii?: string;
+    alteCheltuieliAuto?: string;
+    abonamente?: string;
+    diurne?: string;
+    alteCheltuieli?: string;
+  }): Promise<AgentFixedCosts>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1848,6 +1867,81 @@ export class DatabaseStorage implements IStorage {
           an: data.an,
           achizitieGard: data.achizitieGard ?? "0",
           achizitieAcoperis: data.achizitieAcoperis ?? "0"
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  // Agent Fixed Costs methods
+  async getAgentFixedCosts(agentId: string, an: number): Promise<AgentFixedCosts[]> {
+    return db.select().from(agentFixedCosts).where(
+      and(
+        eq(agentFixedCosts.agentId, agentId),
+        eq(agentFixedCosts.an, an)
+      )
+    );
+  }
+
+  async getAllAgentsFixedCosts(an: number): Promise<AgentFixedCosts[]> {
+    return db.select().from(agentFixedCosts).where(
+      eq(agentFixedCosts.an, an)
+    );
+  }
+
+  async upsertAgentFixedCosts(data: { 
+    agentId: string; 
+    luna: number; 
+    an: number; 
+    salariu?: string;
+    amortizareAuto?: string;
+    combustibil?: string;
+    revizii?: string;
+    alteCheltuieliAuto?: string;
+    abonamente?: string;
+    diurne?: string;
+    alteCheltuieli?: string;
+  }): Promise<AgentFixedCosts> {
+    const [existing] = await db.select().from(agentFixedCosts).where(
+      and(
+        eq(agentFixedCosts.agentId, data.agentId),
+        eq(agentFixedCosts.luna, data.luna),
+        eq(agentFixedCosts.an, data.an)
+      )
+    );
+
+    if (existing) {
+      const [updated] = await db
+        .update(agentFixedCosts)
+        .set({
+          salariu: data.salariu ?? existing.salariu,
+          amortizareAuto: data.amortizareAuto ?? existing.amortizareAuto,
+          combustibil: data.combustibil ?? existing.combustibil,
+          revizii: data.revizii ?? existing.revizii,
+          alteCheltuieliAuto: data.alteCheltuieliAuto ?? existing.alteCheltuieliAuto,
+          abonamente: data.abonamente ?? existing.abonamente,
+          diurne: data.diurne ?? existing.diurne,
+          alteCheltuieli: data.alteCheltuieli ?? existing.alteCheltuieli,
+          updatedAt: new Date()
+        })
+        .where(eq(agentFixedCosts.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(agentFixedCosts)
+        .values({
+          agentId: data.agentId,
+          luna: data.luna,
+          an: data.an,
+          salariu: data.salariu ?? "0",
+          amortizareAuto: data.amortizareAuto ?? "0",
+          combustibil: data.combustibil ?? "0",
+          revizii: data.revizii ?? "0",
+          alteCheltuieliAuto: data.alteCheltuieliAuto ?? "0",
+          abonamente: data.abonamente ?? "0",
+          diurne: data.diurne ?? "0",
+          alteCheltuieli: data.alteCheltuieli ?? "0"
         })
         .returning();
       return created;
