@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAllAgentsExpenseCosts, useShowroomCostsDistributed, useAgentsExpenseCostsRange, useShowroomCostsDistributedRange } from "@/hooks/useAgentExpenseCosts";
 import { useAgentSalesProfitabilityForMonth, useAgentSalesProfitabilityRange, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 import { useAgentManualAchizitiiForMonth, useAgentManualAchizitiiRange } from "@/hooks/useManualAchizitii";
+import { useAgentFixedCostsForMonth, useAgentFixedCostsRange } from "@/hooks/useAgentFixedCosts";
 
 interface DbUser {
   id: string;
@@ -78,11 +79,17 @@ export default function Angajati() {
   const { data: manualAchizitiiSingle = {}, refetch: refetchManualAchizitiiSingle } = useAgentManualAchizitiiForMonth(selectedMonthName, selectedYear);
   const { data: manualAchizitiiRange = {}, refetch: refetchManualAchizitiiRange } = useAgentManualAchizitiiRange(startMonth, endMonth, selectedYear);
   
+  // Agent fixed costs hooks
+  const { data: fixedCostsSingle = {}, refetch: refetchFixedCostsSingle } = useAgentFixedCostsForMonth(selectedMonthName, selectedYear);
+  const { data: fixedCostsRange = {}, refetch: refetchFixedCostsRange } = useAgentFixedCostsRange(startMonth, endMonth, selectedYear);
+  
   // Use the appropriate data based on mode
   const expenseCosts = isRangeMode ? expenseCostsRange : expenseCostsSingle;
   const salesProfitability = isRangeMode ? salesProfitabilityRange : salesProfitabilitySingle;
   const showroomCostsDistributed = isRangeMode ? showroomCostsDistributedRange : showroomCostsDistributedSingle;
   const manualAchizitii = isRangeMode ? manualAchizitiiRange : manualAchizitiiSingle;
+  const agentFixedCosts = isRangeMode ? fixedCostsRange : fixedCostsSingle;
+  const refetchFixedCosts = isRangeMode ? refetchFixedCostsRange : refetchFixedCostsSingle;
   const isLoadingExpenses = isRangeMode ? isLoadingExpensesRange : isLoadingExpensesSingle;
   const isLoadingSales = isRangeMode ? isLoadingSalesRange : isLoadingSalesSingle;
   const isLoadingShowroomCosts = isRangeMode ? isLoadingShowroomCostsRange : isLoadingShowroomCostsSingle;
@@ -129,17 +136,29 @@ export default function Angajati() {
       const expenseData = expenseCosts[agent.id];
       const salesData = salesProfitability[agent.id];
       const manualAchData = manualAchizitii[agent.id];
+      const fixedCostsData = agentFixedCosts[agent.id];
       const showroomCost = showroomCostsDistributed[agent.id]?.costuriShowroomDistribuite ?? 0;
       
-      // Agent costs from API expenses
-      const salariu = expenseData?.salariu ?? 0;
-      const amortizareAuto = expenseData?.amortizareAuto ?? 0;
-      const combustibil = expenseData?.combustibil ?? 0;
-      const revizii = expenseData?.revizii ?? 0;
-      const alteCheltuieliAuto = expenseData?.alteCheltuieliAuto ?? 0;
-      const abonamente = expenseData?.abonamente ?? 0;
-      const diurne = expenseData?.diurne ?? 0;
-      const alteCheltuieli = expenseData?.alteCheltuieli ?? 0;
+      // Agent costs: use fixed costs from Settings, fallback to expense data
+      // fixedCostsData values are numbers when from range hook, or need parsing for single month hook
+      const parseNum = (val: string | number | undefined | null): number | null => {
+        if (val === undefined || val === null) return null;
+        if (typeof val === 'number') return val;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? null : parsed;
+      };
+      
+      // Check if we have fixed costs data for this agent - if so, use it entirely (including zeros)
+      const hasFixedCostsData = fixedCostsData !== undefined && fixedCostsData !== null;
+      
+      const salariu = hasFixedCostsData ? (parseNum(fixedCostsData?.salariu) ?? 0) : (expenseData?.salariu ?? 0);
+      const amortizareAuto = hasFixedCostsData ? (parseNum(fixedCostsData?.amortizareAuto) ?? 0) : (expenseData?.amortizareAuto ?? 0);
+      const combustibil = hasFixedCostsData ? (parseNum(fixedCostsData?.combustibil) ?? 0) : (expenseData?.combustibil ?? 0);
+      const revizii = hasFixedCostsData ? (parseNum(fixedCostsData?.revizii) ?? 0) : (expenseData?.revizii ?? 0);
+      const alteCheltuieliAuto = hasFixedCostsData ? (parseNum(fixedCostsData?.alteCheltuieliAuto) ?? 0) : (expenseData?.alteCheltuieliAuto ?? 0);
+      const abonamente = hasFixedCostsData ? (parseNum(fixedCostsData?.abonamente) ?? 0) : (expenseData?.abonamente ?? 0);
+      const diurne = hasFixedCostsData ? (parseNum(fixedCostsData?.diurne) ?? 0) : (expenseData?.diurne ?? 0);
+      const alteCheltuieli = hasFixedCostsData ? (parseNum(fixedCostsData?.alteCheltuieli) ?? 0) : (expenseData?.alteCheltuieli ?? 0);
       
       // Calculate aggregated metrics from API sales data + manual acquisitions
       const venitGard = salesData ? parseFloat(salesData.venitGard) : 0;
@@ -200,7 +219,7 @@ export default function Angajati() {
         }
       };
     });
-  }, [dbAgents, expenseCosts, salesProfitability, showroomCostsDistributed, manualAchizitii]);
+  }, [dbAgents, expenseCosts, salesProfitability, showroomCostsDistributed, manualAchizitii, agentFixedCosts]);
   
   // Calculate totals and distribute production/indirect costs to agents
   const { totals, agentsWithDistributedCosts } = useMemo(() => {

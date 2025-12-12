@@ -20,6 +20,21 @@ interface AgentManualAchizitii {
   achizitieAcoperis: string;
 }
 
+interface AgentFixedCosts {
+  id: string;
+  agentId: string;
+  luna: number;
+  an: number;
+  salariu: string;
+  amortizareAuto: string;
+  combustibil: string;
+  revizii: string;
+  alteCheltuieliAuto: string;
+  abonamente: string;
+  diurne: string;
+  alteCheltuieli: string;
+}
+
 interface SafeUser {
   id: string;
   email: string;
@@ -60,6 +75,11 @@ export default function Settings() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [editedValues, setEditedValues] = useState<Record<string, { achizitieGard: string; achizitieAcoperis: string }>>({});
   
+  // State for fixed costs section
+  const [fixedCostsYear, setFixedCostsYear] = useState(currentYear);
+  const [fixedCostsMonth, setFixedCostsMonth] = useState(currentMonth);
+  const [editedFixedCosts, setEditedFixedCosts] = useState<Record<string, Partial<AgentFixedCosts>>>({});
+  
   // Fetch agents from database
   const { data: dbAgents = [], isLoading: loadingAgents } = useQuery<SafeUser[]>({
     queryKey: ["/api/users"],
@@ -74,6 +94,16 @@ export default function Settings() {
     queryFn: async () => {
       const res = await fetch(`/api/profitabilitate/achizitii-manuale?an=${selectedYear}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch manual acquisitions");
+      return res.json();
+    }
+  });
+  
+  // Fetch agent fixed costs for selected year
+  const { data: agentFixedCostsData = [], isLoading: loadingFixedCosts } = useQuery<AgentFixedCosts[]>({
+    queryKey: ["/api/profitabilitate/cheltuieli-fixe", fixedCostsYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/profitabilitate/cheltuieli-fixe?an=${fixedCostsYear}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch fixed costs");
       return res.json();
     }
   });
@@ -96,6 +126,39 @@ export default function Settings() {
     },
     onError: () => {
       toast.error("Eroare la salvarea achiziției");
+    }
+  });
+  
+  // Mutation for saving fixed costs
+  const saveFixedCostsMutation = useMutation({
+    mutationFn: async (data: { 
+      agentId: string; 
+      luna: number; 
+      an: number; 
+      salariu?: string;
+      amortizareAuto?: string;
+      combustibil?: string;
+      revizii?: string;
+      alteCheltuieliAuto?: string;
+      abonamente?: string;
+      diurne?: string;
+      alteCheltuieli?: string;
+    }) => {
+      const res = await fetch("/api/profitabilitate/cheltuieli-fixe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profitabilitate/cheltuieli-fixe"] });
+      toast.success("Cheltuieli fixe salvate cu succes");
+    },
+    onError: () => {
+      toast.error("Eroare la salvarea cheltuielilor fixe");
     }
   });
   
@@ -147,6 +210,53 @@ export default function Settings() {
   useEffect(() => {
     setEditedValues({});
   }, [selectedMonth, selectedYear]);
+  
+  // Reset fixed costs edited values when month/year changes
+  useEffect(() => {
+    setEditedFixedCosts({});
+  }, [fixedCostsMonth, fixedCostsYear]);
+  
+  // Fixed costs helper functions
+  type FixedCostField = "salariu" | "amortizareAuto" | "combustibil" | "revizii" | "alteCheltuieliAuto" | "abonamente" | "diurne" | "alteCheltuieli";
+  
+  const getFixedCostValue = (agentId: string, field: FixedCostField): string => {
+    if (editedFixedCosts[agentId]?.[field] !== undefined) {
+      return editedFixedCosts[agentId][field] as string;
+    }
+    const saved = agentFixedCostsData.find(a => a.agentId === agentId && a.luna === fixedCostsMonth);
+    return saved?.[field] || "0";
+  };
+  
+  const handleFixedCostChange = (agentId: string, field: FixedCostField, value: string) => {
+    setEditedFixedCosts(prev => ({
+      ...prev,
+      [agentId]: {
+        ...prev[agentId],
+        [field]: value
+      }
+    }));
+  };
+  
+  const handleSaveFixedCosts = (agentId: string) => {
+    const fields: FixedCostField[] = ["salariu", "amortizareAuto", "combustibil", "revizii", "alteCheltuieliAuto", "abonamente", "diurne", "alteCheltuieli"];
+    const data: Record<string, string> = {};
+    for (const field of fields) {
+      data[field] = editedFixedCosts[agentId]?.[field] ?? getFixedCostValue(agentId, field);
+    }
+    
+    saveFixedCostsMutation.mutate({
+      agentId,
+      luna: fixedCostsMonth,
+      an: fixedCostsYear,
+      ...data
+    });
+    
+    setEditedFixedCosts(prev => {
+      const copy = { ...prev };
+      delete copy[agentId];
+      return copy;
+    });
+  };
 
   const handleShowroomChange = (empId: string, newShowroomId: string) => {
     updateEmployee(empId, { showroomId: newShowroomId });
@@ -498,6 +608,171 @@ export default function Settings() {
                 })}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cheltuieli Fixe Agenți (Database Agents) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cheltuieli Fixe Agenți (pe lună)</CardTitle>
+          <CardDescription>
+            Setează cheltuielile fixe lunare pentru fiecare agent din baza de date. Acestea se vor folosi în calculul profitabilității.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">An:</span>
+              <Select value={fixedCostsYear.toString()} onValueChange={(v) => setFixedCostsYear(parseInt(v))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2023, 2024, 2025, 2026].map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Luna:</span>
+              <Select value={fixedCostsMonth.toString()} onValueChange={(v) => setFixedCostsMonth(parseInt(v))}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map(m => (
+                    <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {(loadingAgents || loadingFixedCosts) ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px]">Agent</TableHead>
+                    <TableHead className="w-[100px]">Salariu</TableHead>
+                    <TableHead className="w-[100px]">Amort. Auto</TableHead>
+                    <TableHead className="w-[100px]">Combustibil</TableHead>
+                    <TableHead className="w-[80px]">Revizii</TableHead>
+                    <TableHead className="w-[100px]">Alte Ch. Auto</TableHead>
+                    <TableHead className="w-[100px]">Abonamente</TableHead>
+                    <TableHead className="w-[80px]">Diurne</TableHead>
+                    <TableHead className="w-[100px]">Alte Chelt.</TableHead>
+                    <TableHead className="w-[80px]">Acțiuni</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agents2.map((agent) => {
+                    const hasChanges = editedFixedCosts[agent.id] !== undefined;
+                    return (
+                      <TableRow key={agent.id} data-testid={`row-fixed-costs-agent-${agent.id}`}>
+                        <TableCell className="font-medium">
+                          {agent.firstName} {agent.lastName}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "salariu")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "salariu", e.target.value)}
+                            placeholder="0"
+                            data-testid={`input-fixed-salariu-${agent.id}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "amortizareAuto")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "amortizareAuto", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "combustibil")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "combustibil", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-20 h-8"
+                            value={getFixedCostValue(agent.id, "revizii")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "revizii", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "alteCheltuieliAuto")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "alteCheltuieliAuto", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "abonamente")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "abonamente", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-20 h-8"
+                            value={getFixedCostValue(agent.id, "diurne")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "diurne", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            className="w-24 h-8"
+                            value={getFixedCostValue(agent.id, "alteCheltuieli")}
+                            onChange={(e) => handleFixedCostChange(agent.id, "alteCheltuieli", e.target.value)}
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveFixedCosts(agent.id)}
+                            disabled={saveFixedCostsMutation.isPending}
+                            variant={hasChanges ? "default" : "outline"}
+                            data-testid={`button-save-fixed-costs-${agent.id}`}
+                          >
+                            {saveFixedCostsMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
