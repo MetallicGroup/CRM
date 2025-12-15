@@ -144,19 +144,17 @@ export default function Dashboard() {
       
       const venitGard = sales ? parseFloat(sales.venitGard) : 0;
       const venitAcoperis = sales ? parseFloat(sales.venitAcoperis) : 0;
-      const achizitieGard = sales ? parseFloat(sales.achizitieGard) : 0;
-      const achizitieAcoperis = sales ? parseFloat(sales.achizitieAcoperis) : 0;
+      const adaosGard = sales ? parseFloat(sales.adaosGard) : 0;
+      const adaosAcoperis = sales ? parseFloat(sales.adaosAcoperis) : 0;
       const comisionGard = sales ? parseFloat(sales.comisionGard) : 0;
       const comisionAcoperis = sales ? parseFloat(sales.comisionAcoperis) : 0;
       
       totalVenitGard += venitGard;
       totalVenitAcoperis += venitAcoperis;
       
-      const adaosTVAGard = venitGard - achizitieGard;
-      const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
-      const adaosFaraTVA = adaosTotalCuTVA * 0.79; // 21% TVA
-      totalAdaosFaraTVA += adaosFaraTVA;
+      // Adaos direct din tabel (fără transformări)
+      const adaosTotal = adaosGard + adaosAcoperis;
+      totalAdaosFaraTVA += adaosTotal;
       
       const valoareComision = comisionGard + comisionAcoperis;
       
@@ -172,7 +170,8 @@ export default function Dashboard() {
       const costuriProprii = salariu + combustibil + revizii + alteCheltuieliAuto + amortizareAuto + abonamente + diurne + alteCheltuieli;
       totalCosturi += costuriProprii;
       
-      const profitFinal = adaosFaraTVA - valoareComision - costuriProprii;
+      // Profit = Adaos - Comisioane - Costuri
+      const profitFinal = adaosTotal - valoareComision - costuriProprii;
       totalProfit += profitFinal;
     }
     
