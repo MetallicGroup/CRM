@@ -1,22 +1,122 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore, getTotalsForMonth, calculateEmployeeMetrics } from "@/lib/store";
-import { MonthSelector } from "@/components/ui/month-selector";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { CalendarIcon, Calendar as CalendarDays } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, subMonths, isWithinInterval, parseISO } from "date-fns";
+import { ro } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { MONTHS, Month } from "@/lib/types";
+import type { DateRange } from "react-day-picker";
+
+type PeriodType = "luna" | "perioada" | "trimestru" | "an";
+
+const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i }));
 
 export default function Dashboard() {
-  const { selectedMonth, employees = [], showrooms = [] } = useStore();
+  const { employees = [], showrooms = [] } = useStore();
   const store = useStore();
-  const totals = getTotalsForMonth(store, selectedMonth);
+  
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonthIndex = currentDate.getMonth();
+  
+  const [periodType, setPeriodType] = useState<PeriodType>("luna");
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(currentDate),
+    to: endOfMonth(currentDate)
+  });
+  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(currentMonthIndex / 3) + 1);
+
+  const effectiveDateRange = useMemo(() => {
+    switch (periodType) {
+      case "luna":
+        const monthDate = new Date(selectedYear, selectedMonthIndex, 1);
+        return { from: startOfMonth(monthDate), to: endOfMonth(monthDate) };
+      case "trimestru":
+        const quarterStartMonth = (selectedQuarter - 1) * 3;
+        const quarterDate = new Date(selectedYear, quarterStartMonth, 1);
+        return { from: startOfQuarter(quarterDate), to: endOfQuarter(quarterDate) };
+      case "an":
+        const yearDate = new Date(selectedYear, 0, 1);
+        return { from: startOfYear(yearDate), to: endOfYear(yearDate) };
+      case "perioada":
+      default:
+        return dateRange || { from: startOfMonth(currentDate), to: endOfMonth(currentDate) };
+    }
+  }, [periodType, selectedMonthIndex, selectedYear, dateRange, selectedQuarter, currentDate]);
+
+  const selectedMonthsForCalculation = useMemo(() => {
+    if (!effectiveDateRange.from || !effectiveDateRange.to) return [MONTHS[currentMonthIndex]];
+    
+    const months: Month[] = [];
+    const startDate = effectiveDateRange.from;
+    const endDate = effectiveDateRange.to;
+    
+    let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    while (current <= endDate) {
+      const monthName = MONTHS[current.getMonth()] as Month;
+      if (!months.includes(monthName)) {
+        months.push(monthName);
+      }
+      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    }
+    
+    return months.length > 0 ? months : [MONTHS[currentMonthIndex]];
+  }, [effectiveDateRange, currentMonthIndex]);
+
+  const aggregatedTotals = useMemo(() => {
+    let totalVenitFirma = 0;
+    let totalVenitGardFirma = 0;
+    let totalProductionCosts = 0;
+    let totalIndirectCosts = 0;
+
+    selectedMonthsForCalculation.forEach(month => {
+      const monthTotals = getTotalsForMonth(store, month);
+      totalVenitFirma += monthTotals.totalVenitFirma;
+      totalVenitGardFirma += monthTotals.totalVenitGardFirma;
+      totalProductionCosts += monthTotals.totalProductionCosts;
+      totalIndirectCosts += monthTotals.totalIndirectCosts;
+    });
+
+    return { totalVenitFirma, totalVenitGardFirma, totalProductionCosts, totalIndirectCosts };
+  }, [store, selectedMonthsForCalculation]);
 
   const agents = employees.filter(e => e.type === 'AGENT');
   
-  const agentMetrics = agents.map(agent => ({
-    ...agent,
-    metrics: calculateEmployeeMetrics(agent, selectedMonth, totals)
-  }));
+  const agentMetrics = useMemo(() => {
+    return agents.map(agent => {
+      let totalProfit = 0;
+      let totalAdaosGard = 0;
+      let totalAdaosAcoperis = 0;
+
+      selectedMonthsForCalculation.forEach(month => {
+        const monthTotals = getTotalsForMonth(store, month);
+        const metrics = calculateEmployeeMetrics(agent, month, monthTotals);
+        totalProfit += metrics.profitFinal;
+        totalAdaosGard += metrics.adaosFaraTVA * (metrics.adaosTVAGard / (metrics.adaosTotalCuTVA || 1));
+        totalAdaosAcoperis += metrics.adaosFaraTVA * (metrics.adaosTVAAcoperis / (metrics.adaosTotalCuTVA || 1));
+      });
+
+      return {
+        ...agent,
+        metrics: {
+          profitFinal: totalProfit,
+          adaosNetGard: totalAdaosGard,
+          adaosNetAcoperis: totalAdaosAcoperis
+        }
+      };
+    });
+  }, [agents, store, selectedMonthsForCalculation]);
 
   const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
-  const totalVenitFirma = totals.totalVenitFirma;
+  const totalVenitFirma = aggregatedTotals.totalVenitFirma;
 
   const profitByAgent = agentMetrics
     .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
@@ -42,14 +142,172 @@ export default function Dashboard() {
   ];
   const COLORS = ['#0088FE', '#00C49F'];
 
+  const formatDateRange = () => {
+    if (!effectiveDateRange.from) return "Selectează perioada";
+    if (!effectiveDateRange.to) return format(effectiveDateRange.from, "d MMM yyyy", { locale: ro });
+    return `${format(effectiveDateRange.from, "d MMM yyyy", { locale: ro })} - ${format(effectiveDateRange.to, "d MMM yyyy", { locale: ro })}`;
+  };
+
+  const getPeriodLabel = () => {
+    switch (periodType) {
+      case "luna":
+        return `${MONTHS[selectedMonthIndex]} ${selectedYear}`;
+      case "trimestru":
+        return `T${selectedQuarter} ${selectedYear}`;
+      case "an":
+        return `Anul ${selectedYear}`;
+      case "perioada":
+        return formatDateRange();
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard Financiar</h1>
-          <p className="text-muted-foreground">Privire de ansamblu - {selectedMonth}</p>
+          <p className="text-muted-foreground">Privire de ansamblu - {getPeriodLabel()}</p>
         </div>
-        <MonthSelector />
+        
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+            <SelectTrigger className="w-[140px]" data-testid="select-period-type">
+              <SelectValue placeholder="Tip perioadă" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="luna">Pe Lună</SelectItem>
+              <SelectItem value="perioada">Pe Perioadă</SelectItem>
+              <SelectItem value="trimestru">Pe Trimestru</SelectItem>
+              <SelectItem value="an">Pe An</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {periodType === "luna" && (
+            <>
+              <Select value={selectedMonthIndex.toString()} onValueChange={(v) => setSelectedMonthIndex(parseInt(v))}>
+                <SelectTrigger className="w-[140px]" data-testid="select-month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_OPTIONS.map((m) => (
+                    <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-[100px]" data-testid="select-year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
+          {periodType === "trimestru" && (
+            <>
+              <Select value={selectedQuarter.toString()} onValueChange={(v) => setSelectedQuarter(parseInt(v))}>
+                <SelectTrigger className="w-[120px]" data-testid="select-quarter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">T1 (Ian-Mar)</SelectItem>
+                  <SelectItem value="2">T2 (Apr-Iun)</SelectItem>
+                  <SelectItem value="3">T3 (Iul-Sep)</SelectItem>
+                  <SelectItem value="4">T4 (Oct-Dec)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-[100px]" data-testid="select-year-quarter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
+          {periodType === "an" && (
+            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+              <SelectTrigger className="w-[100px]" data-testid="select-year-annual">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {periodType === "perioada" && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[280px] justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                  data-testid="button-date-range"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateRange()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+                <div className="p-3 border-t flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDateRange({
+                      from: startOfMonth(currentDate),
+                      to: endOfMonth(currentDate)
+                    })}
+                  >
+                    Luna curentă
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const lastMonth = subMonths(currentDate, 1);
+                      setDateRange({
+                        from: startOfMonth(lastMonth),
+                        to: endOfMonth(lastMonth)
+                      });
+                    }}
+                  >
+                    Luna trecută
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDateRange({
+                      from: startOfYear(currentDate),
+                      to: currentDate
+                    })}
+                  >
+                    De la început de an
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -59,7 +317,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-venit">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">în luna {selectedMonth}</p>
+            <p className="text-xs text-muted-foreground">{getPeriodLabel()}</p>
           </CardContent>
         </Card>
         <Card>
@@ -78,7 +336,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Costuri Producție</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-productie">{totals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-productie">{aggregatedTotals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
             <p className="text-xs text-muted-foreground">Distribuit vânzătorilor de garduri</p>
           </CardContent>
         </Card>
@@ -87,7 +345,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Costuri Indirecte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600" data-testid="text-cost-indirecte">{totals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold text-purple-600" data-testid="text-cost-indirecte">{aggregatedTotals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
             <p className="text-xs text-muted-foreground">Include 80% București</p>
           </CardContent>
         </Card>
