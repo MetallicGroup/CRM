@@ -4,26 +4,37 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStore, getTotalsForMonth, calculateEmployeeMetrics } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { CalendarIcon, Calendar as CalendarDays } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, subMonths, isWithinInterval, parseISO } from "date-fns";
+import { CalendarIcon, RefreshCw } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, subMonths } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { MONTHS, Month } from "@/lib/types";
 import type { DateRange } from "react-day-picker";
+import { useAgentSalesProfitabilityRange } from "@/hooks/useAgentSalesProfitability";
+import { useAgentsExpenseCostsRange } from "@/hooks/useAgentExpenseCosts";
+import { useQuery } from "@tanstack/react-query";
 
 type PeriodType = "luna" | "perioada" | "trimestru" | "an";
 
-const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i }));
+const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
+
+interface DbUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  active: boolean;
+}
 
 export default function Dashboard() {
-  const { employees = [], showrooms = [] } = useStore();
-  const store = useStore();
+  const { showrooms = [] } = useStore();
   
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-  const currentMonthIndex = currentDate.getMonth();
+  const currentMonthIndex = currentDate.getMonth() + 1;
   
   const [periodType, setPeriodType] = useState<PeriodType>("luna");
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
@@ -32,12 +43,12 @@ export default function Dashboard() {
     from: startOfMonth(currentDate),
     to: endOfMonth(currentDate)
   });
-  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(currentMonthIndex / 3) + 1);
+  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor((currentMonthIndex - 1) / 3) + 1);
 
   const effectiveDateRange = useMemo(() => {
     switch (periodType) {
       case "luna":
-        const monthDate = new Date(selectedYear, selectedMonthIndex, 1);
+        const monthDate = new Date(selectedYear, selectedMonthIndex - 1, 1);
         return { from: startOfMonth(monthDate), to: endOfMonth(monthDate) };
       case "trimestru":
         const quarterStartMonth = (selectedQuarter - 1) * 3;
@@ -52,81 +63,75 @@ export default function Dashboard() {
     }
   }, [periodType, selectedMonthIndex, selectedYear, dateRange, selectedQuarter, currentDate]);
 
-  const selectedMonthsForCalculation = useMemo(() => {
-    if (!effectiveDateRange.from || !effectiveDateRange.to) return [MONTHS[currentMonthIndex]];
-    
-    const months: Month[] = [];
-    const startDate = effectiveDateRange.from;
-    const endDate = effectiveDateRange.to;
-    
-    let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    while (current <= endDate) {
-      const monthName = MONTHS[current.getMonth()] as Month;
-      if (!months.includes(monthName)) {
-        months.push(monthName);
-      }
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    }
-    
-    return months.length > 0 ? months : [MONTHS[currentMonthIndex]];
-  }, [effectiveDateRange, currentMonthIndex]);
+  const startMonth = effectiveDateRange.from ? effectiveDateRange.from.getMonth() + 1 : currentMonthIndex;
+  const endMonth = effectiveDateRange.to ? effectiveDateRange.to.getMonth() + 1 : currentMonthIndex;
 
-  const aggregatedTotals = useMemo(() => {
-    let totalVenitFirma = 0;
-    let totalVenitGardFirma = 0;
-    let totalProductionCosts = 0;
-    let totalIndirectCosts = 0;
+  const { data: dbUsers = [] } = useQuery<DbUser[]>({
+    queryKey: ["/api/users"],
+  });
+  const dbAgents = dbUsers.filter(u => u.role === "AGENT" && u.active);
 
-    selectedMonthsForCalculation.forEach(month => {
-      const monthTotals = getTotalsForMonth(store, month);
-      totalVenitFirma += monthTotals.totalVenitFirma;
-      totalVenitGardFirma += monthTotals.totalVenitGardFirma;
-      totalProductionCosts += monthTotals.totalProductionCosts;
-      totalIndirectCosts += monthTotals.totalIndirectCosts;
-    });
+  const { data: salesData = {}, isLoading: isLoadingSales, refetch: refetchSales } = useAgentSalesProfitabilityRange(startMonth, endMonth, selectedYear);
+  const { data: expenseData = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAgentsExpenseCostsRange(startMonth, endMonth, selectedYear);
 
-    return { totalVenitFirma, totalVenitGardFirma, totalProductionCosts, totalIndirectCosts };
-  }, [store, selectedMonthsForCalculation]);
-
-  const agents = employees.filter(e => e.type === 'AGENT');
-  
   const agentMetrics = useMemo(() => {
-    return agents.map(agent => {
-      let totalProfit = 0;
-      let totalAdaosGard = 0;
-      let totalAdaosAcoperis = 0;
-      let totalVenitGard = 0;
-      let totalVenitAcoperis = 0;
-
-      selectedMonthsForCalculation.forEach(month => {
-        const monthTotals = getTotalsForMonth(store, month);
-        const metrics = calculateEmployeeMetrics(agent, month, monthTotals);
-        totalProfit += metrics.profitFinal;
-        totalAdaosGard += metrics.adaosFaraTVA * (metrics.adaosTVAGard / (metrics.adaosTotalCuTVA || 1));
-        totalAdaosAcoperis += metrics.adaosFaraTVA * (metrics.adaosTVAAcoperis / (metrics.adaosTotalCuTVA || 1));
-        totalVenitGard += metrics.venitGard || 0;
-        totalVenitAcoperis += metrics.venitAcoperis || 0;
-      });
-
+    return dbAgents.map(agent => {
+      const sales = salesData[agent.id];
+      const expenses = expenseData[agent.id];
+      
+      const venitGard = sales ? parseFloat(sales.venitGard) : 0;
+      const venitAcoperis = sales ? parseFloat(sales.venitAcoperis) : 0;
+      const achizitieGard = sales ? parseFloat(sales.achizitieGard) : 0;
+      const achizitieAcoperis = sales ? parseFloat(sales.achizitieAcoperis) : 0;
+      const comisionGard = sales ? parseFloat(sales.comisionGard) : 0;
+      const comisionAcoperis = sales ? parseFloat(sales.comisionAcoperis) : 0;
+      
+      const adaosTVAGard = venitGard - achizitieGard;
+      const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
+      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
+      const tvaTotal = adaosTotalCuTVA * 0.21;
+      const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
+      const valoareComision = comisionGard + comisionAcoperis;
+      
+      const salariu = expenses?.salariu ?? 0;
+      const combustibil = expenses?.combustibil ?? 0;
+      const revizii = expenses?.revizii ?? 0;
+      const alteCheltuieliAuto = expenses?.alteCheltuieliAuto ?? 0;
+      const amortizareAuto = expenses?.amortizareAuto ?? 0;
+      const abonamente = expenses?.abonamente ?? 0;
+      const diurne = expenses?.diurne ?? 0;
+      const alteCheltuieli = expenses?.alteCheltuieli ?? 0;
+      
+      const costuriProprii = salariu + combustibil + revizii + alteCheltuieliAuto + amortizareAuto + abonamente + diurne + alteCheltuieli;
+      const profitFinal = adaosFaraTVA - valoareComision - costuriProprii;
+      
       return {
-        ...agent,
+        id: agent.id,
+        name: `${agent.firstName} ${agent.lastName}`,
         metrics: {
-          profitFinal: totalProfit,
-          adaosNetGard: totalAdaosGard,
-          adaosNetAcoperis: totalAdaosAcoperis,
-          venitGard: totalVenitGard,
-          venitAcoperis: totalVenitAcoperis
+          venitGard,
+          venitAcoperis,
+          achizitieGard,
+          achizitieAcoperis,
+          adaosTVAGard,
+          adaosTVAAcoperis,
+          adaosFaraTVA,
+          valoareComision,
+          costuriProprii,
+          profitFinal
         }
       };
     });
-  }, [agents, store, selectedMonthsForCalculation]);
+  }, [dbAgents, salesData, expenseData]);
 
-  const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
-  const totalVenitFirma = aggregatedTotals.totalVenitFirma;
   const totalVenitGardFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitGard, 0);
   const totalVenitAcoperisFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitAcoperis, 0);
+  const totalVenitFirma = totalVenitGardFirma + totalVenitAcoperisFirma;
+  const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
+  const totalCosturiProprii = agentMetrics.reduce((sum, a) => sum + a.metrics.costuriProprii, 0);
+  const totalAdaosFaraTVA = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosFaraTVA, 0);
 
-  const profitByAgent = agentMetrics
+  const profitByAgent = [...agentMetrics]
     .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
     .slice(0, 10)
     .map(a => ({
@@ -134,15 +139,8 @@ export default function Dashboard() {
       profit: Math.round(a.metrics.profitFinal)
     }));
 
-  const profitByShowroom = showrooms.map(s => {
-    const profit = agentMetrics
-      .filter(a => a.showroomId === s.id)
-      .reduce((sum, a) => sum + a.metrics.profitFinal, 0);
-    return { name: s.name.replace('Showroom ', ''), profit: Math.round(profit) };
-  });
-
-  const profitGarduri = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosNetGard, 0);
-  const profitAcoperisuri = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosNetAcoperis, 0);
+  const profitGarduri = agentMetrics.reduce((sum, a) => sum + (a.metrics.adaosFaraTVA * (a.metrics.adaosTVAGard / ((a.metrics.adaosTVAGard + a.metrics.adaosTVAAcoperis) || 1))), 0);
+  const profitAcoperisuri = agentMetrics.reduce((sum, a) => sum + (a.metrics.adaosFaraTVA * (a.metrics.adaosTVAAcoperis / ((a.metrics.adaosTVAGard + a.metrics.adaosTVAAcoperis) || 1))), 0);
 
   const pieData = [
     { name: 'Garduri', value: Math.max(0, profitGarduri) },
@@ -159,7 +157,7 @@ export default function Dashboard() {
   const getPeriodLabel = () => {
     switch (periodType) {
       case "luna":
-        return `${MONTHS[selectedMonthIndex]} ${selectedYear}`;
+        return `${MONTHS[selectedMonthIndex - 1]} ${selectedYear}`;
       case "trimestru":
         return `T${selectedQuarter} ${selectedYear}`;
       case "an":
@@ -168,6 +166,13 @@ export default function Dashboard() {
         return formatDateRange();
     }
   };
+
+  const handleRefresh = () => {
+    refetchSales();
+    refetchExpenses();
+  };
+
+  const isLoading = isLoadingSales || isLoadingExpenses;
 
   return (
     <div className="space-y-8">
@@ -178,6 +183,11 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" onClick={handleRefresh} disabled={isLoading} data-testid="button-refresh">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Se încarcă...' : 'Actualizează'}
+          </Button>
+          
           <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
             <SelectTrigger className="w-[140px]" data-testid="select-period-type">
               <SelectValue placeholder="Tip perioadă" />
@@ -324,7 +334,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium">Venit Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-venit">{(totalVenitGardFirma + totalVenitAcoperisFirma).toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold" data-testid="text-total-venit">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
             <p className="text-xs text-muted-foreground">{getPeriodLabel()}</p>
           </CardContent>
         </Card>
@@ -348,31 +358,31 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Adaos Fără TVA</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600" data-testid="text-adaos">{totalAdaosFaraTVA.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Marjă brută fără TVA</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Costuri Agenți</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-agenti">{totalCosturiProprii.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total cheltuieli agenți</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Profit Total</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalProfitFirma >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-total-profit">
               {totalProfitFirma.toLocaleString('ro-RO')} RON
             </div>
-            <p className="text-xs text-muted-foreground">Marjă netă calculată</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cost Producție</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-productie">{aggregatedTotals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Cost total producție</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costuri Indirecte</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600" data-testid="text-cost-indirecte">{aggregatedTotals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Include 80% București</p>
+            <p className="text-xs text-muted-foreground">Profit net calculat</p>
           </CardContent>
         </Card>
       </div>
@@ -398,42 +408,31 @@ export default function Dashboard() {
         </Card>
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Profit per Showroom & Tip</CardTitle>
+            <CardTitle>Profit per Categorie</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex flex-col gap-4">
-               <div className="h-1/2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={profitByShowroom} layout="vertical">
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 12}} />
-                      <Tooltip />
-                      <Bar dataKey="profit" fill="#82ca9d" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-               </div>
-               <div className="h-1/2 flex justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-               </div>
+            <div className="h-[300px] flex justify-center items-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value.toLocaleString('ro-RO')} RON`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString('ro-RO')} RON`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
