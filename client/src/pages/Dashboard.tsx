@@ -95,6 +95,8 @@ export default function Dashboard() {
       let totalProfit = 0;
       let totalAdaosGard = 0;
       let totalAdaosAcoperis = 0;
+      let totalVenitGard = 0;
+      let totalVenitAcoperis = 0;
 
       selectedMonthsForCalculation.forEach(month => {
         const monthTotals = getTotalsForMonth(store, month);
@@ -102,6 +104,8 @@ export default function Dashboard() {
         totalProfit += metrics.profitFinal;
         totalAdaosGard += metrics.adaosFaraTVA * (metrics.adaosTVAGard / (metrics.adaosTotalCuTVA || 1));
         totalAdaosAcoperis += metrics.adaosFaraTVA * (metrics.adaosTVAAcoperis / (metrics.adaosTotalCuTVA || 1));
+        totalVenitGard += metrics.venitGard || 0;
+        totalVenitAcoperis += metrics.venitAcoperis || 0;
       });
 
       return {
@@ -109,7 +113,9 @@ export default function Dashboard() {
         metrics: {
           profitFinal: totalProfit,
           adaosNetGard: totalAdaosGard,
-          adaosNetAcoperis: totalAdaosAcoperis
+          adaosNetAcoperis: totalAdaosAcoperis,
+          venitGard: totalVenitGard,
+          venitAcoperis: totalVenitAcoperis
         }
       };
     });
@@ -117,6 +123,8 @@ export default function Dashboard() {
 
   const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
   const totalVenitFirma = aggregatedTotals.totalVenitFirma;
+  const totalVenitGardFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitGard, 0);
+  const totalVenitAcoperisFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitAcoperis, 0);
 
   const profitByAgent = agentMetrics
     .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
@@ -310,19 +318,37 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Venit Firmă</CardTitle>
+            <CardTitle className="text-sm font-medium">Venit Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-venit">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold" data-testid="text-total-venit">{(totalVenitGardFirma + totalVenitAcoperisFirma).toLocaleString('ro-RO')} RON</div>
             <p className="text-xs text-muted-foreground">{getPeriodLabel()}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Profit Firmă</CardTitle>
+            <CardTitle className="text-sm font-medium">Venit Garduri</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600" data-testid="text-venit-gard">{totalVenitGardFirma.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total vânzări garduri</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Venit Acoperișuri</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-600" data-testid="text-venit-acoperis">{totalVenitAcoperisFirma.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total vânzări acoperișuri</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Profit Total</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalProfitFirma >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-total-profit">
@@ -333,11 +359,11 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costuri Producție</CardTitle>
+            <CardTitle className="text-sm font-medium">Cost Producție</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-productie">{aggregatedTotals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Distribuit vânzătorilor de garduri</p>
+            <p className="text-xs text-muted-foreground">Cost total producție</p>
           </CardContent>
         </Card>
         <Card>
