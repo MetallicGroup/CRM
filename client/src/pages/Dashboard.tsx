@@ -124,12 +124,74 @@ export default function Dashboard() {
     });
   }, [dbAgents, salesData, expenseData]);
 
-  const totalVenitGardFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitGard, 0);
-  const totalVenitAcoperisFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.venitAcoperis, 0);
-  const totalVenitFirma = totalVenitGardFirma + totalVenitAcoperisFirma;
-  const totalProfitFirma = agentMetrics.reduce((sum, a) => sum + a.metrics.profitFinal, 0);
-  const totalCosturiProprii = agentMetrics.reduce((sum, a) => sum + a.metrics.costuriProprii, 0);
-  const totalAdaosFaraTVA = agentMetrics.reduce((sum, a) => sum + a.metrics.adaosFaraTVA, 0);
+  // Calculate totals directly from ALL agents in salesData (not just dbAgents)
+  const allAgentTotals = useMemo(() => {
+    let totalVenitGard = 0;
+    let totalVenitAcoperis = 0;
+    let totalAdaosFaraTVA = 0;
+    let totalCosturi = 0;
+    let totalProfit = 0;
+    
+    // Get all unique agent IDs from both sales and expenses
+    const allAgentIds = Array.from(new Set([
+      ...Object.keys(salesData),
+      ...Object.keys(expenseData)
+    ]));
+    
+    for (const agentId of allAgentIds) {
+      const sales = salesData[agentId];
+      const expenses = expenseData[agentId];
+      
+      const venitGard = sales ? parseFloat(sales.venitGard) : 0;
+      const venitAcoperis = sales ? parseFloat(sales.venitAcoperis) : 0;
+      const achizitieGard = sales ? parseFloat(sales.achizitieGard) : 0;
+      const achizitieAcoperis = sales ? parseFloat(sales.achizitieAcoperis) : 0;
+      const comisionGard = sales ? parseFloat(sales.comisionGard) : 0;
+      const comisionAcoperis = sales ? parseFloat(sales.comisionAcoperis) : 0;
+      
+      totalVenitGard += venitGard;
+      totalVenitAcoperis += venitAcoperis;
+      
+      const adaosTVAGard = venitGard - achizitieGard;
+      const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
+      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
+      const adaosFaraTVA = adaosTotalCuTVA * 0.79; // 21% TVA
+      totalAdaosFaraTVA += adaosFaraTVA;
+      
+      const valoareComision = comisionGard + comisionAcoperis;
+      
+      const salariu = expenses?.salariu ?? 0;
+      const combustibil = expenses?.combustibil ?? 0;
+      const revizii = expenses?.revizii ?? 0;
+      const alteCheltuieliAuto = expenses?.alteCheltuieliAuto ?? 0;
+      const amortizareAuto = expenses?.amortizareAuto ?? 0;
+      const abonamente = expenses?.abonamente ?? 0;
+      const diurne = expenses?.diurne ?? 0;
+      const alteCheltuieli = expenses?.alteCheltuieli ?? 0;
+      
+      const costuriProprii = salariu + combustibil + revizii + alteCheltuieliAuto + amortizareAuto + abonamente + diurne + alteCheltuieli;
+      totalCosturi += costuriProprii;
+      
+      const profitFinal = adaosFaraTVA - valoareComision - costuriProprii;
+      totalProfit += profitFinal;
+    }
+    
+    return {
+      totalVenitGard,
+      totalVenitAcoperis,
+      totalVenit: totalVenitGard + totalVenitAcoperis,
+      totalAdaosFaraTVA,
+      totalCosturi,
+      totalProfit
+    };
+  }, [salesData, expenseData]);
+
+  const totalVenitGardFirma = allAgentTotals.totalVenitGard;
+  const totalVenitAcoperisFirma = allAgentTotals.totalVenitAcoperis;
+  const totalVenitFirma = allAgentTotals.totalVenit;
+  const totalProfitFirma = allAgentTotals.totalProfit;
+  const totalCosturiProprii = allAgentTotals.totalCosturi;
+  const totalAdaosFaraTVA = allAgentTotals.totalAdaosFaraTVA;
 
   const profitByAgent = [...agentMetrics]
     .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
