@@ -1573,6 +1573,38 @@ export default function Clienti() {
                   <p className="text-sm">{viewClient.observatiiClient}</p>
                 </div>
               )}
+
+              {(viewClient.ofertaFilename || viewClient.ofertaFilename2) && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3">Documente</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {viewClient.ofertaFilename && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`${window.location.origin}${viewClient.ofertaFilename}`, '_blank', 'noopener')}
+                        className="gap-2"
+                        data-testid="button-view-download-oferta-1"
+                      >
+                        <Download className="h-4 w-4" />
+                        {viewClient.ofertaFilename.split('/').pop() || "Ofertă 1"}
+                      </Button>
+                    )}
+                    {viewClient.ofertaFilename2 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`${window.location.origin}${viewClient.ofertaFilename2}`, '_blank', 'noopener')}
+                        className="gap-2"
+                        data-testid="button-view-download-oferta-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        {viewClient.ofertaFilename2.split('/').pop() || "Ofertă 2"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
