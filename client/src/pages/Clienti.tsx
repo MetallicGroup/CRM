@@ -65,7 +65,7 @@ import {
   Upload
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
-import { ObjectUploader } from "@/components/ObjectUploader";
+import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -288,6 +288,7 @@ export default function Clienti() {
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
+  const [pendingFiles, setPendingFiles] = useState<{ oferta1?: File; oferta2?: File }>({});
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["clients", search, stadiuFilter, agentFilter],
@@ -345,9 +346,24 @@ export default function Clienti() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async (newClient) => {
+      if (pendingFiles.oferta1 || pendingFiles.oferta2) {
+        try {
+          if (pendingFiles.oferta1) {
+            await uploadFileForClient(pendingFiles.oferta1, newClient.id, "oferta1");
+          }
+          if (pendingFiles.oferta2) {
+            await uploadFileForClient(pendingFiles.oferta2, newClient.id, "oferta2");
+          }
+          toast.success("Client creat și fișiere încărcate cu succes");
+        } catch (uploadError) {
+          console.error("File upload error:", uploadError);
+          toast.warning("Client creat, dar unele fișiere nu au putut fi încărcate. Le puteți încărca din nou la editare.");
+        }
+      } else {
+        toast.success("Client creat cu succes");
+      }
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      toast.success("Client creat cu succes");
       closeDialog();
     },
     onError: (error: Error) => {
@@ -405,6 +421,7 @@ export default function Clienti() {
       ...defaultFormData,
       agentId: isAdmin ? "" : (user?.id || ""),
     });
+    setPendingFiles({});
     setIsDialogOpen(true);
   };
 
@@ -460,6 +477,7 @@ export default function Clienti() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingClient(null);
+    setPendingFiles({});
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1220,21 +1238,24 @@ export default function Clienti() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </>
-                      ) : editingClient ? (
+                      ) : (
                         <ObjectUploader
-                          clientId={editingClient.id}
+                          clientId={editingClient?.id}
                           fileType="oferta1"
+                          pendingFile={pendingFiles.oferta1}
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename: objectPath });
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
+                          }}
+                          onFileSelected={(file) => {
+                            setPendingFiles({ ...pendingFiles, oferta1: file });
+                            toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
                           }}
                           onError={(error) => toast.error(error.message)}
                           data-testid="uploader-oferta-1"
                         >
                           Încarcă Fișier
                         </ObjectUploader>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Salvați clientul pentru a încărca fișiere</span>
                       )}
                     </div>
                   </div>
@@ -1268,21 +1289,24 @@ export default function Clienti() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </>
-                      ) : editingClient ? (
+                      ) : (
                         <ObjectUploader
-                          clientId={editingClient.id}
+                          clientId={editingClient?.id}
                           fileType="oferta2"
+                          pendingFile={pendingFiles.oferta2}
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename2: objectPath });
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
+                          }}
+                          onFileSelected={(file) => {
+                            setPendingFiles({ ...pendingFiles, oferta2: file });
+                            toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
                           }}
                           onError={(error) => toast.error(error.message)}
                           data-testid="uploader-oferta-2"
                         >
                           Încarcă Fișier
                         </ObjectUploader>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Salvați clientul pentru a încărca fișiere</span>
                       )}
                     </div>
                   </div>
