@@ -125,7 +125,7 @@ export function ClientImportDialog({
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [selectedAgentId, setSelectedAgentId] = useState<string>(isAdmin ? "" : (currentUserId || ""));
-  const [duplicateStrategy, setDuplicateStrategy] = useState<"skip" | "update">("skip");
+  const [duplicateStrategy, setDuplicateStrategy] = useState<"skip" | "update" | "create">("create");
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -378,11 +378,12 @@ export function ClientImportDialog({
 
               <div className="space-y-2 pt-4 border-t">
                 <Label>Dacă telefonul există deja:</Label>
-                <Select value={duplicateStrategy} onValueChange={(v) => setDuplicateStrategy(v as "skip" | "update")}>
+                <Select value={duplicateStrategy} onValueChange={(v) => setDuplicateStrategy(v as "skip" | "update" | "create")}>
                   <SelectTrigger data-testid="select-duplicate-strategy">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="create">Creează intrare nouă (permite duplicate)</SelectItem>
                     <SelectItem value="skip">Sari peste (nu importa)</SelectItem>
                     <SelectItem value="update">Actualizează datele existente</SelectItem>
                   </SelectContent>
