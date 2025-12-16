@@ -4,11 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Check, X } from "lucide-react";
 
 interface ObjectUploaderProps {
-  onGetUploadParameters: (file: { name: string }) => Promise<{
-    method: "PUT";
-    url: string;
-    objectPath: string;
-  }>;
+  clientId: string;
+  fileType: "oferta1" | "oferta2";
   onComplete?: (objectPath: string, filename: string) => void;
   onError?: (error: Error) => void;
   buttonClassName?: string;
@@ -19,7 +16,8 @@ interface ObjectUploaderProps {
 }
 
 export function ObjectUploader({
-  onGetUploadParameters,
+  clientId,
+  fileType,
   onComplete,
   onError,
   buttonClassName,
@@ -51,22 +49,26 @@ export function ObjectUploader({
     setUploadStatus("idle");
 
     try {
-      const { url, objectPath } = await onGetUploadParameters({ name: file.name });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('clientId', clientId);
+      formData.append('fileType', fileType);
       
-      const response = await fetch(url, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
+      const response = await fetch('/api/files/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
       }
 
+      const result = await response.json();
+      
       setUploadStatus("success");
-      onComplete?.(objectPath, file.name);
+      onComplete?.(result.objectPath, result.filename || file.name);
       
       setTimeout(() => setUploadStatus("idle"), 3000);
     } catch (error) {

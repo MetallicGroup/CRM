@@ -2,8 +2,6 @@ import { Client } from "@replit/object-storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
 
-const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
-
 export const objectStorageClient = new Client();
 
 export class ObjectNotFoundError extends Error {
@@ -17,18 +15,19 @@ export class ObjectNotFoundError extends Error {
 export class ObjectStorageService {
   constructor() {}
 
-  async getObjectEntityUploadURL(originalFilename?: string): Promise<{ uploadURL: string; objectPath: string }> {
+  generateObjectPath(originalFilename?: string): string {
     const objectId = randomUUID();
     const extension = originalFilename ? originalFilename.split('.').pop() : '';
     const objectName = extension ? `uploads/${objectId}.${extension}` : `uploads/${objectId}`;
+    return objectName;
+  }
 
-    const uploadURL = await signObjectURL({
-      objectName,
-      method: "PUT",
-      ttlSec: 900,
-    });
-
-    return { uploadURL, objectPath: `/objects/${objectName}` };
+  async uploadFromBuffer(buffer: Buffer, objectName: string): Promise<string> {
+    const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
+    if (!result.ok) {
+      throw new Error("Failed to upload file to storage");
+    }
+    return `/objects/${objectName}`;
   }
 
   async getObjectEntityFile(objectPath: string): Promise<{ objectName: string; exists: boolean }> {
@@ -87,29 +86,21 @@ export class ObjectStorageService {
     }
   }
 
-  normalizeObjectEntityPath(rawPath: string): string {
-    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
-      return rawPath;
-    }
+  async deleteObject(objectPath: string): Promise<boolean> {
+    try {
+      if (!objectPath.startsWith("/objects/")) {
+        return false;
+      }
 
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
-
-    const parts = rawObjectPath.split("/").filter(p => p.length > 0);
-    if (parts.length >= 2) {
+      const parts = objectPath.slice(1).split("/");
       const objectName = parts.slice(1).join("/");
-      return `/objects/${objectName}`;
-    }
 
-    return rawObjectPath;
-  }
-
-  async uploadFromBuffer(buffer: Buffer, objectName: string): Promise<string> {
-    const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
-    if (!result.ok) {
-      throw new Error("Failed to upload file");
+      const result = await objectStorageClient.delete(objectName);
+      return result.ok;
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      return false;
     }
-    return `/objects/${objectName}`;
   }
 }
 
@@ -129,39 +120,4 @@ function getContentType(filename: string): string {
     'csv': 'text/csv',
   };
   return mimeTypes[ext] || 'application/octet-stream';
-}
-
-async function signObjectURL({
-  objectName,
-  method,
-  ttlSec,
-}: {
-  objectName: string;
-  method: "GET" | "PUT" | "DELETE" | "HEAD";
-  ttlSec: number;
-}): Promise<string> {
-  const request = {
-    object_name: objectName,
-    method,
-    expires_at: new Date(Date.now() + ttlSec * 1000).toISOString(),
-  };
-  const response = await fetch(
-    `${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    }
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Failed to sign object URL, errorcode: ${response.status}, ` +
-        `make sure you're running on Replit`
-    );
-  }
-
-  const { signed_url: signedURL } = await response.json();
-  return signedURL;
 }

@@ -1220,18 +1220,10 @@ export default function Clienti() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </>
-                      ) : (
+                      ) : editingClient ? (
                         <ObjectUploader
-                          onGetUploadParameters={async (file) => {
-                            const response = await fetch("/api/files/upload-url", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ filename: file.name }),
-                            });
-                            if (!response.ok) throw new Error("Failed to get upload URL");
-                            const data = await response.json();
-                            return { method: "PUT", url: data.url, objectPath: data.objectPath };
-                          }}
+                          clientId={editingClient.id}
+                          fileType="oferta1"
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename: objectPath });
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
@@ -1241,6 +1233,8 @@ export default function Clienti() {
                         >
                           Încarcă Fișier
                         </ObjectUploader>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Salvați clientul pentru a încărca fișiere</span>
                       )}
                     </div>
                   </div>
@@ -1274,18 +1268,10 @@ export default function Clienti() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </>
-                      ) : (
+                      ) : editingClient ? (
                         <ObjectUploader
-                          onGetUploadParameters={async (file) => {
-                            const response = await fetch("/api/files/upload-url", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ filename: file.name }),
-                            });
-                            if (!response.ok) throw new Error("Failed to get upload URL");
-                            const data = await response.json();
-                            return { method: "PUT", url: data.url, objectPath: data.objectPath };
-                          }}
+                          clientId={editingClient.id}
+                          fileType="oferta2"
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename2: objectPath });
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
@@ -1295,6 +1281,8 @@ export default function Clienti() {
                         >
                           Încarcă Fișier
                         </ObjectUploader>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Salvați clientul pentru a încărca fișiere</span>
                       )}
                     </div>
                   </div>

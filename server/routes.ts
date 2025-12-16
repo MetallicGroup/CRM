@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import multer from "multer";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -1640,27 +1641,40 @@ export async function registerRoutes(
 
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
-  // Get upload URL for a file
-  app.post("/api/files/upload-url", requireAuth, async (req: AuthRequest, res: Response) => {
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 }
+  });
+
+  // Direct file upload endpoint
+  app.post("/api/files/upload", requireAuth, upload.single('file'), async (req: AuthRequest, res: Response) => {
     try {
-      const { filename } = req.body;
-      
-      if (!filename) {
-        return res.status(400).json({ message: "Numele fișierului este obligatoriu" });
+      if (!req.file) {
+        return res.status(400).json({ message: "Niciun fișier nu a fost încărcat" });
       }
+
+      const { clientId, fileType } = req.body;
       
+      if (!clientId || !fileType) {
+        return res.status(400).json({ message: "clientId și fileType sunt obligatorii" });
+      }
+
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
-      const { uploadURL, objectPath } = await objectStorageService.getObjectEntityUploadURL(filename);
       
-      res.json({ 
-        url: uploadURL, 
-        objectPath,
-        method: "PUT" as const 
-      });
+      const objectName = objectStorageService.generateObjectPath(req.file.originalname);
+      const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
+      
+      if (fileType === "oferta1") {
+        await storage.updateClient(clientId, { ofertaFilename: objectPath });
+      } else if (fileType === "oferta2") {
+        await storage.updateClient(clientId, { ofertaFilename2: objectPath });
+      }
+      
+      res.json({ success: true, objectPath, filename: req.file.originalname });
     } catch (error) {
-      console.error("Get upload URL error:", error);
-      res.status(500).json({ message: "Eroare la generarea URL-ului de upload" });
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea fișierului" });
     }
   });
 
@@ -1681,29 +1695,6 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Fișierul nu a fost găsit" });
       }
       res.status(500).json({ message: "Eroare la descărcarea fișierului" });
-    }
-  });
-
-  // Confirm file upload and set ACL (for storing the file path in database)
-  app.post("/api/files/confirm-upload", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const { objectPath, clientId, fileType } = req.body;
-      
-      if (!objectPath || !clientId || !fileType) {
-        return res.status(400).json({ message: "objectPath, clientId și fileType sunt obligatorii" });
-      }
-      
-      // Update the client record with the file path
-      if (fileType === "oferta1") {
-        await storage.updateClient(clientId, { ofertaFilename: objectPath });
-      } else if (fileType === "oferta2") {
-        await storage.updateClient(clientId, { ofertaFilename2: objectPath });
-      }
-      
-      res.json({ success: true, objectPath });
-    } catch (error) {
-      console.error("Confirm upload error:", error);
-      res.status(500).json({ message: "Eroare la confirmarea upload-ului" });
     }
   });
 
