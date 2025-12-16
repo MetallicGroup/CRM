@@ -45,7 +45,7 @@ mockupState = "FULLSTACK"
 [userenv]
 
 [userenv.shared]
-PRIVATE_OBJECT_DIR = "/metallic-crm-files"
+PRIVATE_OBJECT_DIR = "metallic-crm-files"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-891f4e8c-2fae-4d1c-9805-0db1a369e87a"

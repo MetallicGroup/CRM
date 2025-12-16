@@ -1671,9 +1671,9 @@ export async function registerRoutes(
       const objectStorageService = new ObjectStorageService();
       
       const objectPath = req.path;
-      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+      await objectStorageService.getObjectEntityFile(objectPath);
       
-      await objectStorageService.downloadObject(objectFile, res);
+      await objectStorageService.downloadObject(objectPath, res);
     } catch (error) {
       console.error("Download file error:", error);
       const { ObjectNotFoundError } = await import("./objectStorage");
