@@ -62,6 +62,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
+import { SalariiNeproductivi } from "@/components/SalariiNeproductivi";
 
 interface ExpenseCategory {
   id: string;
@@ -137,7 +138,7 @@ export default function Cheltuieli() {
   const queryClient = useQueryClient();
   const currentDate = new Date();
   
-  const [activeTab, setActiveTab] = useState<"agent" | "sediu">("agent");
+  const [activeTab, setActiveTab] = useState<"agent" | "sediu" | "salarii">("agent");
   const [search, setSearch] = useState("");
   const [lunaFilter, setLunaFilter] = useState<string>(String(currentDate.getMonth() + 1));
   const [anFilter, setAnFilter] = useState<string>(String(currentDate.getFullYear()));
@@ -756,8 +757,8 @@ export default function Cheltuieli() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "agent" | "sediu")}>
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "agent" | "sediu" | "salarii")}>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="agent" className="flex items-center gap-2" data-testid="tab-agent">
             <User className="h-4 w-4" />
             Cheltuieli Agent ({cheltuieliAgent.length})
@@ -765,6 +766,10 @@ export default function Cheltuieli() {
           <TabsTrigger value="sediu" className="flex items-center gap-2" data-testid="tab-sediu">
             <Building2 className="h-4 w-4" />
             Cheltuieli Sediu ({cheltuieliSediu.length})
+          </TabsTrigger>
+          <TabsTrigger value="salarii" className="flex items-center gap-2" data-testid="tab-salarii">
+            <Receipt className="h-4 w-4" />
+            Salarii Neproductivi
           </TabsTrigger>
         </TabsList>
 
@@ -942,6 +947,10 @@ export default function Cheltuieli() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="salarii">
+          <SalariiNeproductivi luna={parseInt(lunaFilter)} an={parseInt(anFilter)} />
         </TabsContent>
       </Tabs>
 
