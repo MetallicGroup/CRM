@@ -1639,6 +1639,112 @@ export async function registerRoutes(
     }
   });
 
+  // ============ SALARII NEPRODUCTIVI ROUTES ============
+
+  // Get all salaries for non-productive employees
+  app.get("/api/salarii-neproductivi", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { tipAngajat, luna, an, numeAngajat } = req.query;
+      const data = await storage.getAllSalariiNeproductivi({
+        tipAngajat: tipAngajat as string,
+        luna: luna ? parseInt(luna as string) : undefined,
+        an: an ? parseInt(an as string) : undefined,
+        numeAngajat: numeAngajat as string
+      });
+      res.json(data);
+    } catch (error) {
+      console.error("Get salarii neproductivi error:", error);
+      res.status(500).json({ message: "Eroare la obținerea salariilor" });
+    }
+  });
+
+  // Get totals for a specific month
+  app.get("/api/salarii-neproductivi/totals", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const luna = parseInt(req.query.luna as string) || new Date().getMonth() + 1;
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const totals = await storage.getSalariiNeproductiviTotals(luna, an);
+      res.json(totals);
+    } catch (error) {
+      console.error("Get salarii totals error:", error);
+      res.status(500).json({ message: "Eroare la calcularea totalurilor" });
+    }
+  });
+
+  // Get a single salary entry
+  app.get("/api/salarii-neproductivi/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const data = await storage.getSalariuNeproductiv(id);
+      if (!data) {
+        return res.status(404).json({ message: "Înregistrare negăsită" });
+      }
+      res.json(data);
+    } catch (error) {
+      console.error("Get salariu error:", error);
+      res.status(500).json({ message: "Eroare la obținerea salariului" });
+    }
+  });
+
+  // Create a salary entry
+  app.post("/api/salarii-neproductivi", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { numeAngajat, tipAngajat, luna, an, salariuBrut, salariuNet, bonusuri, alteCosturi, descriere, documentUrl } = req.body;
+      
+      if (!numeAngajat || !tipAngajat || !luna || !an) {
+        return res.status(400).json({ message: "Numele, tipul angajatului, luna și anul sunt obligatorii" });
+      }
+      
+      if (!["PRODUCTIE", "INDIRECT"].includes(tipAngajat)) {
+        return res.status(400).json({ message: "Tipul angajatului trebuie să fie PRODUCTIE sau INDIRECT" });
+      }
+      
+      const result = await storage.createSalariuNeproductiv({
+        numeAngajat,
+        tipAngajat,
+        luna,
+        an,
+        salariuBrut,
+        salariuNet,
+        bonusuri,
+        alteCosturi,
+        descriere,
+        documentUrl
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Create salariu error:", error);
+      res.status(500).json({ message: "Eroare la salvarea salariului" });
+    }
+  });
+
+  // Update a salary entry
+  app.put("/api/salarii-neproductivi/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.updateSalariuNeproductiv(id, req.body);
+      if (!result) {
+        return res.status(404).json({ message: "Înregistrare negăsită" });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Update salariu error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea salariului" });
+    }
+  });
+
+  // Delete a salary entry
+  app.delete("/api/salarii-neproductivi/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteSalariuNeproductiv(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete salariu error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea salariului" });
+    }
+  });
+
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
   const upload = multer({ 
