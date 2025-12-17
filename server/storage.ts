@@ -10,6 +10,7 @@ import {
   agentSalesProfitability,
   agentManualAchizitii,
   agentFixedCosts,
+  salariiNeproductivi,
   type User, 
   type InsertUser, 
   type SafeUser, 
@@ -38,7 +39,10 @@ import {
   type UpdateCheltuialaSediu,
   type AgentSalesProfitability,
   type AgentManualAchizitii,
-  type AgentFixedCosts
+  type AgentFixedCosts,
+  type SalariuNeproductiv,
+  type CreateSalariuNeproductiv,
+  type UpdateSalariuNeproductiv
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -192,6 +196,24 @@ export interface IStorage {
     diurne?: string;
     alteCheltuieli?: string;
   }): Promise<AgentFixedCosts>;
+  
+  // Salarii Neproductivi methods
+  getSalariuNeproductiv(id: string): Promise<SalariuNeproductiv | undefined>;
+  getAllSalariiNeproductivi(filters?: { 
+    tipAngajat?: string; 
+    luna?: number; 
+    an?: number;
+    numeAngajat?: string;
+  }): Promise<SalariuNeproductiv[]>;
+  createSalariuNeproductiv(data: CreateSalariuNeproductiv): Promise<SalariuNeproductiv>;
+  updateSalariuNeproductiv(id: string, data: UpdateSalariuNeproductiv): Promise<SalariuNeproductiv | undefined>;
+  deleteSalariuNeproductiv(id: string): Promise<boolean>;
+  getSalariiNeproductiviTotals(luna: number, an: number): Promise<{ 
+    totalProductie: number; 
+    totalIndirect: number; 
+    totalGeneral: number;
+    byAngajat: Record<string, number>;
+  }>;
 }
 
 function toSafeUser(user: User): SafeUser {
@@ -1946,6 +1968,131 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // Salarii Neproductivi methods
+  async getSalariuNeproductiv(id: string): Promise<SalariuNeproductiv | undefined> {
+    const [result] = await db.select().from(salariiNeproductivi).where(eq(salariiNeproductivi.id, id));
+    return result || undefined;
+  }
+
+  async getAllSalariiNeproductivi(filters?: { 
+    tipAngajat?: string; 
+    luna?: number; 
+    an?: number;
+    numeAngajat?: string;
+  }): Promise<SalariuNeproductiv[]> {
+    const conditions = [];
+    
+    if (filters?.tipAngajat) {
+      conditions.push(eq(salariiNeproductivi.tipAngajat, filters.tipAngajat));
+    }
+    if (filters?.luna) {
+      conditions.push(eq(salariiNeproductivi.luna, filters.luna));
+    }
+    if (filters?.an) {
+      conditions.push(eq(salariiNeproductivi.an, filters.an));
+    }
+    if (filters?.numeAngajat) {
+      conditions.push(ilike(salariiNeproductivi.numeAngajat, `%${filters.numeAngajat}%`));
+    }
+    
+    if (conditions.length > 0) {
+      return db.select().from(salariiNeproductivi).where(and(...conditions));
+    }
+    return db.select().from(salariiNeproductivi);
+  }
+
+  async createSalariuNeproductiv(data: CreateSalariuNeproductiv): Promise<SalariuNeproductiv> {
+    const totalCost = (
+      parseFloat(data.salariuBrut || "0") + 
+      parseFloat(data.bonusuri || "0") + 
+      parseFloat(data.alteCosturi || "0")
+    ).toFixed(2);
+
+    const [result] = await db
+      .insert(salariiNeproductivi)
+      .values({
+        numeAngajat: data.numeAngajat,
+        tipAngajat: data.tipAngajat,
+        luna: data.luna,
+        an: data.an,
+        salariuBrut: data.salariuBrut || "0",
+        salariuNet: data.salariuNet || "0",
+        bonusuri: data.bonusuri || "0",
+        alteCosturi: data.alteCosturi || "0",
+        totalCost: totalCost,
+        descriere: data.descriere,
+        documentUrl: data.documentUrl
+      })
+      .returning();
+    return result;
+  }
+
+  async updateSalariuNeproductiv(id: string, data: UpdateSalariuNeproductiv): Promise<SalariuNeproductiv | undefined> {
+    const existing = await this.getSalariuNeproductiv(id);
+    if (!existing) return undefined;
+
+    const salariuBrut = data.salariuBrut ?? existing.salariuBrut ?? "0";
+    const bonusuri = data.bonusuri ?? existing.bonusuri ?? "0";
+    const alteCosturi = data.alteCosturi ?? existing.alteCosturi ?? "0";
+    const totalCost = (
+      parseFloat(salariuBrut) + 
+      parseFloat(bonusuri) + 
+      parseFloat(alteCosturi)
+    ).toFixed(2);
+
+    const [result] = await db
+      .update(salariiNeproductivi)
+      .set({
+        ...data,
+        totalCost: totalCost,
+        updatedAt: new Date()
+      })
+      .where(eq(salariiNeproductivi.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteSalariuNeproductiv(id: string): Promise<boolean> {
+    const result = await db.delete(salariiNeproductivi).where(eq(salariiNeproductivi.id, id));
+    return true;
+  }
+
+  async getSalariiNeproductiviTotals(luna: number, an: number): Promise<{ 
+    totalProductie: number; 
+    totalIndirect: number; 
+    totalGeneral: number;
+    byAngajat: Record<string, number>;
+  }> {
+    const salarii = await db.select().from(salariiNeproductivi).where(
+      and(
+        eq(salariiNeproductivi.luna, luna),
+        eq(salariiNeproductivi.an, an)
+      )
+    );
+
+    let totalProductie = 0;
+    let totalIndirect = 0;
+    const byAngajat: Record<string, number> = {};
+
+    for (const s of salarii) {
+      const cost = parseFloat(s.totalCost || "0");
+      byAngajat[s.numeAngajat] = cost;
+      
+      if (s.tipAngajat === "PRODUCTIE") {
+        totalProductie += cost;
+      } else if (s.tipAngajat === "INDIRECT") {
+        totalIndirect += cost;
+      }
+    }
+
+    return {
+      totalProductie,
+      totalIndirect,
+      totalGeneral: totalProductie + totalIndirect,
+      byAngajat
+    };
   }
 }
 

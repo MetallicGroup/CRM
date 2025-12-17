@@ -692,3 +692,52 @@ export const insertAgentFixedCostsSchema = createInsertSchema(agentFixedCosts).o
 
 export type AgentFixedCosts = typeof agentFixedCosts.$inferSelect;
 export type InsertAgentFixedCosts = z.infer<typeof insertAgentFixedCostsSchema>;
+
+// ============ SALARII ANGAJATI NEPRODUCTIVI (Producție și HQ/Indirect) ============
+
+export const salariiNeproductivi = pgTable("salarii_neproductivi", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  numeAngajat: varchar("nume_angajat", { length: 200 }).notNull(),
+  tipAngajat: varchar("tip_angajat", { length: 50 }).notNull(), // PRODUCTIE sau INDIRECT
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  
+  salariuBrut: decimal("salariu_brut", { precision: 12, scale: 2 }).default("0"),
+  salariuNet: decimal("salariu_net", { precision: 12, scale: 2 }).default("0"),
+  bonusuri: decimal("bonusuri", { precision: 12, scale: 2 }).default("0"),
+  alteCosturi: decimal("alte_costuri", { precision: 12, scale: 2 }).default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).default("0"),
+  
+  descriere: text("descriere"),
+  documentUrl: varchar("document_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSalariuNeproductivSchema = createInsertSchema(salariiNeproductivi).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createSalariuNeproductivSchema = z.object({
+  numeAngajat: z.string().min(1, "Numele angajatului este obligatoriu"),
+  tipAngajat: z.enum(["PRODUCTIE", "INDIRECT"]),
+  luna: z.number().min(1).max(12),
+  an: z.number().min(2020).max(2100),
+  salariuBrut: z.string().optional(),
+  salariuNet: z.string().optional(),
+  bonusuri: z.string().optional(),
+  alteCosturi: z.string().optional(),
+  totalCost: z.string().optional(),
+  descriere: z.string().optional(),
+  documentUrl: z.string().optional(),
+});
+
+export const updateSalariuNeproductivSchema = createSalariuNeproductivSchema.partial();
+
+export type SalariuNeproductiv = typeof salariiNeproductivi.$inferSelect;
+export type InsertSalariuNeproductiv = z.infer<typeof insertSalariuNeproductivSchema>;
+export type CreateSalariuNeproductiv = z.infer<typeof createSalariuNeproductivSchema>;
+export type UpdateSalariuNeproductiv = z.infer<typeof updateSalariuNeproductivSchema>;
