@@ -1646,21 +1646,29 @@ export async function registerRoutes(
     limits: { fileSize: 50 * 1024 * 1024 }
   });
 
-  // Direct file upload endpoint
+  // Direct file upload endpoint for clients
   app.post("/api/files/upload", requireAuth, upload.single('file'), async (req: AuthRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "Niciun fișier nu a fost încărcat" });
       }
 
-      const { clientId, fileType } = req.body;
+      const { clientId, fileType, folder } = req.body;
       
-      if (!clientId || !fileType) {
-        return res.status(400).json({ message: "clientId și fileType sunt obligatorii" });
-      }
-
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
+      
+      // Use folder for general uploads (cheltuieli, etc) or clientId/fileType for client files
+      if (folder) {
+        // General upload - just return the URL
+        const objectName = objectStorageService.generateObjectPath(req.file.originalname, folder);
+        const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
+        return res.json({ success: true, url: objectPath, filename: req.file.originalname });
+      }
+      
+      if (!clientId || !fileType) {
+        return res.status(400).json({ message: "clientId și fileType sunt obligatorii (sau folder pentru upload general)" });
+      }
       
       const objectName = objectStorageService.generateObjectPath(req.file.originalname);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);

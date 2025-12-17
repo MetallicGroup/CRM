@@ -523,6 +523,7 @@ export const cheltuieliAgent = pgTable("cheltuieli_agent", {
   autoNr: varchar("auto_nr", { length: 50 }),
   
   facturaFilename: varchar("factura_filename", { length: 255 }),
+  documentUrl: varchar("document_url", { length: 500 }),
   
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
   
@@ -549,6 +550,7 @@ export const createCheltuialaAgentSchema = z.object({
   firma: z.string().min(1, "Firma este obligatorie"),
   autoNr: z.string().optional(),
   facturaFilename: z.string().optional(),
+  documentUrl: z.string().optional(),
   tipCheltuiala: z.string().optional(),
 });
 
@@ -578,6 +580,7 @@ export const cheltuieliSediu = pgTable("cheltuieli_sediu", {
   firma: varchar("firma", { length: 100 }),
   
   facturaFilename: varchar("factura_filename", { length: 255 }),
+  documentUrl: varchar("document_url", { length: 500 }),
   
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
   

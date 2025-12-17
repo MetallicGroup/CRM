@@ -15,10 +15,11 @@ export class ObjectNotFoundError extends Error {
 export class ObjectStorageService {
   constructor() {}
 
-  generateObjectPath(originalFilename?: string): string {
+  generateObjectPath(originalFilename?: string, folder?: string): string {
     const objectId = randomUUID();
     const extension = originalFilename ? originalFilename.split('.').pop() : '';
-    const objectName = extension ? `uploads/${objectId}.${extension}` : `uploads/${objectId}`;
+    const baseFolder = folder || 'uploads';
+    const objectName = extension ? `${baseFolder}/${objectId}.${extension}` : `${baseFolder}/${objectId}`;
     return objectName;
   }
 

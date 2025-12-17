@@ -54,7 +54,10 @@ import {
   Car,
   FileText,
   TrendingUp,
-  Filter
+  Filter,
+  Upload,
+  Download,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -95,6 +98,7 @@ interface CheltuialaAgent {
   firma: string | null;
   autoNr: string | null;
   facturaFilename: string | null;
+  documentUrl: string | null;
   createdAt: string;
 }
 
@@ -111,6 +115,7 @@ interface CheltuialaSediu {
   an: number;
   firma: string | null;
   facturaFilename: string | null;
+  documentUrl: string | null;
   createdAt: string;
 }
 
@@ -147,6 +152,8 @@ export default function Cheltuieli() {
   
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     agentId: "",
@@ -161,6 +168,7 @@ export default function Cheltuieli() {
     firma: "",
     autoNr: "",
     facturaFilename: "",
+    documentUrl: "",
   });
 
   const { data: mainCategories = [] } = useQuery<ExpenseCategory[]>({
@@ -447,9 +455,11 @@ export default function Cheltuieli() {
       firma: "",
       autoNr: "",
       facturaFilename: "",
+      documentUrl: "",
     });
     setSelectedCategory("");
     setSelectedSubcategory("");
+    setSelectedFile(null);
   };
 
   const handleOpenDialog = (cheltuiala?: CheltuialaAgent | CheltuialaSediu) => {
@@ -468,22 +478,61 @@ export default function Cheltuieli() {
         firma: cheltuiala.firma || "",
         autoNr: (cheltuiala as CheltuialaAgent).autoNr || "",
         facturaFilename: cheltuiala.facturaFilename || "",
+        documentUrl: cheltuiala.documentUrl || "",
       });
       setSelectedCategory(cheltuiala.categoryId || "");
       setSelectedSubcategory(cheltuiala.subcategoryId || "");
+      setSelectedFile(null);
     } else {
       resetForm();
     }
     setIsDialogOpen(true);
   };
+  
+  const handleFileUpload = async (file: File): Promise<string | null> => {
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+    formDataUpload.append("folder", "cheltuieli");
+    
+    try {
+      const res = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Eroare la încărcare");
+      }
+      
+      const result = await res.json();
+      return result.url;
+    } catch (err: any) {
+      toast.error("Eroare la încărcarea documentului: " + err.message);
+      return null;
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    let documentUrl = formData.documentUrl;
+    
+    if (selectedFile) {
+      setIsUploading(true);
+      const uploadedUrl = await handleFileUpload(selectedFile);
+      setIsUploading(false);
+      
+      if (uploadedUrl) {
+        documentUrl = uploadedUrl;
+      }
+    }
     
     const data = {
       ...formData,
       categoryId: selectedCategory,
       subcategoryId: selectedSubcategory,
+      documentUrl,
     };
     
     if (editingCheltuiala) {
@@ -736,6 +785,7 @@ export default function Cheltuieli() {
                       <TableHead>Sediu</TableHead>
                       <TableHead>Firmă</TableHead>
                       <TableHead>Nr. Auto</TableHead>
+                      <TableHead>Doc</TableHead>
                       <TableHead className="text-right">Suma (LEI)</TableHead>
                       {isAdmin && <TableHead className="text-right">Acțiuni</TableHead>}
                     </TableRow>
@@ -762,6 +812,19 @@ export default function Cheltuieli() {
                             </span>
                           )}
                           {!c.autoNr && "-"}
+                        </TableCell>
+                        <TableCell>
+                          {c.documentUrl ? (
+                            <a 
+                              href={c.documentUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-700"
+                              title="Descarcă document"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          ) : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-red-600">
                           {parseFloat(c.suma).toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
@@ -814,6 +877,7 @@ export default function Cheltuieli() {
                       <TableHead>Categorie</TableHead>
                       <TableHead>Firmă</TableHead>
                       <TableHead>Descriere</TableHead>
+                      <TableHead>Doc</TableHead>
                       <TableHead className="text-right">Suma (LEI)</TableHead>
                       {isAdmin && <TableHead className="text-right">Acțiuni</TableHead>}
                     </TableRow>
@@ -832,6 +896,19 @@ export default function Cheltuieli() {
                         </TableCell>
                         <TableCell>{c.firma || "-"}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{c.descriere || "-"}</TableCell>
+                        <TableCell>
+                          {c.documentUrl ? (
+                            <a 
+                              href={c.documentUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-700"
+                              title="Descarcă document"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          ) : "-"}
+                        </TableCell>
                         <TableCell className="text-right font-semibold text-red-600">
                           {parseFloat(c.suma).toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
                         </TableCell>
@@ -1068,6 +1145,41 @@ export default function Cheltuieli() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="document">Document Atașat</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="document"
+                  type="file"
+                  accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="flex-1"
+                  data-testid="input-document"
+                />
+                {selectedFile && (
+                  <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+                    {selectedFile.name}
+                  </span>
+                )}
+              </div>
+              {formData.documentUrl && !selectedFile && (
+                <div className="flex items-center gap-2 text-sm">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  <a 
+                    href={formData.documentUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Document existent - click pentru descărcare
+                  </a>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Fișiere acceptate: PDF, Excel, Word, Imagini (max 10MB)
+              </p>
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
@@ -1082,10 +1194,15 @@ export default function Cheltuieli() {
               </Button>
               <Button 
                 type="submit" 
-                disabled={createAgentMutation.isPending || createSediuMutation.isPending || updateAgentMutation.isPending || updateSediuMutation.isPending}
+                disabled={isUploading || createAgentMutation.isPending || createSediuMutation.isPending || updateAgentMutation.isPending || updateSediuMutation.isPending}
                 data-testid="button-submit"
               >
-                {editingCheltuiala ? "Salvează" : "Adaugă"}
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Se încarcă...
+                  </>
+                ) : editingCheltuiala ? "Salvează" : "Adaugă"}
               </Button>
             </DialogFooter>
           </form>
