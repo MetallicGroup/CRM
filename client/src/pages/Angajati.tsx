@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAllAgentsExpenseCosts, useShowroomCostsDistributed, useAgentsExpenseCostsRange, useShowroomCostsDistributedRange } from "@/hooks/useAgentExpenseCosts";
 import { useAgentSalesProfitabilityForMonth, useAgentSalesProfitabilityRange, getMonthNumber } from "@/hooks/useAgentSalesProfitability";
 import { useAgentManualAchizitiiForMonth, useAgentManualAchizitiiRange } from "@/hooks/useManualAchizitii";
+import { useSalariiNeproductiviTotals, useSalariiNeproductiviTotalsRange } from "@/hooks/useSalariiNeproductivi";
 
 interface DbUser {
   id: string;
@@ -78,6 +79,10 @@ export default function Angajati() {
   const { data: manualAchizitiiSingle = {}, refetch: refetchManualAchizitiiSingle } = useAgentManualAchizitiiForMonth(selectedMonthName, selectedYear);
   const { data: manualAchizitiiRange = {}, refetch: refetchManualAchizitiiRange } = useAgentManualAchizitiiRange(startMonth, endMonth, selectedYear);
   
+  // Salarii neproductivi hooks (from database)
+  const { data: salariiTotalsSingle, refetch: refetchSalariiSingle } = useSalariiNeproductiviTotals(selectedMonthName, selectedYear);
+  const { data: salariiTotalsRange, refetch: refetchSalariiRange } = useSalariiNeproductiviTotalsRange(startMonth, endMonth, selectedYear);
+  
   // Use the appropriate data based on mode
   const expenseCosts = isRangeMode ? expenseCostsRange : expenseCostsSingle;
   const salesProfitability = isRangeMode ? salesProfitabilityRange : salesProfitabilitySingle;
@@ -106,22 +111,37 @@ export default function Angajati() {
     alteCheltuieli: (fixedCosts?.alteCheltuieliLunar ?? 0) * months,
   });
   
-  // Calculate total production and indirect costs from Zustand employees
+  // Get salarii neproductivi totals from database API
+  const salariiTotals = isRangeMode ? salariiTotalsRange : salariiTotalsSingle;
+  const refetchSalarii = isRangeMode ? refetchSalariiRange : refetchSalariiSingle;
+  
+  // Calculate total production and indirect costs
+  // Use database API values when available (trust them even if zero), fallback to Zustand if API not loaded
   const totalProductionCosts = useMemo(() => {
+    // Use database API if available (totalProductie is defined, even if 0)
+    if (salariiTotals && typeof salariiTotals.totalProductie === 'number') {
+      return Number(salariiTotals.totalProductie) || 0;
+    }
+    // Fallback to Zustand employees only if API data not yet loaded
     return productieEmployees.reduce((sum, emp) => {
       const fixed = getFixedTotals(emp.fixedCosts, monthsCount);
       return sum + fixed.salariu + fixed.amortizareAuto + fixed.combustibil + fixed.revizii + 
              fixed.alteCheltuieliAuto + fixed.abonamente + fixed.diurne + fixed.alteCheltuieli;
     }, 0);
-  }, [productieEmployees, monthsCount]);
+  }, [salariiTotals, productieEmployees, monthsCount]);
   
   const totalIndirectCosts = useMemo(() => {
+    // Use database API if available (totalIndirect is defined, even if 0)
+    if (salariiTotals && typeof salariiTotals.totalIndirect === 'number') {
+      return Number(salariiTotals.totalIndirect) || 0;
+    }
+    // Fallback to Zustand employees only if API data not yet loaded
     return indirectEmployees.reduce((sum, emp) => {
       const fixed = getFixedTotals(emp.fixedCosts, monthsCount);
       return sum + fixed.salariu + fixed.amortizareAuto + fixed.combustibil + fixed.revizii + 
              fixed.alteCheltuieliAuto + fixed.abonamente + fixed.diurne + fixed.alteCheltuieli;
     }, 0);
-  }, [indirectEmployees, monthsCount]);
+  }, [salariiTotals, indirectEmployees, monthsCount]);
   
   // Create agent data using API agents (with correct IDs)
   const agentsWithMetrics = useMemo(() => {
