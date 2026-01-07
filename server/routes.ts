@@ -55,11 +55,11 @@ export async function registerRoutes(
     try {
       const data = loginSchema.parse(req.body);
       const user = await storage.validatePassword(data.email, data.password);
-      
+
       if (!user) {
         return res.status(401).json({ message: "Email sau parolă incorectă" });
       }
-      
+
       if (!user.active) {
         return res.status(401).json({ message: "Contul a fost dezactivat" });
       }
@@ -77,7 +77,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: error.errors[0].message });
       }
       console.error("Login error:", error);
-      res.status(500).json({ message: "Eroare la autentificare" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ message: `Eroare la autentificare: ${errorMessage}` });
     }
   });
 
@@ -101,7 +102,7 @@ export async function registerRoutes(
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user || !user.active) {
-        req.session.destroy(() => {});
+        req.session.destroy(() => { });
         return res.json({ user: null });
       }
 
@@ -131,7 +132,7 @@ export async function registerRoutes(
   app.post("/api/users", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const data = createUserSchema.parse(req.body);
-      
+
       const existingUser = await storage.getUserByEmail(data.email);
       if (existingUser) {
         return res.status(400).json({ message: "Acest email este deja folosit" });
@@ -153,7 +154,7 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const data = updateUserSchema.parse(req.body);
-      
+
       if (data.email) {
         const existingUser = await storage.getUserByEmail(data.email);
         if (existingUser && existingUser.id !== id) {
@@ -180,7 +181,7 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const { newPassword } = req.body;
-      
+
       if (!newPassword || newPassword.length < 6) {
         return res.status(400).json({ message: "Parola trebuie să aibă minim 6 caractere" });
       }
@@ -198,7 +199,7 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const user = await storage.getUser(id);
-      
+
       if (!user) {
         return res.status(404).json({ message: "Utilizator negăsit" });
       }
@@ -219,7 +220,7 @@ export async function registerRoutes(
   app.post("/api/auth/change-password", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      
+
       if (!newPassword || newPassword.length < 6) {
         return res.status(400).json({ message: "Parola nouă trebuie să aibă minim 6 caractere" });
       }
@@ -252,7 +253,7 @@ export async function registerRoutes(
         storage.getClientStats(agentId),
         storage.getActiveAgentsCount()
       ]);
-      
+
       res.json({
         clients: clientStats,
         activeAgents: activeAgentsCount
@@ -275,7 +276,7 @@ export async function registerRoutes(
         }
         return res.json([]);
       }
-      
+
       const agents = await storage.getAgents();
       res.json(agents);
     } catch (error) {
@@ -290,7 +291,7 @@ export async function registerRoutes(
   app.get("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, stadiuOferta, search } = req.query;
-      
+
       // Non-admins can only see their own clients
       let filterAgentId = agentId as string | undefined;
       if (req.userRole !== "ADMIN") {
@@ -302,7 +303,7 @@ export async function registerRoutes(
         stadiuOferta: stadiuOferta as string | undefined,
         search: search as string | undefined,
       });
-      
+
       res.json(clients);
     } catch (error) {
       console.error("Get clients error:", error);
@@ -326,7 +327,7 @@ export async function registerRoutes(
   app.get("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const client = await storage.getClient(req.params.id);
-      
+
       if (!client) {
         return res.status(404).json({ message: "Client negăsit" });
       }
@@ -347,7 +348,7 @@ export async function registerRoutes(
   app.post("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const data = createClientSchema.parse(req.body);
-      
+
       // RBAC: Non-admins can only create clients assigned to themselves
       if (req.userRole !== "ADMIN") {
         data.agentId = req.userId;
@@ -357,7 +358,7 @@ export async function registerRoutes(
       }
 
       const client = await storage.createClient(data);
-      
+
       // Auto-recalculate profitability if client is VANDUT with an agent
       if (client.stadiuOferta === "VANDUT" && client.agentId && client.dataVanzarii) {
         const saleDate = new Date(client.dataVanzarii);
@@ -365,7 +366,7 @@ export async function registerRoutes(
         const an = saleDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(client.agentId, an, luna);
       }
-      
+
       res.status(201).json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -416,10 +417,10 @@ export async function registerRoutes(
   app.post("/api/clients/import", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const parsed = importPayloadSchema.safeParse(req.body);
-      
+
       if (!parsed.success) {
-        return res.status(400).json({ 
-          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message 
+        return res.status(400).json({
+          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message
         });
       }
 
@@ -430,7 +431,7 @@ export async function registerRoutes(
         agentId,
         duplicateStrategy
       );
-      
+
       res.json(result);
     } catch (error) {
       console.error("Import clients error:", error);
@@ -442,7 +443,7 @@ export async function registerRoutes(
   app.patch("/api/clients/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const existingClient = await storage.getClient(req.params.id);
-      
+
       if (!existingClient) {
         return res.status(404).json({ message: "Client negăsit" });
       }
@@ -453,18 +454,18 @@ export async function registerRoutes(
       }
 
       const data = updateClientSchema.parse(req.body);
-      
+
       // RBAC: Non-admins cannot change the agent assignment
       if (req.userRole !== "ADMIN") {
         delete data.agentId;
       }
 
       const client = await storage.updateClient(req.params.id, data);
-      
+
       // Auto-recalculate profitability when relevant fields change
       const wasVandut = existingClient.stadiuOferta === "VANDUT";
       const isNowVandut = client?.stadiuOferta === "VANDUT";
-      
+
       // Recalculate for old agent/date if it was VANDUT before (to subtract it)
       if (wasVandut && existingClient.agentId && existingClient.dataVanzarii) {
         const oldSaleDate = new Date(existingClient.dataVanzarii);
@@ -472,20 +473,20 @@ export async function registerRoutes(
         const oldAn = oldSaleDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(existingClient.agentId, oldAn, oldLuna);
       }
-      
+
       // Recalculate for new agent/date if it's VANDUT now (to add it)
       if (isNowVandut && client?.agentId && client?.dataVanzarii) {
         const newSaleDate = new Date(client.dataVanzarii);
         const newLuna = newSaleDate.getMonth() + 1;
         const newAn = newSaleDate.getFullYear();
         // Only recalculate if it's different from what we just recalculated
-        if (!wasVandut || 
-            existingClient.agentId !== client.agentId || 
-            existingClient.dataVanzarii?.getTime() !== new Date(client.dataVanzarii).getTime()) {
+        if (!wasVandut ||
+          existingClient.agentId !== client.agentId ||
+          existingClient.dataVanzarii?.getTime() !== new Date(client.dataVanzarii).getTime()) {
           await storage.recomputeAgentMonthlyProfit(client.agentId, newAn, newLuna);
         }
       }
-      
+
       res.json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -501,13 +502,13 @@ export async function registerRoutes(
     try {
       // Get client before deletion for profitability recalculation
       const existingClient = await storage.getClient(req.params.id);
-      
+
       const deleted = await storage.deleteClient(req.params.id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Client negăsit" });
       }
-      
+
       // Recalculate profitability if deleted client was VANDUT
       if (existingClient?.stadiuOferta === "VANDUT" && existingClient.agentId && existingClient.dataVanzarii) {
         const saleDate = new Date(existingClient.dataVanzarii);
@@ -529,7 +530,7 @@ export async function registerRoutes(
   app.patch("/api/profile", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { firstName, lastName, email } = req.body;
-      
+
       if (email) {
         const existingUser = await storage.getUserByEmail(email);
         if (existingUser && existingUser.id !== req.userId) {
@@ -554,7 +555,7 @@ export async function registerRoutes(
   app.post("/api/profile/change-password", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Ambele parole sunt obligatorii" });
       }
@@ -587,7 +588,7 @@ export async function registerRoutes(
   app.get("/api/targets", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an } = req.query;
-      
+
       // Non-admins can only see their own targets
       const filters: any = {};
       if (req.userRole !== "ADMIN") {
@@ -595,10 +596,10 @@ export async function registerRoutes(
       } else if (agentId) {
         filters.agentId = agentId as string;
       }
-      
+
       if (luna) filters.luna = parseInt(luna as string);
       if (an) filters.an = parseInt(an as string);
-      
+
       const targets = await storage.getAllTargets(filters);
       res.json(targets);
     } catch (error) {
@@ -611,7 +612,7 @@ export async function registerRoutes(
   app.get("/api/targets/progress", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an } = req.query;
-      
+
       // Non-admins can ONLY see their own progress - ignore agentId parameter
       const targetAgentId = req.userRole !== "ADMIN" ? req.userId! : (agentId as string || req.userId!);
       const targetLuna = parseInt(luna as string) || new Date().getMonth() + 1;
@@ -645,7 +646,7 @@ export async function registerRoutes(
     try {
       const data = updateTargetSchema.parse(req.body);
       const target = await storage.updateTarget(req.params.id, data);
-      
+
       if (!target) {
         return res.status(404).json({ message: "Target negăsit" });
       }
@@ -664,7 +665,7 @@ export async function registerRoutes(
   app.delete("/api/targets/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const deleted = await storage.deleteTarget(req.params.id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Target negăsit" });
       }
@@ -682,12 +683,12 @@ export async function registerRoutes(
   app.get("/api/partners", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { tipPartener, activ, search } = req.query;
-      
+
       const filters: any = {};
       if (tipPartener) filters.tipPartener = tipPartener as string;
       if (activ !== undefined) filters.activ = activ === "true";
       if (search) filters.search = search as string;
-      
+
       const partners = await storage.getAllPartners(filters);
       res.json(partners);
     } catch (error) {
@@ -700,7 +701,7 @@ export async function registerRoutes(
   app.get("/api/partners/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const partner = await storage.getPartner(req.params.id);
-      
+
       if (!partner) {
         return res.status(404).json({ message: "Partener negăsit" });
       }
@@ -732,7 +733,7 @@ export async function registerRoutes(
     try {
       const data = updatePartnerSchema.parse(req.body);
       const partner = await storage.updatePartner(req.params.id, data);
-      
+
       if (!partner) {
         return res.status(404).json({ message: "Partener negăsit" });
       }
@@ -751,7 +752,7 @@ export async function registerRoutes(
   app.delete("/api/partners/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const deleted = await storage.deletePartner(req.params.id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Partener negăsit" });
       }
@@ -913,7 +914,7 @@ export async function registerRoutes(
   app.get("/api/cheltuieli-agent", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an, categoryId, sediuId, firma } = req.query;
-      
+
       // Non-admins can only see their own expenses
       const filters: any = {};
       if (req.userRole !== "ADMIN") {
@@ -921,13 +922,13 @@ export async function registerRoutes(
       } else if (agentId) {
         filters.agentId = agentId as string;
       }
-      
+
       if (luna) filters.luna = parseInt(luna as string);
       if (an) filters.an = parseInt(an as string);
       if (categoryId) filters.categoryId = categoryId as string;
       if (sediuId) filters.sediuId = sediuId as string;
       if (firma) filters.firma = firma as string;
-      
+
       const cheltuieli = await storage.getAllCheltuieliAgent(filters);
       res.json(cheltuieli);
     } catch (error) {
@@ -940,7 +941,7 @@ export async function registerRoutes(
   app.get("/api/cheltuieli-agent/stats", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an } = req.query;
-      
+
       const filters: any = {};
       if (req.userRole !== "ADMIN") {
         filters.agentId = req.userId;
@@ -949,7 +950,7 @@ export async function registerRoutes(
       }
       if (luna) filters.luna = parseInt(luna as string);
       if (an) filters.an = parseInt(an as string);
-      
+
       const stats = await storage.getCheltuieliAgentStats(filters);
       res.json(stats);
     } catch (error) {
@@ -965,12 +966,12 @@ export async function registerRoutes(
       if (!cheltuiala) {
         return res.status(404).json({ message: "Cheltuială negăsită" });
       }
-      
+
       // Non-admins can only see their own expenses
       if (req.userRole !== "ADMIN" && cheltuiala.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la această cheltuială" });
       }
-      
+
       res.json(cheltuiala);
     } catch (error) {
       console.error("Get cheltuiala agent error:", error);
@@ -1045,10 +1046,10 @@ export async function registerRoutes(
   app.post("/api/cheltuieli-agent/import", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const parsed = expenseImportPayloadSchema.safeParse(req.body);
-      
+
       if (!parsed.success) {
-        return res.status(400).json({ 
-          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message 
+        return res.status(400).json({
+          message: "Datele de import sunt invalide: " + parsed.error.errors[0].message
         });
       }
 
@@ -1121,17 +1122,17 @@ export async function registerRoutes(
             let first = parseInt(parts[0]);
             let second = parseInt(parts[1]);
             const year = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
-            
+
             if (isNaN(first) || isNaN(second) || isNaN(year)) return undefined;
-            
+
             const fullYear = year < 100 ? 2000 + year : year;
-            
+
             // Validate year range
             if (fullYear < 1900 || fullYear > 2100) return undefined;
-            
+
             let month: number;
             let day: number;
-            
+
             // Smart format detection: if first > 12, it must be day (D/M/YYYY format)
             // if second > 12, it must be day (M/D/YYYY format)
             if (first > 12 && second <= 12) {
@@ -1147,12 +1148,12 @@ export async function registerRoutes(
               month = first;
               day = second;
             }
-            
+
             // Validate month and day bounds
             if (month < 1 || month > 12) return undefined;
             if (day < 1 || day > 31) return undefined;
-            
-            return { 
+
+            return {
               date: new Date(fullYear, month - 1, day),
               luna: month,
               an: fullYear
@@ -1225,11 +1226,11 @@ export async function registerRoutes(
           };
 
           await storage.createCheltuialaAgent(cheltuialaData as any);
-          
+
           if (agentId) {
             affectedMonths.add(`${agentId}:${dateInfo.an}:${dateInfo.luna}`);
           }
-          
+
           success++;
         } catch (error) {
           errors++;
@@ -1241,10 +1242,10 @@ export async function registerRoutes(
         }
       }
 
-      res.json({ 
-        success, 
-        errors, 
-        skipped, 
+      res.json({
+        success,
+        errors,
+        skipped,
         errorDetails: errorDetails.slice(0, 50),
         affectedMonths: Array.from(affectedMonths)
       });
@@ -1260,14 +1261,14 @@ export async function registerRoutes(
   app.get("/api/cheltuieli-sediu", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { sediuId, luna, an, categoryId, firma } = req.query;
-      
+
       const filters: any = {};
       if (sediuId) filters.sediuId = sediuId as string;
       if (luna) filters.luna = parseInt(luna as string);
       if (an) filters.an = parseInt(an as string);
       if (categoryId) filters.categoryId = categoryId as string;
       if (firma) filters.firma = firma as string;
-      
+
       const cheltuieli = await storage.getAllCheltuieliSediu(filters);
       res.json(cheltuieli);
     } catch (error) {
@@ -1280,12 +1281,12 @@ export async function registerRoutes(
   app.get("/api/cheltuieli-sediu/stats", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { sediuId, luna, an } = req.query;
-      
+
       const filters: any = {};
       if (sediuId) filters.sediuId = sediuId as string;
       if (luna) filters.luna = parseInt(luna as string);
       if (an) filters.an = parseInt(an as string);
-      
+
       const stats = await storage.getCheltuieliSediuStats(filters);
       res.json(stats);
     } catch (error) {
@@ -1298,7 +1299,7 @@ export async function registerRoutes(
   app.get("/api/profitabilitate/showroom-costs", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { luna, an } = req.query;
-      
+
       if (!luna || !an) {
         return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
       }
@@ -1318,7 +1319,7 @@ export async function registerRoutes(
   app.get("/api/profitabilitate/showroom-costs-distributed", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { luna, an } = req.query;
-      
+
       if (!luna || !an) {
         return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
       }
@@ -1401,17 +1402,17 @@ export async function registerRoutes(
   app.get("/api/profitabilitate/agent-costs/:agentId", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { luna, an } = req.query;
-      
+
       if (!luna || !an) {
         return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
       }
-      
+
       const costs = await storage.getAgentProfitabilityCosts(
         req.params.agentId,
         parseInt(luna as string),
         parseInt(an as string)
       );
-      
+
       res.json(costs);
     } catch (error) {
       console.error("Get agent profitability costs error:", error);
@@ -1423,14 +1424,14 @@ export async function registerRoutes(
   app.get("/api/profitabilitate/all-agents-costs", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { luna, an } = req.query;
-      
+
       if (!luna || !an) {
         return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
       }
-      
+
       // Get all agents
       const agents = await storage.getAgents();
-      
+
       // Get costs for each agent
       const result: Record<string, any> = {};
       for (const agent of agents) {
@@ -1444,7 +1445,7 @@ export async function registerRoutes(
           ...costs
         };
       }
-      
+
       res.json(result);
     } catch (error) {
       console.error("Get all agents profitability costs error:", error);
@@ -1458,11 +1459,11 @@ export async function registerRoutes(
   app.get("/api/profitabilitate/sales", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { an } = req.query;
-      
+
       if (!an) {
         return res.status(400).json({ message: "Anul este obligatoriu" });
       }
-      
+
       const salesData = await storage.getAllAgentsSalesProfitability(parseInt(an as string));
       res.json(salesData);
     } catch (error) {
@@ -1476,11 +1477,11 @@ export async function registerRoutes(
     try {
       const { agentId } = req.params;
       const { an } = req.query;
-      
+
       if (!an) {
         return res.status(400).json({ message: "Anul este obligatoriu" });
       }
-      
+
       const salesData = await storage.getAgentSalesProfitability(agentId, parseInt(an as string));
       res.json(salesData);
     } catch (error) {
@@ -1493,11 +1494,11 @@ export async function registerRoutes(
   app.post("/api/profitabilitate/sales/recalculate", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, an, luna } = req.body;
-      
+
       if (!agentId || !an || !luna) {
         return res.status(400).json({ message: "agentId, an și luna sunt obligatorii" });
       }
-      
+
       const result = await storage.recomputeAgentMonthlyProfit(agentId, an, luna);
       res.json(result);
     } catch (error) {
@@ -1510,22 +1511,22 @@ export async function registerRoutes(
   app.post("/api/profitabilitate/sales/recalculate-all", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { an, luna } = req.body;
-      
+
       if (!an || !luna) {
         return res.status(400).json({ message: "an și luna sunt obligatorii" });
       }
-      
+
       const agents = await storage.getAgents();
       const results = [];
-      
+
       for (const agent of agents) {
         const profitResult = await storage.recomputeAgentMonthlyProfit(agent.id, an, luna);
-        results.push({ 
-          agentName: `${agent.firstName} ${agent.lastName}`, 
-          ...profitResult 
+        results.push({
+          agentName: `${agent.firstName} ${agent.lastName}`,
+          ...profitResult
         });
       }
-      
+
       res.json(results);
     } catch (error) {
       console.error("Recalculate all agents profitability error:", error);
@@ -1564,11 +1565,11 @@ export async function registerRoutes(
   app.post("/api/profitabilitate/achizitii-manuale", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an, achizitieGard, achizitieAcoperis } = req.body;
-      
+
       if (!agentId || !luna || !an) {
         return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
       }
-      
+
       const result = await storage.upsertAgentManualAchizitii({
         agentId,
         luna,
@@ -1614,11 +1615,11 @@ export async function registerRoutes(
   app.post("/api/profitabilitate/cheltuieli-fixe", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli } = req.body;
-      
+
       if (!agentId || !luna || !an) {
         return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
       }
-      
+
       const result = await storage.upsertAgentFixedCosts({
         agentId,
         luna,
@@ -1690,15 +1691,15 @@ export async function registerRoutes(
   app.post("/api/salarii-neproductivi", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const { numeAngajat, tipAngajat, luna, an, salariuBrut, salariuNet, bonusuri, alteCosturi, descriere, documentUrl } = req.body;
-      
+
       if (!numeAngajat || !tipAngajat || !luna || !an) {
         return res.status(400).json({ message: "Numele, tipul angajatului, luna și anul sunt obligatorii" });
       }
-      
+
       if (!["PRODUCTIE", "INDIRECT"].includes(tipAngajat)) {
         return res.status(400).json({ message: "Tipul angajatului trebuie să fie PRODUCTIE sau INDIRECT" });
       }
-      
+
       const result = await storage.createSalariuNeproductiv({
         numeAngajat,
         tipAngajat,
@@ -1747,7 +1748,7 @@ export async function registerRoutes(
 
   // ============ FILE UPLOAD/DOWNLOAD ROUTES ============
 
-  const upload = multer({ 
+  const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 50 * 1024 * 1024 }
   });
@@ -1760,10 +1761,10 @@ export async function registerRoutes(
       }
 
       const { clientId, fileType, folder } = req.body;
-      
+
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
-      
+
       // Use folder for general uploads (cheltuieli, etc) or clientId/fileType for client files
       if (folder) {
         // General upload - just return the URL
@@ -1771,20 +1772,20 @@ export async function registerRoutes(
         const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
         return res.json({ success: true, url: objectPath, filename: req.file.originalname });
       }
-      
+
       if (!clientId || !fileType) {
         return res.status(400).json({ message: "clientId și fileType sunt obligatorii (sau folder pentru upload general)" });
       }
-      
+
       const objectName = objectStorageService.generateObjectPath(req.file.originalname);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
-      
+
       if (fileType === "oferta1") {
         await storage.updateClient(clientId, { ofertaFilename: objectPath });
       } else if (fileType === "oferta2") {
         await storage.updateClient(clientId, { ofertaFilename2: objectPath });
       }
-      
+
       res.json({ success: true, objectPath, filename: req.file.originalname });
     } catch (error) {
       console.error("File upload error:", error);
@@ -1797,10 +1798,10 @@ export async function registerRoutes(
     try {
       const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
-      
+
       const objectPath = req.path;
       await objectStorageService.getObjectEntityFile(objectPath);
-      
+
       await objectStorageService.downloadObject(objectPath, res);
     } catch (error) {
       console.error("Download file error:", error);
