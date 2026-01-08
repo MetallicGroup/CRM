@@ -13,7 +13,9 @@ try {
 }
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+console.log(`[ObjectStorage] Uploads directory: ${UPLOADS_DIR}`);
 if (!fs.existsSync(UPLOADS_DIR)) {
+  console.log(`[ObjectStorage] Creating uploads directory...`);
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
@@ -52,7 +54,9 @@ export class ObjectStorageService {
     // Disk Fallback
     const filePath = path.join(process.cwd(), objectName);
     const dir = path.dirname(filePath);
+    console.log(`[ObjectStorage] Uploading to disk path: ${filePath}`);
     if (!fs.existsSync(dir)) {
+      console.log(`[ObjectStorage] Creating directory: ${dir}`);
       fs.mkdirSync(dir, { recursive: true });
     }
 
@@ -83,6 +87,7 @@ export class ObjectStorageService {
 
     // Check disk
     const filePath = path.join(process.cwd(), objectName);
+    console.log(`[ObjectStorage] Checking disk existence: ${filePath}`);
     if (fs.existsSync(filePath)) {
       return { objectName, exists: true };
     }
@@ -91,55 +96,52 @@ export class ObjectStorageService {
   }
 
   async downloadObject(objectPath: string, res: Response, cacheTtlSec: number = 3600) {
-    try {
-      if (!objectPath.startsWith("/objects/")) {
-        throw new ObjectNotFoundError();
-      }
+    if (!objectPath.startsWith("/objects/")) {
+      throw new ObjectNotFoundError();
+    }
 
-      const parts = objectPath.slice(1).split("/");
-      const objectName = parts.slice(1).join("/");
+    const parts = objectPath.slice(1).split("/");
+    const objectName = parts.slice(1).join("/");
 
-      let data: Buffer | null = null;
+    let data: Buffer | null = null;
 
-      // Try Replit first
-      if (objectStorageClient) {
+    // Try Replit first
+    if (objectStorageClient) {
+      try {
         const downloadResult = await objectStorageClient.downloadAsBytes(objectName);
         if (downloadResult.ok) {
           data = Buffer.from(downloadResult.value as any);
         }
-      }
-
-      // Try disk if not found or no client
-      if (!data) {
-        const filePath = path.join(process.cwd(), objectName);
-        if (fs.existsSync(filePath)) {
-          data = fs.readFileSync(filePath);
-        }
-      }
-
-      if (!data) {
-        throw new ObjectNotFoundError();
-      }
-
-      const contentType = getContentType(objectName);
-
-      res.set({
-        "Content-Type": contentType,
-        "Content-Length": data.length,
-        "Cache-Control": `public, max-age=${cacheTtlSec}`,
-      });
-
-      res.send(data);
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      if (!res.headersSent) {
-        if (error instanceof ObjectNotFoundError) {
-          res.status(404).json({ error: "File not found" });
-        } else {
-          res.status(500).json({ error: "Error downloading file" });
-        }
+      } catch (e) {
+        console.warn("[ObjectStorage] Replit download failed, checking disk:", e);
       }
     }
+
+    // Try disk if not found or no client
+    if (!data) {
+      const filePath = path.join(process.cwd(), objectName);
+      console.log(`[ObjectStorage] Trying to read from disk: ${filePath}`);
+      if (fs.existsSync(filePath)) {
+        console.log(`[ObjectStorage] File found on disk.`);
+        data = fs.readFileSync(filePath);
+      } else {
+        console.log(`[ObjectStorage] File NOT found on disk: ${filePath}`);
+      }
+    }
+
+    if (!data) {
+      throw new ObjectNotFoundError();
+    }
+
+    const contentType = getContentType(objectName);
+
+    res.set({
+      "Content-Type": contentType,
+      "Content-Length": data.length,
+      "Cache-Control": `public, max-age=${cacheTtlSec}`,
+    });
+
+    res.send(data);
   }
 
   async deleteObject(objectPath: string): Promise<boolean> {

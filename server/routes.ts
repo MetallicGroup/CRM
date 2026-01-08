@@ -1836,16 +1836,18 @@ export async function registerRoutes(
       const objectStorageService = new ObjectStorageService();
 
       const objectPath = req.path;
+      console.log(`[Download API] Request for path: ${objectPath}`);
       await objectStorageService.getObjectEntityFile(objectPath);
 
       await objectStorageService.downloadObject(objectPath, res);
     } catch (error) {
-      console.error("Download file error:", error);
+      console.error("[Download API] Error:", error);
       const { ObjectNotFoundError } = await import("./objectStorage");
       if (error instanceof ObjectNotFoundError) {
+        console.warn(`[Download API] File not found: ${req.path}`);
         return res.status(404).json({ message: "Fișierul nu a fost găsit" });
       }
-      res.status(500).json({ message: "Eroare la descărcarea fișierului" });
+      res.status(500).json({ message: "Eroare la descărcarea fișierului", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
