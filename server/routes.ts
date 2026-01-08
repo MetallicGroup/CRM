@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema } from "@shared/schema";
+import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
@@ -1404,6 +1404,28 @@ export async function registerRoutes(
 
   // ============ PROFITABILITY INTEGRATION ROUTES ============
 
+  // Get financial report for a range of months
+  app.get("/api/financial/report", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { luna, an, endLuna } = req.query;
+
+      if (!luna || !an) {
+        return res.status(400).json({ message: "Luna și anul sunt obligatorii" });
+      }
+
+      const report = await storage.getFinancialReport(
+        parseInt(luna as string),
+        parseInt(an as string),
+        endLuna ? parseInt(endLuna as string) : undefined
+      );
+
+      res.json(report);
+    } catch (error) {
+      console.error("Get financial report error:", error);
+      res.status(500).json({ message: "Eroare la generarea raportului" });
+    }
+  });
+
   // Get aggregated expenses mapped to profitability fields for an agent
   app.get("/api/profitabilitate/agent-costs/:agentId", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
@@ -1816,6 +1838,98 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Fișierul nu a fost găsit" });
       }
       res.status(500).json({ message: "Eroare la descărcarea fișierului" });
+    }
+  });
+
+  // ============ EMPLOYEES ============
+
+  app.get("/api/employees", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const type = req.query.type as string;
+      const active = req.query.active === "false" ? false : true;
+      const employees = await storage.getAllEmployees({ type, active });
+      res.json(employees);
+    } catch (error) {
+      res.status(500).json({ message: "Eroare la obținerea angajaților" });
+    }
+  });
+
+  app.post("/api/employees", requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const data = createEmployeeSchema.parse(req.body);
+      const employee = await storage.createEmployee(data);
+      res.status(201).json(employee);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Eroare la crearea angajatului" });
+    }
+  });
+
+  app.patch("/api/employees/:id", requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const data = updateEmployeeSchema.parse(req.body);
+      const updated = await storage.updateEmployee(req.params.id, data);
+      if (!updated) return res.status(404).json({ message: "Angajat negăsit" });
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Eroare la actualizarea angajatului" });
+    }
+  });
+
+  app.delete("/api/employees/:id", requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteEmployee(req.params.id);
+      res.json({ message: "Angajat șters cu succes" });
+    } catch (error) {
+      res.status(500).json({ message: "Eroare la ștergerea angajatului" });
+    }
+  });
+
+  // ============ PARTNER MONTHLY DATA (DISTRIBUTORS) ============
+
+  app.get("/api/distributors/monthly", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { partnerId, luna, an } = req.query;
+      const data = await storage.getAllPartnerMonthlyData({
+        partnerId: partnerId as string,
+        luna: luna ? parseInt(luna as string) : undefined,
+        an: an ? parseInt(an as string) : undefined
+      });
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ message: "Eroare la obținerea datelor lunare" });
+    }
+  });
+
+  app.post("/api/distributors/monthly", requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const data = createPartnerMonthlyDataSchema.parse(req.body);
+      const result = await storage.upsertPartnerMonthlyData(data);
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Eroare la salvarea datelor" });
+    }
+  });
+
+  // ============ FINANCIAL REPORT ============
+
+  app.get("/api/financial/report", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const luna = req.query.luna ? parseInt(req.query.luna as string) : new Date().getMonth() + 1;
+      const an = req.query.an ? parseInt(req.query.an as string) : new Date().getFullYear();
+      const report = await storage.getFinancialReport(luna, an);
+      res.json(report);
+    } catch (error) {
+      console.error("Report error:", error);
+      res.status(500).json({ message: "Eroare la generarea raportului financiar" });
     }
   });
 

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, pgEnum, integer, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, pgEnum, integer, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -33,16 +33,16 @@ export const productCategoryEnum = pgEnum("product_category", [
 ]);
 
 export const offerStatusEnum = pgEnum("offer_status", [
-  "NOU",
-  "CONTACTAT",
-  "INFORMATII",
-  "OFERTAT",
-  "FOLLOW_UP",
-  "PROSPECT",
-  "CUSTODIE",
+  "NOUA",
+  "TRIMISA",
+  "IN_ASTEPTARE",
+  "ACCEPTATA",
   "VANDUT",
-  "PIERDUT"
+  "REFUZAT",
+  "ANULATA"
 ]);
+
+export const employeeTypeEnum = pgEnum("employee_type", ["AGENT", "PRODUCTIE", "INDIRECT"]);
 
 export const orderStatusEnum = pgEnum("order_status", [
   "CUSTODIE",
@@ -149,6 +149,12 @@ export const users = pgTable("users", {
   lastActivity: timestamp("last_activity"),
 });
 
+export const userSessions = pgTable("user_sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -193,7 +199,7 @@ export type SafeUser = Omit<User, "passwordHash">;
 
 export const clients = pgTable("clients", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-  
+
   // SECȚIUNEA 1: Informații de bază
   dataAdaugare: timestamp("data_adaugare").defaultNow(),
   sursa: clientSourceEnum("sursa").default("ALTELE"),
@@ -202,11 +208,11 @@ export const clients = pgTable("clients", {
   email: varchar("email", { length: 120 }),
   localitate: varchar("localitate", { length: 100 }),
   judet: varchar("judet", { length: 100 }),
-  
+
   // SECȚIUNEA 2: Informații partener
   isPartnerOrder: boolean("is_partner_order").default(false),
   partnerId: varchar("partner_id", { length: 36 }).references(() => partners.id),
-  
+
   // SECȚIUNEA 3: Detalii produs
   categorieProdus: productCategoryEnum("categorie_produs").default("GARD"),
   brand: varchar("brand", { length: 100 }),
@@ -217,10 +223,10 @@ export const clients = pgTable("clients", {
   finisaj: varchar("finisaj", { length: 50 }),
   mlRulouProd: decimal("ml_rulou_prod", { precision: 10, scale: 2 }),
   smartDripstop: boolean("smart_dripstop").default(false),
-  
+
   // SECȚIUNEA 4: Ofertă și vânzare
   valoareOferta: decimal("valoare_oferta", { precision: 12, scale: 2 }),
-  stadiuOferta: offerStatusEnum("stadiu_oferta").default("NOU"),
+  stadiuOferta: offerStatusEnum("stadiu_oferta").default("NOUA"),
   dataOfertarii: timestamp("data_ofertarii"),
   stadiuComanda: orderStatusEnum("stadiu_comanda"),
   dataVanzarii: timestamp("data_vanzarii"),
@@ -229,34 +235,34 @@ export const clients = pgTable("clients", {
   comisionOferta: decimal("comision_oferta", { precision: 12, scale: 2 }),
   incasat: boolean("incasat").default(false),
   pretAchizitie: decimal("pret_achizitie", { precision: 12, scale: 2 }),
-  
+
   // SECȚIUNEA 5: Fișiere (salvăm doar numele, fișierele vor fi în storage separat)
   ofertaFilename: varchar("oferta_filename", { length: 255 }),
   ofertaFilename2: varchar("oferta_filename_2", { length: 255 }),
-  
+
   // SECȚIUNEA 6: Follow-up 1
   dataRevenire1: timestamp("data_revenire_1"),
   comentariuObservatii1: text("comentariu_observatii_1"),
   followUpEfectuat1: boolean("follow_up_efectuat_1").default(false),
-  
+
   // Follow-up 2
   dataRevenire2: timestamp("data_revenire_2"),
   comentariuObservatii2: text("comentariu_observatii_2"),
   followUpEfectuat2: boolean("follow_up_efectuat_2").default(false),
-  
+
   // Follow-up 3
   dataRevenire3: timestamp("data_revenire_3"),
   comentariuObservatii3: text("comentariu_observatii_3"),
   followUpEfectuat3: boolean("follow_up_efectuat_3").default(false),
-  
+
   // SECȚIUNEA 7: Observații generale
   observatiiClient: text("observatii_client"),
   comentariiDupaContact: text("comentarii_dupa_contact"),
   contactat: boolean("contactat").default(false),
-  
+
   // Relații
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
-  
+
   // Metadata
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -277,11 +283,11 @@ export const createClientSchema = z.object({
   email: z.string().email("Email invalid").optional().or(z.literal("")),
   localitate: z.string().optional(),
   judet: z.string().optional(),
-  
+
   // Secțiunea 2: Informații partener
   isPartnerOrder: z.boolean().optional().default(false),
   partnerId: z.string().optional(),
-  
+
   // Secțiunea 3: Detalii produs
   categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE", "VENTILATII"]).optional(),
   brand: z.string().optional(),
@@ -292,7 +298,7 @@ export const createClientSchema = z.object({
   finisaj: z.string().optional(),
   mlRulouProd: z.string().optional(),
   smartDripstop: z.boolean().optional().default(false),
-  
+
   // Secțiunea 4: Ofertă și vânzare
   valoareOferta: z.string().optional(),
   stadiuOferta: z.enum(["NOUA", "TRIMISA", "IN_ASTEPTARE", "ACCEPTATA", "VANDUT", "REFUZAT", "ANULATA"]).optional(),
@@ -304,11 +310,11 @@ export const createClientSchema = z.object({
   comisionOferta: z.string().optional(),
   incasat: z.boolean().optional().default(false),
   pretAchizitie: z.string().optional(),
-  
+
   // Secțiunea 5: Fișiere
   ofertaFilename: z.string().optional(),
   ofertaFilename2: z.string().optional(),
-  
+
   // Secțiunea 6: Follow-up
   dataRevenire1: z.string().optional(),
   comentariuObservatii1: z.string().optional(),
@@ -319,12 +325,12 @@ export const createClientSchema = z.object({
   dataRevenire3: z.string().optional(),
   comentariuObservatii3: z.string().optional(),
   followUpEfectuat3: z.boolean().optional().default(false),
-  
+
   // Secțiunea 7: Observații
   observatiiClient: z.string().optional(),
   comentariiDupaContact: z.string().optional(),
   contactat: z.boolean().optional().default(false),
-  
+
   // Relații
   agentId: z.string().optional(),
 });
@@ -384,7 +390,7 @@ export type UpdateTarget = z.infer<typeof updateTargetSchema>;
 
 export const partnerTypeEnum = pgEnum("partner_type", [
   "FURNIZOR",
-  "SUBCONTRACTOR", 
+  "SUBCONTRACTOR",
   "COLABORATOR",
   "DISTRIBUITOR"
 ]);
@@ -506,27 +512,27 @@ export type CategoryLevel = "main" | "sub" | "detail";
 export const cheltuieliAgent = pgTable("cheltuieli_agent", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
-  
+
   categoryId: varchar("category_id", { length: 36 }).references(() => expenseCategories.id),
   subcategoryId: varchar("subcategory_id", { length: 36 }).references(() => expenseCategories.id),
   detailCategoryId: varchar("detail_category_id", { length: 36 }).references(() => expenseCategories.id),
-  
+
   suma: decimal("suma", { precision: 12, scale: 2 }).notNull(),
   descriere: text("descriere"),
   dataCheltuiala: timestamp("data_cheltuiala").notNull(),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   judet: varchar("judet", { length: 100 }),
   sediuId: varchar("sediu_id", { length: 36 }).references(() => sedii.id),
   firma: varchar("firma", { length: 100 }),
   autoNr: varchar("auto_nr", { length: 50 }),
-  
+
   facturaFilename: varchar("factura_filename", { length: 255 }),
   documentUrl: varchar("document_url", { length: 500 }),
-  
+
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
-  
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -566,24 +572,24 @@ export type UpdateCheltuialaAgent = z.infer<typeof updateCheltuialaAgentSchema>;
 export const cheltuieliSediu = pgTable("cheltuieli_sediu", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   sediuId: varchar("sediu_id", { length: 36 }).references(() => sedii.id).notNull(),
-  
+
   categoryId: varchar("category_id", { length: 36 }).references(() => expenseCategories.id),
   subcategoryId: varchar("subcategory_id", { length: 36 }).references(() => expenseCategories.id),
   detailCategoryId: varchar("detail_category_id", { length: 36 }).references(() => expenseCategories.id),
-  
+
   suma: decimal("suma", { precision: 12, scale: 2 }).notNull(),
   descriere: text("descriere"),
   dataCheltuiala: timestamp("data_cheltuiala").notNull(),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   firma: varchar("firma", { length: 100 }),
-  
+
   facturaFilename: varchar("factura_filename", { length: 255 }),
   documentUrl: varchar("document_url", { length: 500 }),
-  
+
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
-  
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -621,10 +627,10 @@ export const agentManualAchizitii = pgTable("agent_manual_achizitii", {
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   achizitieGard: decimal("achizitie_gard", { precision: 12, scale: 2 }).default("0"),
   achizitieAcoperis: decimal("achizitie_acoperis", { precision: 12, scale: 2 }).default("0"),
-  
+
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -643,23 +649,23 @@ export const agentSalesProfitability = pgTable("agent_sales_profitability", {
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   venitGard: decimal("venit_gard", { precision: 12, scale: 2 }).default("0"),
   achizitieGard: decimal("achizitie_gard", { precision: 12, scale: 2 }).default("0"),
   adaosGard: decimal("adaos_gard", { precision: 12, scale: 2 }).default("0"),
   comisionGard: decimal("comision_gard", { precision: 12, scale: 2 }).default("0"),
-  
+
   venitAcoperis: decimal("venit_acoperis", { precision: 12, scale: 2 }).default("0"),
   achizitieAcoperis: decimal("achizitie_acoperis", { precision: 12, scale: 2 }).default("0"),
   adaosAcoperis: decimal("adaos_acoperis", { precision: 12, scale: 2 }).default("0"),
   comisionAcoperis: decimal("comision_acoperis", { precision: 12, scale: 2 }).default("0"),
-  
+
   nrVanzariGard: integer("nr_vanzari_gard").default(0),
   nrVanzariAcoperis: integer("nr_vanzari_acoperis").default(0),
-  
+
   venitTvaTotal: decimal("venit_tva_total", { precision: 12, scale: 2 }).default("0"),
   comisionPercentMediu: decimal("comision_percent_mediu", { precision: 5, scale: 2 }).default("0"),
-  
+
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -672,7 +678,7 @@ export const agentFixedCosts = pgTable("agent_fixed_costs", {
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   salariu: decimal("salariu", { precision: 12, scale: 2 }).default("0"),
   amortizareAuto: decimal("amortizare_auto", { precision: 12, scale: 2 }).default("0"),
   combustibil: decimal("combustibil", { precision: 12, scale: 2 }).default("0"),
@@ -681,7 +687,7 @@ export const agentFixedCosts = pgTable("agent_fixed_costs", {
   abonamente: decimal("abonamente", { precision: 12, scale: 2 }).default("0"),
   diurne: decimal("diurne", { precision: 12, scale: 2 }).default("0"),
   alteCheltuieli: decimal("alte_cheltuieli", { precision: 12, scale: 2 }).default("0"),
-  
+
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -701,16 +707,16 @@ export const salariiNeproductivi = pgTable("salarii_neproductivi", {
   tipAngajat: varchar("tip_angajat", { length: 50 }).notNull(), // PRODUCTIE sau INDIRECT
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
-  
+
   salariuBrut: decimal("salariu_brut", { precision: 12, scale: 2 }).default("0"),
   salariuNet: decimal("salariu_net", { precision: 12, scale: 2 }).default("0"),
   bonusuri: decimal("bonusuri", { precision: 12, scale: 2 }).default("0"),
   alteCosturi: decimal("alte_costuri", { precision: 12, scale: 2 }).default("0"),
   totalCost: decimal("total_cost", { precision: 12, scale: 2 }).default("0"),
-  
+
   descriere: text("descriere"),
   documentUrl: varchar("document_url", { length: 500 }),
-  
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -741,3 +747,90 @@ export type SalariuNeproductiv = typeof salariiNeproductivi.$inferSelect;
 export type InsertSalariuNeproductiv = z.infer<typeof insertSalariuNeproductivSchema>;
 export type CreateSalariuNeproductiv = z.infer<typeof createSalariuNeproductivSchema>;
 export type UpdateSalariuNeproductiv = z.infer<typeof updateSalariuNeproductivSchema>;
+
+// ============ EMPLOYEES ============
+
+export const employees = pgTable("employees", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  type: employeeTypeEnum("type").notNull(),
+  showroomId: varchar("showroom_id", { length: 36 }), // Optional, mostly for Agents
+  userId: integer("user_id"), // Optional link to login account
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertEmployeeSchema = createInsertSchema(employees);
+// No omit needed if we handle it in storage or if Drizzle handles it
+
+export const createEmployeeSchema = z.object({
+  firstName: z.string().min(1, "Prenumele este obligatoriu"),
+  lastName: z.string().min(1, "Numele este obligatoriu"),
+  type: z.enum(["AGENT", "PRODUCTIE", "INDIRECT"]),
+  showroomId: z.string().optional().nullable(),
+  userId: z.number().optional().nullable(),
+  active: z.boolean().default(true),
+});
+
+export const updateEmployeeSchema = createEmployeeSchema.partial();
+
+export type Employee = typeof employees.$inferSelect;
+export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+export type CreateEmployee = z.infer<typeof createEmployeeSchema>;
+export type UpdateEmployee = z.infer<typeof updateEmployeeSchema>;
+
+// ============ PARTNER MONTHLY DATA (Distributors) ============
+
+export const partnerMonthlyData = pgTable("partner_monthly_data", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: varchar("partner_id", { length: 36 }).notNull(),
+  luna: integer("luna").notNull(),
+  an: integer("an").notNull(),
+  venitTva: decimal("venit_tva", { precision: 12, scale: 2 }).default("0"),
+  achizitieTva: decimal("achizitie_tva", { precision: 12, scale: 2 }).default("0"),
+  comisionPercent: decimal("comision_percent", { precision: 5, scale: 2 }).default("0"),
+  cheltuieliMarketing: decimal("cheltuieli_marketing", { precision: 12, scale: 2 }).default("0"),
+  costTransport: decimal("cost_transport", { precision: 12, scale: 2 }).default("0"),
+  costAmbalare: decimal("cost_ambalare", { precision: 12, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPartnerMonthlyDataSchema = createInsertSchema(partnerMonthlyData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createPartnerMonthlyDataSchema = z.object({
+  partnerId: z.string().min(1, "ID-ul partenerului este obligatoriu"),
+  luna: z.number().min(1).max(12),
+  an: z.number().min(2020).max(2100),
+  venitTva: z.string().optional(),
+  achizitieTva: z.string().optional(),
+  comisionPercent: z.string().optional(),
+  cheltuieliMarketing: z.string().optional(),
+  costTransport: z.string().optional(),
+  costAmbalare: z.string().optional(),
+});
+
+export const updatePartnerMonthlyDataSchema = createPartnerMonthlyDataSchema.partial();
+
+export type PartnerMonthlyData = typeof partnerMonthlyData.$inferSelect;
+export type InsertPartnerMonthlyData = z.infer<typeof insertPartnerMonthlyDataSchema>;
+export type CreatePartnerMonthlyData = z.infer<typeof createPartnerMonthlyDataSchema>;
+export type UpdatePartnerMonthlyData = z.infer<typeof updatePartnerMonthlyDataSchema>;
+
+// ============ APP SETTINGS ============
+
+export const appSettings = pgTable("app_settings", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: text("value").notNull(),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;
+

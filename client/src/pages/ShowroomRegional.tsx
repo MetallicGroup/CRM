@@ -16,6 +16,7 @@ import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { MONTHS } from "@/lib/types";
+import { useFinancialReport } from "@/hooks/use-financials";
 
 interface ShowroomCosts {
   sediuName: string;
@@ -76,7 +77,7 @@ const SHOWROOM_EXPENSE_TYPES = [
 export default function ShowroomRegional() {
   const { selectedMonth } = useStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  
+
   const lunaNumar = useMemo(() => {
     return MONTHS.indexOf(selectedMonth) + 1;
   }, [selectedMonth]);
@@ -85,7 +86,7 @@ export default function ShowroomRegional() {
   const [editingExpense, setEditingExpense] = useState<CheltuialaSediu | null>(null);
   const [deleteExpense, setDeleteExpense] = useState<CheltuialaSediu | null>(null);
   const queryClient = useQueryClient();
-  
+
   const [formData, setFormData] = useState({
     expenseType: "",
     suma: "",
@@ -109,14 +110,19 @@ export default function ShowroomRegional() {
     }
   }, [sedii, selectedShowroomId]);
 
-  const { data: showroomCosts = {}, isLoading } = useQuery<Record<string, ShowroomCosts>>({
-    queryKey: ["showroom-costs", lunaNumar, selectedYear],
-    queryFn: async () => {
-      const res = await fetch(`/api/profitabilitate/showroom-costs?luna=${lunaNumar}&an=${selectedYear}`);
-      if (!res.ok) throw new Error("Eroare la încărcarea costurilor");
-      return res.json();
-    },
-  });
+  const { data: report, isLoading: loadingReport } = useFinancialReport(
+    lunaNumar,
+    selectedYear
+  );
+
+  const showroomCosts = useMemo(() => {
+    if (!report?.showroomTotals) return {};
+    const map: Record<string, any> = {};
+    report.showroomTotals.forEach((s: any) => {
+      map[s.id] = s;
+    });
+    return map;
+  }, [report]);
 
   const { data: cheltuieliSediu = [], isLoading: loadingCheltuieli } = useQuery<CheltuialaSediu[]>({
     queryKey: ["cheltuieli-sediu-showroom", selectedShowroomId, lunaNumar, selectedYear],
@@ -226,7 +232,7 @@ export default function ShowroomRegional() {
   const handleOpenDialog = (expense?: CheltuialaSediu) => {
     if (expense) {
       setEditingExpense(expense);
-      const expType = SHOWROOM_EXPENSE_TYPES.find(t => 
+      const expType = SHOWROOM_EXPENSE_TYPES.find(t =>
         t.categoryId === expense.categoryId && t.subcategoryId === expense.subcategoryId
       );
       setFormData({
@@ -245,10 +251,10 @@ export default function ShowroomRegional() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const expenseType = SHOWROOM_EXPENSE_TYPES.find(t => t.id === formData.expenseType);
     if (!expenseType || !selectedShowroomId) return;
-    
+
     const date = new Date(formData.dataCheltuiala);
     const payload = {
       sediuId: selectedShowroomId,
@@ -261,7 +267,7 @@ export default function ShowroomRegional() {
       an: date.getFullYear(),
       firma: formData.firma,
     };
-    
+
     if (editingExpense) {
       updateMutation.mutate({ id: editingExpense.id, data: payload });
     } else {
@@ -270,17 +276,19 @@ export default function ShowroomRegional() {
   };
 
   const getExpenseTypeName = (categoryId: string, subcategoryId: string) => {
-    const expType = SHOWROOM_EXPENSE_TYPES.find(t => 
+    const expType = SHOWROOM_EXPENSE_TYPES.find(t =>
       t.categoryId === categoryId && t.subcategoryId === subcategoryId
     );
     return expType?.name || "Altele";
   };
 
-  const showrooms = Object.entries(showroomCosts).map(([id, data]) => ({
-    id,
-    name: data.sediuName,
-    costs: data,
-  }));
+  const showrooms = useMemo(() => {
+    return Object.entries(showroomCosts).map(([id, data]: [string, any]) => ({
+      id,
+      name: data.name,
+      costs: data,
+    }));
+  }, [showroomCosts]);
 
   const allShowrooms = sedii.map(s => {
     const existing = showrooms.find(sh => sh.id === s.id);
@@ -289,13 +297,13 @@ export default function ShowroomRegional() {
       name: s.nume,
       costs: {
         sediuName: s.nume,
-        chirie: 0, utilitati: 0, marketing: 0, consumabile: 0, alteCheltuieli: 0,
+        chirie: 0, utilitati: 0, marketing: 0, consumabile: 0, investitii: 0, alte: 0,
         total: 0, cheltuieliAgenti: 0, salarii: 0, combustibil: 0, auto: 0,
       },
     };
   });
 
-  if (isLoading) {
+  if (loadingReport) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -332,8 +340,8 @@ export default function ShowroomRegional() {
           </CardContent>
         </Card>
       ) : (
-        <Tabs 
-          defaultValue={allShowrooms[0]?.id} 
+        <Tabs
+          defaultValue={allShowrooms[0]?.id}
           value={selectedShowroomId || allShowrooms[0]?.id}
           onValueChange={setSelectedShowroomId}
         >
@@ -350,15 +358,15 @@ export default function ShowroomRegional() {
               </TabsTrigger>
             ))}
           </TabsList>
-          
+
           {allShowrooms.map(showroom => {
             const costs = showroom.costs;
             const isBucuresti = showroom.name.toLowerCase().includes('bucurești');
-            const cheltuieliShowroom = costs.chirie + costs.utilitati + costs.marketing + costs.consumabile + costs.alteCheltuieli;
+            const cheltuieliShowroom = costs.chirie + costs.utilitati + costs.marketing + costs.consumabile + (costs.investitii || 0) + costs.alte;
             const costShowroomDistribuit = isBucuresti ? cheltuieliShowroom * 0.20 : cheltuieliShowroom;
             const costShowroomIndirect = isBucuresti ? cheltuieliShowroom * 0.80 : 0;
             const totalDistribuitAgenti = costShowroomDistribuit + (costs.cheltuieliAgenti || 0);
-            
+
             return (
               <TabsContent key={showroom.id} value={showroom.id} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-3">
@@ -409,9 +417,15 @@ export default function ShowroomRegional() {
                             </TableCell>
                           </TableRow>
                           <TableRow>
+                            <TableCell className="pl-6">Investiții / Amenajări</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {(costs.investitii || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
                             <TableCell className="pl-6">Alte cheltuieli showroom</TableCell>
                             <TableCell className="text-right font-medium">
-                              {costs.alteCheltuieli.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                              {costs.alte.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow className="bg-blue-100/50">
@@ -420,7 +434,7 @@ export default function ShowroomRegional() {
                               {cheltuieliShowroom.toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
-                          
+
                           <TableRow className="bg-green-50/50">
                             <TableCell colSpan={2} className="font-semibold text-green-700">
                               Cheltuieli Agenți
@@ -447,7 +461,7 @@ export default function ShowroomRegional() {
                           <TableRow>
                             <TableCell className="pl-6">Alte cheltuieli agenți</TableCell>
                             <TableCell className="text-right font-medium">
-                              {((costs.cheltuieliAgenti || 0) - (costs.salarii || 0) - (costs.combustibil || 0) - (costs.auto || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+                              {(costs.alteCheltuieliAgenti || 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
                             </TableCell>
                           </TableRow>
                           <TableRow className="bg-green-100/50">
@@ -479,7 +493,7 @@ export default function ShowroomRegional() {
                           {costs.total.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-2 text-sm border-t pt-4">
                         <div>
                           <span className="text-muted-foreground">Showroom:</span>
@@ -494,7 +508,7 @@ export default function ShowroomRegional() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {isBucuresti && cheltuieliShowroom > 0 && (
                         <div className="space-y-2 border-t pt-4">
                           <p className="text-xs text-muted-foreground font-medium">Distribuție Cheltuieli Showroom (București):</p>
@@ -512,7 +526,7 @@ export default function ShowroomRegional() {
                           </div>
                         </div>
                       )}
-                      
+
                       {!isBucuresti && costs.total > 0 && (
                         <div className="space-y-2 border-t pt-4">
                           <p className="text-sm text-muted-foreground">100% cheltuieli showroom se distribuie agenților.</p>
@@ -522,7 +536,7 @@ export default function ShowroomRegional() {
                           </div>
                         </div>
                       )}
-                      
+
                       {costs.total === 0 && (
                         <p className="text-sm text-muted-foreground">
                           Nu există cheltuieli înregistrate pentru această lună.
@@ -604,7 +618,7 @@ export default function ShowroomRegional() {
                             </Table>
                           </div>
                         )}
-                        
+
                         {cheltuieliAgenti.length > 0 && (
                           <div>
                             <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
@@ -734,8 +748,8 @@ export default function ShowroomRegional() {
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Anulează
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={!formData.expenseType || !formData.suma || createMutation.isPending || updateMutation.isPending}
                 data-testid="btn-submit"
               >

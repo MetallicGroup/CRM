@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useStore } from "@/lib/store";
-import { EmployeeType, EmployeeFixedCosts } from "@/lib/types";
+import { useEmployees, useUpdateEmployee } from "@/hooks/use-financials";
+import { EmployeeType } from "@/lib/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -51,23 +51,25 @@ const MONTHS = [
 ];
 
 export default function Settings() {
-  const { employees = [], showrooms = [], updateEmployee, resetData } = useStore();
+  const { data: dbEmployees = [], isLoading: loadingEmployees } = useEmployees();
+  const updateMutation = useUpdateEmployee();
+
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
-  
+
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [editedValues, setEditedValues] = useState<Record<string, { achizitieGard: string; achizitieAcoperis: string }>>({});
-  
+
   // Fetch agents from database
   const { data: dbAgents = [], isLoading: loadingAgents } = useQuery<SafeUser[]>({
     queryKey: ["/api/users"],
   });
-  
+
   // Filter only AGENT role users
-  const agents2 = dbAgents.filter(u => u.role === "AGENT" && u.active);
-  
+  const agents2 = dbAgents.filter((u: SafeUser) => u.role === "AGENT" && u.active);
+
   // Fetch manual acquisitions for selected year
   const { data: manualAchizitii = [], isLoading: loadingAchizitii } = useQuery<AgentManualAchizitii[]>({
     queryKey: ["/api/profitabilitate/achizitii-manuale", selectedYear],
@@ -77,7 +79,7 @@ export default function Settings() {
       return res.json();
     }
   });
-  
+
   // Mutation for saving
   const saveMutation = useMutation({
     mutationFn: async (data: { agentId: string; luna: number; an: number; achizitieGard: string; achizitieAcoperis: string }) => {
@@ -98,7 +100,7 @@ export default function Settings() {
       toast.error("Eroare la salvarea achiziției");
     }
   });
-  
+
   // Get value for an agent/month
   const getAchizitieValue = (agentId: string, field: "achizitieGard" | "achizitieAcoperis") => {
     // Check edited values first
@@ -106,10 +108,10 @@ export default function Settings() {
       return editedValues[agentId][field];
     }
     // Check saved data
-    const saved = manualAchizitii.find(a => a.agentId === agentId && a.luna === selectedMonth);
+    const saved = manualAchizitii.find((a: AgentManualAchizitii) => a.agentId === agentId && a.luna === selectedMonth);
     return saved?.[field] || "0";
   };
-  
+
   const handleValueChange = (agentId: string, field: "achizitieGard" | "achizitieAcoperis", value: string) => {
     setEditedValues(prev => ({
       ...prev,
@@ -120,13 +122,13 @@ export default function Settings() {
       }
     }));
   };
-  
+
   const handleSave = (agentId: string) => {
     const values = editedValues[agentId] || {
       achizitieGard: getAchizitieValue(agentId, "achizitieGard"),
       achizitieAcoperis: getAchizitieValue(agentId, "achizitieAcoperis")
     };
-    
+
     saveMutation.mutate({
       agentId,
       luna: selectedMonth,
@@ -134,7 +136,7 @@ export default function Settings() {
       achizitieGard: values.achizitieGard,
       achizitieAcoperis: values.achizitieAcoperis
     });
-    
+
     // Clear edited value after save
     setEditedValues(prev => {
       const copy = { ...prev };
@@ -142,30 +144,22 @@ export default function Settings() {
       return copy;
     });
   };
-  
+
   // Reset edited values when month/year changes
   useEffect(() => {
     setEditedValues({});
   }, [selectedMonth, selectedYear]);
-  
+
   const handleShowroomChange = (empId: string, newShowroomId: string) => {
-    updateEmployee(empId, { showroomId: newShowroomId });
+    updateMutation.mutate({ id: empId, data: { showroomId: newShowroomId } });
   };
 
   const handleTypeChange = (empId: string, newType: EmployeeType) => {
-    const emp = employees.find(e => e.id === empId);
-    let newShowroomId: string | null = null;
-    
-    if (newType === 'AGENT') {
-      // Păstrează showroom-ul existent sau setează primul showroom disponibil
-      newShowroomId = emp?.showroomId || (showrooms.length > 0 ? showrooms[0].id : null);
-    }
-    // Pentru PRODUCTIE și INDIRECT, showroomId devine null
-    
-    updateEmployee(empId, { type: newType, showroomId: newShowroomId });
+    updateMutation.mutate({ id: empId, data: { type: newType } });
   };
 
-  const agents = (employees || []).filter(e => e.type === 'AGENT');
+  const agents = dbEmployees.filter(e => e.type === 'AGENT');
+  const employees = dbEmployees;
 
   return (
     <div className="space-y-8">
@@ -200,8 +194,8 @@ export default function Settings() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Select 
-                      value={emp.type} 
+                    <Select
+                      value={emp.type}
                       onValueChange={(val) => handleTypeChange(emp.id, val as EmployeeType)}
                     >
                       <SelectTrigger className="w-[180px]" data-testid={`select-type-${emp.id}`}>
@@ -241,19 +235,18 @@ export default function Settings() {
                 <TableRow key={agent.id}>
                   <TableCell className="font-medium">{agent.name}</TableCell>
                   <TableCell>
-                    <Select 
-                      value={agent.showroomId || ''} 
+                    <Select
+                      value={agent.showroomId || ''}
                       onValueChange={(val) => handleShowroomChange(agent.id, val)}
                     >
                       <SelectTrigger className="w-[280px]" data-testid={`select-showroom-settings-${agent.id}`}>
                         <SelectValue placeholder="Selectează showroom" />
                       </SelectTrigger>
                       <SelectContent>
-                        {showrooms.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.name} ({s.location})
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="BUCURESTI">București</SelectItem>
+                        <SelectItem value="IASI">Iași</SelectItem>
+                        <SelectItem value="CLUJ">Cluj</SelectItem>
+                        <SelectItem value="TIMISOARA">Timișoara</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -264,139 +257,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Cheltuieli Fixe Lunare */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cheltuieli Fixe Lunare</CardTitle>
-          <CardDescription>
-            Setează cheltuielile fixe pentru fiecare angajat. Acestea se vor înmulți automat cu numărul de luni selectate în pagina Angajați.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px]">Angajat</TableHead>
-                  <TableHead className="w-[80px]">Tip</TableHead>
-                  <TableHead className="w-[100px]">Salariu/Lună</TableHead>
-                  <TableHead className="w-[100px]">Amort. Auto</TableHead>
-                  <TableHead className="w-[100px]">Combustibil</TableHead>
-                  <TableHead className="w-[80px]">Revizii</TableHead>
-                  <TableHead className="w-[100px]">Alte Ch. Auto</TableHead>
-                  <TableHead className="w-[100px]">Abonamente</TableHead>
-                  <TableHead className="w-[80px]">Diurne</TableHead>
-                  <TableHead className="w-[100px]">Alte Chelt.</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map((emp) => {
-                  const fixedCosts = emp.fixedCosts || {
-                    salariuLunar: 0,
-                    amortizareAutoLunar: 0,
-                    combustibilLunar: 0,
-                    reviziiLunar: 0,
-                    alteCheltuieliAutoLunar: 0,
-                    abonamenteLunar: 0,
-                    diurneLunar: 0,
-                    alteCheltuieliLunar: 0
-                  };
-                  
-                  const updateFixedCost = (field: keyof EmployeeFixedCosts, value: number) => {
-                    updateEmployee(emp.id, { 
-                      fixedCosts: { ...fixedCosts, [field]: value }
-                    });
-                  };
-                  
-                  return (
-                    <TableRow key={emp.id} data-testid={`row-fixed-costs-${emp.id}`}>
-                      <TableCell className="font-medium">{emp.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={emp.type === 'AGENT' ? 'default' : 'secondary'} className="text-xs">
-                          {TYPE_LABELS[emp.type]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.salariuLunar || ''} 
-                          onChange={(e) => updateFixedCost('salariuLunar', Number(e.target.value))}
-                          placeholder="0"
-                          data-testid={`input-fixed-salariu-${emp.id}`}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.amortizareAutoLunar || ''} 
-                          onChange={(e) => updateFixedCost('amortizareAutoLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.combustibilLunar || ''} 
-                          onChange={(e) => updateFixedCost('combustibilLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-20 h-8" 
-                          value={fixedCosts.reviziiLunar || ''} 
-                          onChange={(e) => updateFixedCost('reviziiLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.alteCheltuieliAutoLunar || ''} 
-                          onChange={(e) => updateFixedCost('alteCheltuieliAutoLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.abonamenteLunar || ''} 
-                          onChange={(e) => updateFixedCost('abonamenteLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-20 h-8" 
-                          value={fixedCosts.diurneLunar || ''} 
-                          onChange={(e) => updateFixedCost('diurneLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          className="w-24 h-8" 
-                          value={fixedCosts.alteCheltuieliLunar || ''} 
-                          onChange={(e) => updateFixedCost('alteCheltuieliLunar', Number(e.target.value))}
-                          placeholder="0"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Cheltuieli Fixe section removed as it's now handled monthly in individual expense tables or bulk import */}
 
       {/* Achiziții Manuale pe Lună */}
       <Card>
@@ -435,7 +296,7 @@ export default function Settings() {
               </Select>
             </div>
           </div>
-          
+
           {(loadingAgents || loadingAchizitii) ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -451,7 +312,7 @@ export default function Settings() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {agents2.map((agent) => {
+                {agents2.map((agent: SafeUser) => {
                   const hasChanges = editedValues[agent.id] !== undefined;
                   return (
                     <TableRow key={agent.id} data-testid={`row-achizitii-${agent.id}`}>
@@ -502,19 +363,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Reset Date</CardTitle>
-          <CardDescription>
-            Atenție: Aceasta va șterge toate datele introduse și va restaura valorile inițiale
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={resetData} data-testid="button-reset-data">
-            Resetează toate datele
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Reset Data card removed as it's no longer supported with React Query refactor */}
     </div>
   );
 }

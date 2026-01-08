@@ -10,10 +10,9 @@ import { CalendarIcon, RefreshCw } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, subMonths } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { MONTHS, Month } from "@/lib/types";
+import { MONTHS } from "@/lib/types";
 import type { DateRange } from "react-day-picker";
-import { useAgentSalesProfitabilityRange } from "@/hooks/useAgentSalesProfitability";
-import { useAgentsExpenseCostsRange } from "@/hooks/useAgentExpenseCosts";
+import { useFinancialReport } from "@/hooks/use-financials";
 import { useQuery } from "@tanstack/react-query";
 
 type PeriodType = "luna" | "perioada" | "trimestru" | "an";
@@ -30,12 +29,10 @@ interface DbUser {
 }
 
 export default function Dashboard() {
-  const { showrooms = [] } = useStore();
-  
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonthIndex = currentDate.getMonth() + 1;
-  
+
   const [periodType, setPeriodType] = useState<PeriodType>("luna");
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -66,148 +63,38 @@ export default function Dashboard() {
   const startMonth = effectiveDateRange.from ? effectiveDateRange.from.getMonth() + 1 : currentMonthIndex;
   const endMonth = effectiveDateRange.to ? effectiveDateRange.to.getMonth() + 1 : currentMonthIndex;
 
-  const { data: dbUsers = [] } = useQuery<DbUser[]>({
-    queryKey: ["/api/users"],
-  });
-  const dbAgents = dbUsers.filter(u => u.role === "AGENT" && u.active);
+  const { data: report, isLoading, refetch } = useFinancialReport(
+    startMonth,
+    selectedYear,
+    periodType !== "luna" ? endMonth : undefined
+  );
 
-  const { data: salesData = {}, isLoading: isLoadingSales, refetch: refetchSales } = useAgentSalesProfitabilityRange(startMonth, endMonth, selectedYear);
-  const { data: expenseData = {}, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useAgentsExpenseCostsRange(startMonth, endMonth, selectedYear);
+  const totals = report?.totals || {
+    totalProfitAgents: 0,
+    totalProfitDistributors: 0,
+    totalCostIndirect: 0,
+    totalCostProductie: 0,
+    profitGrup: 0
+  };
 
-  const agentMetrics = useMemo(() => {
-    return dbAgents.map(agent => {
-      const sales = salesData[agent.id];
-      const expenses = expenseData[agent.id];
-      
-      const venitGard = sales ? parseFloat(sales.venitGard) : 0;
-      const venitAcoperis = sales ? parseFloat(sales.venitAcoperis) : 0;
-      const achizitieGard = sales ? parseFloat(sales.achizitieGard) : 0;
-      const achizitieAcoperis = sales ? parseFloat(sales.achizitieAcoperis) : 0;
-      const comisionGard = sales ? parseFloat(sales.comisionGard) : 0;
-      const comisionAcoperis = sales ? parseFloat(sales.comisionAcoperis) : 0;
-      
-      const adaosTVAGard = venitGard - achizitieGard;
-      const adaosTVAAcoperis = venitAcoperis - achizitieAcoperis;
-      const adaosTotalCuTVA = adaosTVAGard + adaosTVAAcoperis;
-      const tvaTotal = adaosTotalCuTVA * 0.21;
-      const adaosFaraTVA = adaosTotalCuTVA - tvaTotal;
-      const valoareComision = comisionGard + comisionAcoperis;
-      
-      const salariu = expenses?.salariu ?? 0;
-      const combustibil = expenses?.combustibil ?? 0;
-      const revizii = expenses?.revizii ?? 0;
-      const alteCheltuieliAuto = expenses?.alteCheltuieliAuto ?? 0;
-      const amortizareAuto = expenses?.amortizareAuto ?? 0;
-      const abonamente = expenses?.abonamente ?? 0;
-      const diurne = expenses?.diurne ?? 0;
-      const alteCheltuieli = expenses?.alteCheltuieli ?? 0;
-      
-      const costuriProprii = salariu + combustibil + revizii + alteCheltuieliAuto + amortizareAuto + abonamente + diurne + alteCheltuieli;
-      const profitFinal = adaosFaraTVA - valoareComision - costuriProprii;
-      
-      return {
-        id: agent.id,
-        name: `${agent.firstName} ${agent.lastName}`,
-        metrics: {
-          venitGard,
-          venitAcoperis,
-          achizitieGard,
-          achizitieAcoperis,
-          adaosTVAGard,
-          adaosTVAAcoperis,
-          adaosFaraTVA,
-          valoareComision,
-          costuriProprii,
-          profitFinal
-        }
-      };
-    });
-  }, [dbAgents, salesData, expenseData]);
+  const agentMetrics = report?.agentsMetrics || [];
 
-  // Calculate totals directly from ALL agents in salesData (not just dbAgents)
-  const allAgentTotals = useMemo(() => {
-    let totalVenitGard = 0;
-    let totalVenitAcoperis = 0;
-    let totalAdaosFaraTVA = 0;
-    let totalCosturi = 0;
-    let totalProfit = 0;
-    
-    // Get all unique agent IDs from both sales and expenses
-    const allAgentIds = Array.from(new Set([
-      ...Object.keys(salesData),
-      ...Object.keys(expenseData)
-    ]));
-    
-    for (const agentId of allAgentIds) {
-      const sales = salesData[agentId];
-      const expenses = expenseData[agentId];
-      
-      const venitGard = sales ? parseFloat(sales.venitGard) : 0;
-      const venitAcoperis = sales ? parseFloat(sales.venitAcoperis) : 0;
-      const adaosGard = sales ? parseFloat(sales.adaosGard) : 0;
-      const adaosAcoperis = sales ? parseFloat(sales.adaosAcoperis) : 0;
-      const comisionGard = sales ? parseFloat(sales.comisionGard) : 0;
-      const comisionAcoperis = sales ? parseFloat(sales.comisionAcoperis) : 0;
-      
-      totalVenitGard += venitGard;
-      totalVenitAcoperis += venitAcoperis;
-      
-      // Adaos direct din tabel (fără transformări)
-      const adaosTotal = adaosGard + adaosAcoperis;
-      totalAdaosFaraTVA += adaosTotal;
-      
-      const valoareComision = comisionGard + comisionAcoperis;
-      
-      const salariu = expenses?.salariu ?? 0;
-      const combustibil = expenses?.combustibil ?? 0;
-      const revizii = expenses?.revizii ?? 0;
-      const alteCheltuieliAuto = expenses?.alteCheltuieliAuto ?? 0;
-      const amortizareAuto = expenses?.amortizareAuto ?? 0;
-      const abonamente = expenses?.abonamente ?? 0;
-      const diurne = expenses?.diurne ?? 0;
-      const alteCheltuieli = expenses?.alteCheltuieli ?? 0;
-      
-      const costuriProprii = salariu + combustibil + revizii + alteCheltuieliAuto + amortizareAuto + abonamente + diurne + alteCheltuieli;
-      totalCosturi += costuriProprii;
-      
-      // Profit = Adaos - Comisioane - Costuri
-      const profitFinal = adaosTotal - valoareComision - costuriProprii;
-      totalProfit += profitFinal;
-    }
-    
-    return {
-      totalVenitGard,
-      totalVenitAcoperis,
-      totalVenit: totalVenitGard + totalVenitAcoperis,
-      totalAdaosFaraTVA,
-      totalCosturi,
-      totalProfit
-    };
-  }, [salesData, expenseData]);
-
-  const totalVenitGardFirma = allAgentTotals.totalVenitGard;
-  const totalVenitAcoperisFirma = allAgentTotals.totalVenitAcoperis;
-  const totalVenitFirma = allAgentTotals.totalVenit;
-  const totalProfitFirma = allAgentTotals.totalProfit;
-  const totalCosturiProprii = allAgentTotals.totalCosturi;
-  const totalAdaosFaraTVA = allAgentTotals.totalAdaosFaraTVA;
+  const totalVenitFirma = report?.totals?.totalVenitFirma || 0; // Note: need to ensure backend sums these
+  const totalProfitFirma = totals.profitGrup;
 
   const profitByAgent = [...agentMetrics]
-    .sort((a, b) => b.metrics.profitFinal - a.metrics.profitFinal)
+    .sort((a, b) => b.profitNet - a.profitNet)
     .slice(0, 10)
-    .map(a => ({
+    .map((a: any) => ({
       name: a.name,
-      profit: Math.round(a.metrics.profitFinal)
+      profit: Math.round(a.profitNet)
     }));
 
-  const profitGarduri = agentMetrics.reduce((sum, a) => sum + (a.metrics.adaosFaraTVA * (a.metrics.adaosTVAGard / ((a.metrics.adaosTVAGard + a.metrics.adaosTVAAcoperis) || 1))), 0);
-  const profitAcoperisuri = agentMetrics.reduce((sum, a) => sum + (a.metrics.adaosFaraTVA * (a.metrics.adaosTVAAcoperis / ((a.metrics.adaosTVAGard + a.metrics.adaosTVAAcoperis) || 1))), 0);
-
   const pieData = [
-    { name: 'Garduri', value: Math.max(0, profitGarduri) },
-    { name: 'Acoperișuri', value: Math.max(0, profitAcoperisuri) },
+    { name: 'Agenți', value: Math.max(0, totals.totalProfitAgents) },
+    { name: 'Distribuitori', value: Math.max(0, totals.totalProfitDistributors) },
   ];
-  const COLORS = ['#0088FE', '#00C49F'];
+  const COLORS = ['#0088FE', '#FF8042'];
 
   const formatDateRange = () => {
     if (!effectiveDateRange.from) return "Selectează perioada";
@@ -229,11 +116,8 @@ export default function Dashboard() {
   };
 
   const handleRefresh = () => {
-    refetchSales();
-    refetchExpenses();
+    refetch();
   };
-
-  const isLoading = isLoadingSales || isLoadingExpenses;
 
   return (
     <div className="space-y-8">
@@ -242,13 +126,13 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard Financiar</h1>
           <p className="text-muted-foreground">Privire de ansamblu - {getPeriodLabel()}</p>
         </div>
-        
+
         <div className="flex items-center gap-3 flex-wrap">
           <Button variant="outline" onClick={handleRefresh} disabled={isLoading} data-testid="button-refresh">
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Se încarcă...' : 'Actualizează'}
           </Button>
-          
+
           <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
             <SelectTrigger className="w-[140px]" data-testid="select-period-type">
               <SelectValue placeholder="Tip perioadă" />
@@ -389,61 +273,52 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Venit Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Profit Agenți</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-venit">{totalVenitFirma.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">{getPeriodLabel()}</p>
+            <div className="text-2xl font-bold text-blue-600">{totals.totalProfitAgents.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total profit net agenți</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Venit Garduri</CardTitle>
+            <CardTitle className="text-sm font-medium">Profit Distribuitori</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600" data-testid="text-venit-gard">{totalVenitGardFirma.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total vânzări garduri</p>
+            <div className="text-2xl font-bold text-orange-600">{totals.totalProfitDistributors.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total profit net distribuitori</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Venit Acoperișuri</CardTitle>
+            <CardTitle className="text-sm font-medium">Costuri Producție</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-cyan-600" data-testid="text-venit-acoperis">{totalVenitAcoperisFirma.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total vânzări acoperișuri</p>
+            <div className="text-2xl font-bold text-red-600">{totals.totalCostProductie.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total costuri personal producție</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Adaos Fără TVA</CardTitle>
+            <CardTitle className="text-sm font-medium">Costuri Indirecte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600" data-testid="text-adaos">{totalAdaosFaraTVA.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Marjă brută fără TVA</p>
+            <div className="text-2xl font-bold text-purple-600">{totals.totalCostIndirect.toLocaleString('ro-RO')} RON</div>
+            <p className="text-xs text-muted-foreground">Total costuri personal indirect</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costuri Agenți</CardTitle>
+            <CardTitle className="text-sm font-medium">Profit Grup</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600" data-testid="text-cost-agenti">{totalCosturiProprii.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total cheltuieli agenți</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${totalProfitFirma >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-total-profit">
-              {totalProfitFirma.toLocaleString('ro-RO')} RON
+            <div className={`text-2xl font-bold ${totals.profitGrup >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {totals.profitGrup.toLocaleString('ro-RO')} RON
             </div>
-            <p className="text-xs text-muted-foreground">Profit net calculat</p>
+            <p className="text-xs text-muted-foreground">Profit final după toate costurile</p>
           </CardContent>
         </Card>
       </div>

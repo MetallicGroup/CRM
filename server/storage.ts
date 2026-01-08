@@ -1,5 +1,5 @@
-import { 
-  users, 
+import {
+  users,
   clients,
   targets,
   partners,
@@ -11,10 +11,13 @@ import {
   agentManualAchizitii,
   agentFixedCosts,
   salariiNeproductivi,
-  type User, 
-  type InsertUser, 
-  type SafeUser, 
-  type CreateUser, 
+  employees,
+  partnerMonthlyData,
+  appSettings,
+  type User,
+  type InsertUser,
+  type SafeUser,
+  type CreateUser,
   type UpdateUser,
   type Client,
   type CreateClient,
@@ -42,7 +45,14 @@ import {
   type AgentFixedCosts,
   type SalariuNeproductiv,
   type CreateSalariuNeproductiv,
-  type UpdateSalariuNeproductiv
+  type UpdateSalariuNeproductiv,
+  type Employee,
+  type CreateEmployee,
+  type UpdateEmployee,
+  type PartnerMonthlyData,
+  type CreatePartnerMonthlyData,
+  type UpdatePartnerMonthlyData,
+  type AppSetting
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
@@ -59,7 +69,7 @@ export interface IStorage {
   updateLastLogin(id: string): Promise<void>;
   updateLastActivity(id: string): Promise<void>;
   changePassword(id: string, newPassword: string): Promise<void>;
-  
+
   // Client methods
   getClient(id: string): Promise<Client | undefined>;
   getClientByPhone(telefon: string): Promise<Client | undefined>;
@@ -69,12 +79,32 @@ export interface IStorage {
   deleteClient(id: string): Promise<boolean>;
   getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
   bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update" | "create"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
-  
+  bulkImportAgentFixedCosts(rows: any[]): Promise<{ success: number; errors: number }>;
+
+  // Employee methods
+  getEmployee(id: string): Promise<Employee | undefined>;
+  getAllEmployees(filters?: { type?: string; active?: boolean }): Promise<Employee[]>;
+  createEmployee(data: CreateEmployee): Promise<Employee>;
+  updateEmployee(id: string, data: UpdateEmployee): Promise<Employee | undefined>;
+  deleteEmployee(id: string): Promise<boolean>;
+
+  // Partner Monthly Data methods
+  getPartnerMonthlyData(partnerId: string, luna: number, an: number): Promise<PartnerMonthlyData | undefined>;
+  getAllPartnerMonthlyData(filters?: { partnerId?: string; luna?: number; an?: number }): Promise<PartnerMonthlyData[]>;
+  upsertPartnerMonthlyData(data: CreatePartnerMonthlyData): Promise<PartnerMonthlyData>;
+
+  // App Settings methods
+  getAppSetting(key: string): Promise<AppSetting | undefined>;
+  updateAppSetting(key: string, value: string, description?: string): Promise<AppSetting>;
+
+  // Centralized Financial Calculation
+  getFinancialReport(luna: number, an: number): Promise<any>;
+
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
   getAgents(): Promise<SafeUser[]>;
   getClientStatsWithPeriod(agentId?: string, startDate?: Date, endDate?: Date): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
-  
+
   // Target methods
   getTarget(id: string): Promise<Target | undefined>;
   getAllTargets(filters?: { agentId?: string; luna?: number; an?: number }): Promise<Target[]>;
@@ -82,21 +112,21 @@ export interface IStorage {
   updateTarget(id: string, data: UpdateTarget): Promise<Target | undefined>;
   deleteTarget(id: string): Promise<boolean>;
   getTargetProgress(agentId: string, luna: number, an: number): Promise<{ target: Target | null; realizedValue: number; realizedClients: number }>;
-  
+
   // Partner methods
   getPartner(id: string): Promise<Partner | undefined>;
   getAllPartners(filters?: { tipPartener?: string; activ?: boolean; search?: string }): Promise<Partner[]>;
   createPartner(data: CreatePartner): Promise<Partner>;
   updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined>;
   deletePartner(id: string): Promise<boolean>;
-  
+
   // Sedii methods
   getSediu(id: string): Promise<Sediu | undefined>;
   getAllSedii(activ?: boolean): Promise<Sediu[]>;
   createSediu(data: CreateSediu): Promise<Sediu>;
   updateSediu(id: string, data: UpdateSediu): Promise<Sediu | undefined>;
   deleteSediu(id: string): Promise<boolean>;
-  
+
   // Expense Category methods
   getExpenseCategory(id: string): Promise<ExpenseCategory | undefined>;
   getExpenseCategoriesByLevel(level: string): Promise<ExpenseCategory[]>;
@@ -104,13 +134,13 @@ export interface IStorage {
   createExpenseCategory(data: CreateExpenseCategory): Promise<ExpenseCategory>;
   updateExpenseCategory(id: string, data: UpdateExpenseCategory): Promise<ExpenseCategory | undefined>;
   deleteExpenseCategory(id: string): Promise<boolean>;
-  
+
   // Cheltuieli Agent methods
   getCheltuialaAgent(id: string): Promise<CheltuialaAgent | undefined>;
-  getAllCheltuieliAgent(filters?: { 
-    agentId?: string; 
-    luna?: number; 
-    an?: number; 
+  getAllCheltuieliAgent(filters?: {
+    agentId?: string;
+    luna?: number;
+    an?: number;
     categoryId?: string;
     sediuId?: string;
     firma?: string;
@@ -119,13 +149,13 @@ export interface IStorage {
   updateCheltuialaAgent(id: string, data: UpdateCheltuialaAgent): Promise<CheltuialaAgent | undefined>;
   deleteCheltuialaAgent(id: string): Promise<boolean>;
   getCheltuieliAgentStats(filters?: { agentId?: string; luna?: number; an?: number }): Promise<{ total: number; byCategory: Record<string, number> }>;
-  
+
   // Cheltuieli Sediu methods
   getCheltuialaSediu(id: string): Promise<CheltuialaSediu | undefined>;
-  getAllCheltuieliSediu(filters?: { 
-    sediuId?: string; 
-    luna?: number; 
-    an?: number; 
+  getAllCheltuieliSediu(filters?: {
+    sediuId?: string;
+    luna?: number;
+    an?: number;
     categoryId?: string;
     firma?: string;
   }): Promise<CheltuialaSediu[]>;
@@ -133,7 +163,7 @@ export interface IStorage {
   updateCheltuialaSediu(id: string, data: UpdateCheltuialaSediu): Promise<CheltuialaSediu | undefined>;
   deleteCheltuialaSediu(id: string): Promise<boolean>;
   getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{ total: number; byCategory: Record<string, number> }>;
-  
+
   // Profitability integration - aggregate expenses to profitability fields
   getAgentProfitabilityCosts(agentId: string, luna: number, an: number): Promise<{
     salariu: number;
@@ -145,12 +175,12 @@ export interface IStorage {
     diurne: number;
     alteCheltuieli: number;
   }>;
-  
+
   // Agent Sales Profitability methods
   recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability>;
   getAgentSalesProfitability(agentId: string, an: number): Promise<AgentSalesProfitability[]>;
   getAllAgentsSalesProfitability(an: number): Promise<AgentSalesProfitability[]>;
-  
+
   // Showroom profitability costs
   getShowroomProfitabilityCosts(luna: number, an: number): Promise<Record<string, {
     sediuName: string;
@@ -165,7 +195,7 @@ export interface IStorage {
     combustibil: number;
     auto: number;
   }>>;
-  
+
   // Showroom costs distributed to agents
   getShowroomCostsDistributedToAgents(luna: number, an: number): Promise<Record<string, {
     agentId: string;
@@ -174,19 +204,19 @@ export interface IStorage {
     sediuName: string;
     costuriShowroomDistribuite: number;
   }>>;
-  
+
   // Agent Manual Acquisitions methods
   getAgentManualAchizitii(agentId: string, an: number): Promise<AgentManualAchizitii[]>;
   getAllAgentsManualAchizitii(an: number): Promise<AgentManualAchizitii[]>;
   upsertAgentManualAchizitii(data: { agentId: string; luna: number; an: number; achizitieGard?: string; achizitieAcoperis?: string }): Promise<AgentManualAchizitii>;
-  
+
   // Agent Fixed Costs methods
   getAgentFixedCosts(agentId: string, an: number): Promise<AgentFixedCosts[]>;
   getAllAgentsFixedCosts(an: number): Promise<AgentFixedCosts[]>;
-  upsertAgentFixedCosts(data: { 
-    agentId: string; 
-    luna: number; 
-    an: number; 
+  upsertAgentFixedCosts(data: {
+    agentId: string;
+    luna: number;
+    an: number;
     salariu?: string;
     amortizareAuto?: string;
     combustibil?: string;
@@ -196,21 +226,21 @@ export interface IStorage {
     diurne?: string;
     alteCheltuieli?: string;
   }): Promise<AgentFixedCosts>;
-  
+
   // Salarii Neproductivi methods
   getSalariuNeproductiv(id: string): Promise<SalariuNeproductiv | undefined>;
-  getAllSalariiNeproductivi(filters?: { 
-    tipAngajat?: string; 
-    luna?: number; 
+  getAllSalariiNeproductivi(filters?: {
+    tipAngajat?: string;
+    luna?: number;
     an?: number;
     numeAngajat?: string;
   }): Promise<SalariuNeproductiv[]>;
   createSalariuNeproductiv(data: CreateSalariuNeproductiv): Promise<SalariuNeproductiv>;
   updateSalariuNeproductiv(id: string, data: UpdateSalariuNeproductiv): Promise<SalariuNeproductiv | undefined>;
   deleteSalariuNeproductiv(id: string): Promise<boolean>;
-  getSalariiNeproductiviTotals(luna: number, an: number): Promise<{ 
-    totalProductie: number; 
-    totalIndirect: number; 
+  getSalariiNeproductiviTotals(luna: number, an: number): Promise<{
+    totalProductie: number;
+    totalIndirect: number;
     totalGeneral: number;
     byAngajat: Record<string, number>;
   }>;
@@ -266,10 +296,10 @@ export class DatabaseStorage implements IStorage {
   async validatePassword(email: string, password: string): Promise<User | null> {
     const user = await this.getUserByEmail(email);
     if (!user) return null;
-    
+
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return null;
-    
+
     return user;
   }
 
@@ -310,17 +340,17 @@ export class DatabaseStorage implements IStorage {
 
   async getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]> {
     let query = db.select().from(clients);
-    
+
     const conditions = [];
-    
+
     if (filters?.agentId) {
       conditions.push(eq(clients.agentId, filters.agentId));
     }
-    
+
     if (filters?.stadiuOferta) {
       conditions.push(eq(clients.stadiuOferta, filters.stadiuOferta as any));
     }
-    
+
     if (filters?.search) {
       const searchTerm = `%${filters.search}%`;
       conditions.push(
@@ -417,7 +447,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     const updateData: any = { updatedAt: new Date() };
-    
+
     if (data.nume !== undefined) updateData.nume = data.nume;
     if (data.telefon !== undefined) updateData.telefon = data.telefon;
     if (data.email !== undefined) updateData.email = data.email || null;
@@ -467,7 +497,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(clients.id, id))
       .returning();
-    
+
     return client || undefined;
   }
 
@@ -476,30 +506,30 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getClientStats(agentId?: string): Promise<{ 
-    total: number; 
-    byStatus: Record<string, number>; 
+  async getClientStats(agentId?: string): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
     totalValue: number;
     wonValue: number;
     pipelineValue: number;
   }> {
     let query = db.select().from(clients);
-    
+
     if (agentId) {
       query = query.where(eq(clients.agentId, agentId)) as any;
     }
-    
+
     const allClients = await query;
-    
+
     const byStatus: Record<string, number> = {};
     let totalValue = 0;
     let wonValue = 0;
     let pipelineValue = 0;
-    
+
     for (const client of allClients) {
       const status = client.stadiuOferta || "NOUA";
       byStatus[status] = (byStatus[status] || 0) + 1;
-      
+
       if (status === "VANDUT" && client.valoareOferta) {
         wonValue += parseFloat(client.valoareOferta);
         totalValue += parseFloat(client.valoareOferta);
@@ -508,7 +538,7 @@ export class DatabaseStorage implements IStorage {
         totalValue += parseFloat(client.valoareOferta);
       }
     }
-    
+
     return {
       total: allClients.length,
       byStatus,
@@ -522,11 +552,11 @@ export class DatabaseStorage implements IStorage {
     rows: Partial<Record<string, string>>[],
     agentId?: string,
     duplicateStrategy: "skip" | "update" | "create" = "skip"
-  ): Promise<{ 
-    success: number; 
-    errors: number; 
-    skipped: number; 
-    errorDetails: { row: number; error: string; data: Record<string, string> }[] 
+  ): Promise<{
+    success: number;
+    errors: number;
+    skipped: number;
+    errorDetails: { row: number; error: string; data: Record<string, string> }[]
   }> {
     let success = 0;
     let errors = 0;
@@ -621,7 +651,7 @@ export class DatabaseStorage implements IStorage {
 
         const normalizedPhone = normalizePhone(row.telefon);
         const parsedValue = parseValue(row.valoareOferta);
-        
+
         // Check for duplicates: same phone + same value = skip, same phone + different value = add (returning client)
         if (normalizedPhone && normalizedPhone !== "#ERROR!" && normalizedPhone !== "N/A") {
           const existingClients = await db.select().from(clients)
@@ -658,8 +688,8 @@ export class DatabaseStorage implements IStorage {
           sursa: mapSursa(row.sursa),
           mlRulouProd: parseValue(row.mlRulouProd),
           valoareOferta: parsedValue,
-          categorieProdus: row.categorieProdus?.toUpperCase()?.includes("GARD") ? "GARD" : 
-                          row.categorieProdus?.toUpperCase()?.includes("ACOPERIS") ? "ACOPERIS" : undefined,
+          categorieProdus: row.categorieProdus?.toUpperCase()?.includes("GARD") ? "GARD" :
+            row.categorieProdus?.toUpperCase()?.includes("ACOPERIS") ? "ACOPERIS" : undefined,
           brand: row.brand || undefined,
           model: row.model || undefined,
           suprafataMp: parseValue(row.suprafataMp),
@@ -673,8 +703,8 @@ export class DatabaseStorage implements IStorage {
           comentariuObservatii2: row.comentariuObservatii2 || undefined,
           stadiuOferta: stadiuOferta,
           dataVanzarii: dataVanzarii,
-          stadiuComanda: row.stadiuComanda?.toUpperCase()?.includes("LIVRAT") ? "LIVRAT" : 
-                         row.stadiuComanda?.toUpperCase()?.includes("PROD") ? "IN_PRODUCTIE" : undefined,
+          stadiuComanda: row.stadiuComanda?.toUpperCase()?.includes("LIVRAT") ? "LIVRAT" :
+            row.stadiuComanda?.toUpperCase()?.includes("PROD") ? "IN_PRODUCTIE" : undefined,
           dataLivrarii: dataLivrarii,
           incasat: parseBool(row.incasat),
           procentComision: parsePercent(row.procentComision),
@@ -682,7 +712,7 @@ export class DatabaseStorage implements IStorage {
         };
 
         await this.createClient(clientData);
-        
+
         if (stadiuOferta === "VANDUT" && dataVanzarii && finalAgentId) {
           affectedMonths.add(`${finalAgentId}:${dataVanzarii.getFullYear()}:${dataVanzarii.getMonth() + 1}`);
         }
@@ -735,23 +765,23 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getClientStatsWithPeriod(agentId?: string, startDate?: Date, endDate?: Date): Promise<{ 
-    total: number; 
-    byStatus: Record<string, number>; 
+  async getClientStatsWithPeriod(agentId?: string, startDate?: Date, endDate?: Date): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
     totalValue: number;
     wonValue: number;
     pipelineValue: number;
   }> {
     const conditions = [];
-    
+
     if (agentId) {
       conditions.push(eq(clients.agentId, agentId));
     }
-    
+
     if (startDate) {
       conditions.push(gte(clients.createdAt, startDate));
     }
-    
+
     if (endDate) {
       conditions.push(lte(clients.createdAt, endDate));
     }
@@ -760,18 +790,18 @@ export class DatabaseStorage implements IStorage {
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
-    
+
     const allClients = await query;
-    
+
     const byStatus: Record<string, number> = {};
     let totalValue = 0;
     let wonValue = 0;
     let pipelineValue = 0;
-    
+
     for (const client of allClients) {
       const status = client.stadiuOferta || "NOUA";
       byStatus[status] = (byStatus[status] || 0) + 1;
-      
+
       if (status === "VANDUT" && client.valoareOferta) {
         wonValue += parseFloat(client.valoareOferta);
         totalValue += parseFloat(client.valoareOferta);
@@ -780,7 +810,7 @@ export class DatabaseStorage implements IStorage {
         totalValue += parseFloat(client.valoareOferta);
       }
     }
-    
+
     return {
       total: allClients.length,
       byStatus,
@@ -799,15 +829,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllTargets(filters?: { agentId?: string; luna?: number; an?: number }): Promise<Target[]> {
     const conditions = [];
-    
+
     if (filters?.agentId) {
       conditions.push(eq(targets.agentId, filters.agentId));
     }
-    
+
     if (filters?.luna) {
       conditions.push(eq(targets.luna, filters.luna));
     }
-    
+
     if (filters?.an) {
       conditions.push(eq(targets.an, filters.an));
     }
@@ -833,7 +863,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateTarget(id: string, data: UpdateTarget): Promise<Target | undefined> {
     const updateData: any = { updatedAt: new Date() };
-    
+
     if (data.agentId !== undefined) updateData.agentId = data.agentId;
     if (data.luna !== undefined) updateData.luna = data.luna;
     if (data.an !== undefined) updateData.an = data.an;
@@ -845,7 +875,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(targets.id, id))
       .returning();
-    
+
     return target || undefined;
   }
 
@@ -854,9 +884,9 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getTargetProgress(agentId: string, luna: number, an: number): Promise<{ 
-    target: Target | null; 
-    realizedValue: number; 
+  async getTargetProgress(agentId: string, luna: number, an: number): Promise<{
+    target: Target | null;
+    realizedValue: number;
     realizedClients: number;
   }> {
     const [target] = await db.select().from(targets).where(
@@ -902,15 +932,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPartners(filters?: { tipPartener?: string; activ?: boolean; search?: string }): Promise<Partner[]> {
     const conditions = [];
-    
+
     if (filters?.tipPartener) {
       conditions.push(eq(partners.tipPartener, filters.tipPartener as any));
     }
-    
+
     if (filters?.activ !== undefined) {
       conditions.push(eq(partners.activ, filters.activ));
     }
-    
+
     if (filters?.search) {
       const searchTerm = `%${filters.search}%`;
       conditions.push(
@@ -948,7 +978,7 @@ export class DatabaseStorage implements IStorage {
 
   async updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined> {
     const updateData: any = { updatedAt: new Date() };
-    
+
     if (data.nume !== undefined) updateData.nume = data.nume;
     if (data.tipPartener !== undefined) updateData.tipPartener = data.tipPartener;
     if (data.cui !== undefined) updateData.cui = data.cui || null;
@@ -964,7 +994,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(partners.id, id))
       .returning();
-    
+
     return partner || undefined;
   }
 
@@ -1002,7 +1032,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateSediu(id: string, data: UpdateSediu): Promise<Sediu | undefined> {
     const updateData: any = {};
-    
+
     if (data.nume !== undefined) updateData.nume = data.nume;
     if (data.adresa !== undefined) updateData.adresa = data.adresa || null;
     if (data.oras !== undefined) updateData.oras = data.oras || null;
@@ -1016,7 +1046,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(sedii.id, id))
       .returning();
-    
+
     return sediu || undefined;
   }
 
@@ -1063,7 +1093,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateExpenseCategory(id: string, data: UpdateExpenseCategory): Promise<ExpenseCategory | undefined> {
     const updateData: any = {};
-    
+
     if (data.name !== undefined) updateData.name = data.name;
     if (data.parentId !== undefined) updateData.parentId = data.parentId || null;
     if (data.level !== undefined) updateData.level = data.level;
@@ -1075,7 +1105,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(expenseCategories.id, id))
       .returning();
-    
+
     return category || undefined;
   }
 
@@ -1091,16 +1121,16 @@ export class DatabaseStorage implements IStorage {
     return cheltuiala || undefined;
   }
 
-  async getAllCheltuieliAgent(filters?: { 
-    agentId?: string; 
-    luna?: number; 
-    an?: number; 
+  async getAllCheltuieliAgent(filters?: {
+    agentId?: string;
+    luna?: number;
+    an?: number;
     categoryId?: string;
     sediuId?: string;
     firma?: string;
   }): Promise<CheltuialaAgent[]> {
     const conditions = [];
-    
+
     if (filters?.agentId) {
       conditions.push(eq(cheltuieliAgent.agentId, filters.agentId));
     }
@@ -1130,7 +1160,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCheltuialaAgent(data: CreateCheltuialaAgent): Promise<CheltuialaAgent> {
     const dataCheltuiala = new Date(data.dataCheltuiala);
-    
+
     const [cheltuiala] = await db.insert(cheltuieliAgent).values({
       agentId: data.agentId || null,
       categoryId: data.categoryId,
@@ -1153,7 +1183,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateCheltuialaAgent(id: string, data: UpdateCheltuialaAgent): Promise<CheltuialaAgent | undefined> {
     const updateData: any = {};
-    
+
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
     if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
@@ -1177,7 +1207,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(cheltuieliAgent.id, id))
       .returning();
-    
+
     return cheltuiala || undefined;
   }
 
@@ -1186,12 +1216,12 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getCheltuieliAgentStats(filters?: { agentId?: string; luna?: number; an?: number }): Promise<{ 
-    total: number; 
+  async getCheltuieliAgentStats(filters?: { agentId?: string; luna?: number; an?: number }): Promise<{
+    total: number;
     byCategory: Record<string, number>;
   }> {
     const conditions = [];
-    
+
     if (filters?.agentId) {
       conditions.push(eq(cheltuieliAgent.agentId, filters.agentId));
     }
@@ -1208,19 +1238,19 @@ export class DatabaseStorage implements IStorage {
     }
 
     const allCheltuieli = await query;
-    
+
     let total = 0;
     const byCategory: Record<string, number> = {};
-    
+
     for (const c of allCheltuieli) {
       const suma = parseFloat(c.suma || "0");
       total += suma;
-      
+
       if (c.categoryId) {
         byCategory[c.categoryId] = (byCategory[c.categoryId] || 0) + suma;
       }
     }
-    
+
     return { total, byCategory };
   }
 
@@ -1231,15 +1261,15 @@ export class DatabaseStorage implements IStorage {
     return cheltuiala || undefined;
   }
 
-  async getAllCheltuieliSediu(filters?: { 
-    sediuId?: string; 
-    luna?: number; 
-    an?: number; 
+  async getAllCheltuieliSediu(filters?: {
+    sediuId?: string;
+    luna?: number;
+    an?: number;
     categoryId?: string;
     firma?: string;
   }): Promise<CheltuialaSediu[]> {
     const conditions = [];
-    
+
     if (filters?.sediuId) {
       conditions.push(eq(cheltuieliSediu.sediuId, filters.sediuId));
     }
@@ -1266,7 +1296,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCheltuialaSediu(data: CreateCheltuialaSediu): Promise<CheltuialaSediu> {
     const dataCheltuiala = new Date(data.dataCheltuiala);
-    
+
     const [cheltuiala] = await db.insert(cheltuieliSediu).values({
       sediuId: data.sediuId,
       categoryId: data.categoryId,
@@ -1286,7 +1316,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateCheltuialaSediu(id: string, data: UpdateCheltuialaSediu): Promise<CheltuialaSediu | undefined> {
     const updateData: any = {};
-    
+
     if (data.sediuId !== undefined) updateData.sediuId = data.sediuId;
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
     if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
@@ -1307,7 +1337,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(cheltuieliSediu.id, id))
       .returning();
-    
+
     return cheltuiala || undefined;
   }
 
@@ -1316,12 +1346,12 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{ 
-    total: number; 
+  async getCheltuieliSediuStats(filters?: { sediuId?: string; luna?: number; an?: number }): Promise<{
+    total: number;
     byCategory: Record<string, number>;
   }> {
     const conditions = [];
-    
+
     if (filters?.sediuId) {
       conditions.push(eq(cheltuieliSediu.sediuId, filters.sediuId));
     }
@@ -1338,19 +1368,19 @@ export class DatabaseStorage implements IStorage {
     }
 
     const allCheltuieli = await query;
-    
+
     let total = 0;
     const byCategory: Record<string, number> = {};
-    
+
     for (const c of allCheltuieli) {
       const suma = parseFloat(c.suma || "0");
       total += suma;
-      
+
       if (c.categoryId) {
         byCategory[c.categoryId] = (byCategory[c.categoryId] || 0) + suma;
       }
     }
-    
+
     return { total, byCategory };
   }
 
@@ -1401,7 +1431,7 @@ export class DatabaseStorage implements IStorage {
     for (const expense of expenses) {
       const suma = parseFloat(expense.suma || "0");
       const subcategoryId = expense.subcategoryId;
-      
+
       if (!subcategoryId) {
         // If no subcategory, check main category
         if (expense.categoryId === "cat-salarii") {
@@ -1417,8 +1447,8 @@ export class DatabaseStorage implements IStorage {
       const subcategoryName = subcategoryNames[subcategoryId] || "";
 
       // Mapping based on subcategory name (case-insensitive)
-      if (subcategoryName.includes("salariu") || subcategoryName.includes("salarii") || 
-          subcategoryName.includes("comision") || subcategoryName.includes("bonuri")) {
+      if (subcategoryName.includes("salariu") || subcategoryName.includes("salarii") ||
+        subcategoryName.includes("comision") || subcategoryName.includes("bonuri")) {
         // Salarii + bonusuri → salariu
         result.salariu += suma;
       } else if (subcategoryName.includes("combustibil")) {
@@ -1440,12 +1470,12 @@ export class DatabaseStorage implements IStorage {
       } else if (subcategoryName.includes("deplasări") || subcategoryName.includes("deplasari")) {
         // Deplasări → diurne
         result.diurne += suma;
-      } else if (subcategoryName.includes("materiale") || subcategoryName.includes("protocol") || 
-                 subcategoryName.includes("alte cheltuieli") || subcategoryName.includes("echipament") ||
-                 subcategoryName.includes("cota parte") || subcategoryName.includes("marketing") ||
-                 subcategoryName.includes("investiții") || subcategoryName.includes("protecția") ||
-                 subcategoryName.includes("contabil") || subcategoryName.includes("angajații") ||
-                 subcategoryName.includes("credite")) {
+      } else if (subcategoryName.includes("materiale") || subcategoryName.includes("protocol") ||
+        subcategoryName.includes("alte cheltuieli") || subcategoryName.includes("echipament") ||
+        subcategoryName.includes("cota parte") || subcategoryName.includes("marketing") ||
+        subcategoryName.includes("investiții") || subcategoryName.includes("protecția") ||
+        subcategoryName.includes("contabil") || subcategoryName.includes("angajații") ||
+        subcategoryName.includes("credite")) {
         // General expenses → alteCheltuieli
         result.alteCheltuieli += suma;
       } else {
@@ -1475,12 +1505,12 @@ export class DatabaseStorage implements IStorage {
     let achizitieGard = 0;
     let comisionGard = 0;
     let nrVanzariGard = 0;
-    
+
     let venitAcoperis = 0;
     let achizitieAcoperis = 0;
     let comisionAcoperis = 0;
     let nrVanzariAcoperis = 0;
-    
+
     // For weighted average commission calculation
     let totalValoareOferta = 0;
     let totalComisionOferta = 0;
@@ -1491,18 +1521,18 @@ export class DatabaseStorage implements IStorage {
     for (const client of soldClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
-      
+
       // Only use comisionOferta - clients without it are excluded from commission totals
       // They are still included in revenue (valoare) and achizitie calculations
       const hasComision = client.comisionOferta && parseFloat(client.comisionOferta) > 0;
       const comision = hasComision ? parseFloat(client.comisionOferta!) : 0;
-      
+
       // Track totals for weighted average commission (only from clients WITH commission)
       if (hasComision) {
         totalValoareOferta += valoare;
         totalComisionOferta += comision;
       }
-      
+
       if (client.categorieProdus === "GARD") {
         venitGard += valoare;
         achizitieGard += achizitie;
@@ -1520,14 +1550,14 @@ export class DatabaseStorage implements IStorage {
     // Calculate adaos (margin)
     const adaosGard = venitGard - achizitieGard;
     const adaosAcoperis = venitAcoperis - achizitieAcoperis;
-    
+
     // Calculate venitTvaTotal (sum of all revenues)
     const venitTvaTotal = venitGard + venitAcoperis;
-    
+
     // Calculate weighted average commission percentage
     // Formula: (Σ comisionOferta / Σ valoareOferta) * 100
-    const comisionPercentMediu = totalValoareOferta > 0 
-      ? (totalComisionOferta / totalValoareOferta) * 100 
+    const comisionPercentMediu = totalValoareOferta > 0
+      ? (totalComisionOferta / totalValoareOferta) * 100
       : 0;
 
     // Upsert the profitability record
@@ -1617,7 +1647,7 @@ export class DatabaseStorage implements IStorage {
   }>> {
     // Get all showrooms
     const allSedii = await db.select().from(sedii);
-    
+
     // Get all showroom expenses for this month/year
     const sediuExpenses = await db.select().from(cheltuieliSediu).where(
       and(
@@ -1775,8 +1805,8 @@ export class DatabaseStorage implements IStorage {
     const agentRevenue: Record<string, number> = {};
     for (const sale of salesData) {
       if (sale.luna === luna) {
-        const venit = parseFloat(sale.venitGard?.toString() || "0") + 
-                      parseFloat(sale.venitAcoperis?.toString() || "0");
+        const venit = parseFloat(sale.venitGard?.toString() || "0") +
+          parseFloat(sale.venitAcoperis?.toString() || "0");
         agentRevenue[sale.agentId] = venit;
       }
     }
@@ -1793,10 +1823,10 @@ export class DatabaseStorage implements IStorage {
     for (const [sediuId, cost] of Object.entries(sediuCosts)) {
       const sediuName = sediuMap[sediuId] || sediuId;
       const isBucuresti = sediuName.toLowerCase().includes('bucurești');
-      
+
       // Apply București 20/80 rule
       const costToDistribute = isBucuresti ? cost * 0.20 : cost;
-      
+
       const agentsInSediu = agentsBySediu[sediuId] || [];
       if (agentsInSediu.length === 0) continue;
 
@@ -1911,10 +1941,10 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
-  async upsertAgentFixedCosts(data: { 
-    agentId: string; 
-    luna: number; 
-    an: number; 
+  async upsertAgentFixedCosts(data: {
+    agentId: string;
+    luna: number;
+    an: number;
     salariu?: string;
     amortizareAuto?: string;
     combustibil?: string;
@@ -1976,14 +2006,14 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async getAllSalariiNeproductivi(filters?: { 
-    tipAngajat?: string; 
-    luna?: number; 
+  async getAllSalariiNeproductivi(filters?: {
+    tipAngajat?: string;
+    luna?: number;
     an?: number;
     numeAngajat?: string;
   }): Promise<SalariuNeproductiv[]> {
     const conditions = [];
-    
+
     if (filters?.tipAngajat) {
       conditions.push(eq(salariiNeproductivi.tipAngajat, filters.tipAngajat));
     }
@@ -1996,7 +2026,7 @@ export class DatabaseStorage implements IStorage {
     if (filters?.numeAngajat) {
       conditions.push(ilike(salariiNeproductivi.numeAngajat, `%${filters.numeAngajat}%`));
     }
-    
+
     if (conditions.length > 0) {
       return db.select().from(salariiNeproductivi).where(and(...conditions));
     }
@@ -2005,8 +2035,8 @@ export class DatabaseStorage implements IStorage {
 
   async createSalariuNeproductiv(data: CreateSalariuNeproductiv): Promise<SalariuNeproductiv> {
     const totalCost = (
-      parseFloat(data.salariuBrut || "0") + 
-      parseFloat(data.bonusuri || "0") + 
+      parseFloat(data.salariuBrut || "0") +
+      parseFloat(data.bonusuri || "0") +
       parseFloat(data.alteCosturi || "0")
     ).toFixed(2);
 
@@ -2037,8 +2067,8 @@ export class DatabaseStorage implements IStorage {
     const bonusuri = data.bonusuri ?? existing.bonusuri ?? "0";
     const alteCosturi = data.alteCosturi ?? existing.alteCosturi ?? "0";
     const totalCost = (
-      parseFloat(salariuBrut) + 
-      parseFloat(bonusuri) + 
+      parseFloat(salariuBrut) +
+      parseFloat(bonusuri) +
       parseFloat(alteCosturi)
     ).toFixed(2);
 
@@ -2059,9 +2089,9 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
-  async getSalariiNeproductiviTotals(luna: number, an: number): Promise<{ 
-    totalProductie: number; 
-    totalIndirect: number; 
+  async getSalariiNeproductiviTotals(luna: number, an: number): Promise<{
+    totalProductie: number;
+    totalIndirect: number;
     totalGeneral: number;
     byAngajat: Record<string, number>;
   }> {
@@ -2079,7 +2109,7 @@ export class DatabaseStorage implements IStorage {
     for (const s of salarii) {
       const cost = parseFloat(s.totalCost || "0");
       byAngajat[s.numeAngajat] = cost;
-      
+
       if (s.tipAngajat === "PRODUCTIE") {
         totalProductie += cost;
       } else if (s.tipAngajat === "INDIRECT") {
@@ -2092,6 +2122,311 @@ export class DatabaseStorage implements IStorage {
       totalIndirect,
       totalGeneral: totalProductie + totalIndirect,
       byAngajat
+    };
+  }
+
+  async bulkImportAgentFixedCosts(rows: any[]): Promise<{ success: number; errors: number }> {
+    let success = 0;
+    let errors = 0;
+    for (const row of rows) {
+      try {
+        const existing = await db.select().from(agentFixedCosts).where(
+          and(
+            eq(agentFixedCosts.agentId, row.agentId),
+            eq(agentFixedCosts.luna, row.luna),
+            eq(agentFixedCosts.an, row.an)
+          )
+        );
+        if (existing.length > 0) {
+          await db.update(agentFixedCosts).set({ ...row, updatedAt: new Date() }).where(eq(agentFixedCosts.id, existing[0].id));
+        } else {
+          await db.insert(agentFixedCosts).values(row);
+        }
+        success++;
+      } catch (e) {
+        errors++;
+      }
+    }
+    return { success, errors };
+  }
+
+  // Employee methods
+  async getEmployee(id: string): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+    return employee;
+  }
+
+  async getAllEmployees(filters?: { type?: string; active?: boolean }): Promise<Employee[]> {
+    let query = db.select().from(employees);
+    const conditions = [];
+    if (filters?.type) conditions.push(eq(employees.type, filters.type as any));
+    if (filters?.active !== undefined) conditions.push(eq(employees.active, filters.active));
+
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(employees.createdAt));
+    }
+    return await query.orderBy(desc(employees.createdAt));
+  }
+
+  async createEmployee(data: CreateEmployee): Promise<Employee> {
+    const [newEmployee] = await db.insert(employees).values(data as any).returning();
+    return newEmployee;
+  }
+
+  async updateEmployee(id: string, data: UpdateEmployee): Promise<Employee | undefined> {
+    const [updated] = await db.update(employees).set({ ...data, updatedAt: new Date() } as any).where(eq(employees.id, id)).returning();
+    return updated;
+  }
+
+  async deleteEmployee(id: string): Promise<boolean> {
+    await db.delete(employees).where(eq(employees.id, id));
+    return true;
+  }
+
+  // Partner Monthly Data methods
+  async getPartnerMonthlyData(partnerId: string, luna: number, an: number): Promise<PartnerMonthlyData | undefined> {
+    const [data] = await db.select().from(partnerMonthlyData).where(
+      and(
+        eq(partnerMonthlyData.partnerId, partnerId),
+        eq(partnerMonthlyData.luna, luna),
+        eq(partnerMonthlyData.an, an)
+      )
+    );
+    return data;
+  }
+
+  async getAllPartnerMonthlyData(filters?: { partnerId?: string; luna?: number; an?: number }): Promise<PartnerMonthlyData[]> {
+    let query = db.select().from(partnerMonthlyData);
+    const conditions = [];
+    if (filters?.partnerId) conditions.push(eq(partnerMonthlyData.partnerId, filters.partnerId));
+    if (filters?.luna) conditions.push(eq(partnerMonthlyData.luna, filters.luna));
+    if (filters?.an) conditions.push(eq(partnerMonthlyData.an, filters.an));
+
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(partnerMonthlyData.createdAt));
+    }
+    return await query.orderBy(desc(partnerMonthlyData.createdAt));
+  }
+
+  async upsertPartnerMonthlyData(data: CreatePartnerMonthlyData): Promise<PartnerMonthlyData> {
+    const existing = await this.getPartnerMonthlyData(data.partnerId, data.luna, data.an);
+    if (existing) {
+      const [updated] = await db.update(partnerMonthlyData)
+        .set({ ...data, updatedAt: new Date() } as any)
+        .where(eq(partnerMonthlyData.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [inserted] = await db.insert(partnerMonthlyData).values(data as any).returning();
+    return inserted;
+  }
+
+  // App Settings methods
+  async getAppSetting(key: string): Promise<AppSetting | undefined> {
+    const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, key));
+    return setting;
+  }
+
+  async updateAppSetting(key: string, value: string, description?: string): Promise<AppSetting> {
+    const existing = await this.getAppSetting(key);
+    if (existing) {
+      const [updated] = await db.update(appSettings)
+        .set({ value, description, updatedAt: new Date() })
+        .where(eq(appSettings.key, key))
+        .returning();
+      return updated;
+    }
+    const [inserted] = await db.insert(appSettings).values({ key, value, description }).returning();
+    return inserted;
+  }
+
+  // Centralized Financial Calculation
+  async getFinancialReport(luna: number, an: number, endLuna?: number): Promise<any> {
+    const startMonth = luna;
+    const endMonth = endLuna || luna;
+
+    // 1. Fetch all necessary data
+    const agents = await this.getAgents();
+    const partners = await this.getAllPartners({ tipPartener: "DISTRIBUITOR", activ: true });
+
+    // Helper to get range condition
+    const range = (table: any) => and(
+      eq(table.an, an),
+      gte(table.luna, startMonth),
+      lte(table.luna, endMonth)
+    );
+
+    const agentsFixedCosts = await db.select().from(agentFixedCosts).where(range(agentFixedCosts));
+    const agentsSales = await db.select().from(agentSalesProfitability).where(range(agentSalesProfitability));
+
+    // For neproductivi totals, we need to sum across the range
+    const salariiAcrossRange = await db.select().from(salariiNeproductivi).where(range(salariiNeproductivi));
+    const distributorsData = await db.select().from(partnerMonthlyData).where(range(partnerMonthlyData));
+
+    // 2. Aggregate data
+    const aggregateByAgent = (data: any[], key: string) => {
+      const map = new Map<string, any>();
+      data.forEach(item => {
+        const existing = map.get(item[key]);
+        if (!existing) {
+          map.set(item[key], { ...item });
+        } else {
+          // Sum numeric fields
+          Object.keys(item).forEach(k => {
+            if (typeof item[k] === 'string' && !isNaN(parseFloat(item[k])) && k !== 'id' && k !== 'luna' && k !== 'an') {
+              existing[k] = (parseFloat(existing[k]) + parseFloat(item[k])).toFixed(2);
+            }
+          });
+        }
+      });
+      return map;
+    };
+
+    const agentsSalesMap = aggregateByAgent(agentsSales, 'agentId');
+    const agentsFixedCostsMap = aggregateByAgent(agentsFixedCosts, 'agentId');
+    const distributorsDataMap = aggregateByAgent(distributorsData, 'partnerId');
+
+    // 3. Calculate metrics per agent
+    const agentsMetrics = agents.map(agent => {
+      const sales = agentsSalesMap.get(agent.id);
+      const fixed = agentsFixedCostsMap.get(agent.id);
+
+      const adaosGard = parseFloat(sales?.adaosGard || "0");
+      const adaosAcoperis = parseFloat(sales?.adaosAcoperis || "0");
+      const totalAdaos = adaosGard + adaosAcoperis;
+
+      const totalCostFixed = parseFloat(fixed?.salariu || "0") +
+        parseFloat(fixed?.amortizareAuto || "0") +
+        parseFloat(fixed?.combustibil || "0") +
+        parseFloat(fixed?.revizii || "0") +
+        parseFloat(fixed?.alteCheltuieliAuto || "0") +
+        parseFloat(fixed?.abonamente || "0") +
+        parseFloat(fixed?.diurne || "0") +
+        parseFloat(fixed?.alteCheltuieli || "0");
+
+      const profitNet = totalAdaos - (totalAdaos * 0.21) - totalCostFixed; // Simplified for now
+
+      return {
+        id: agent.id,
+        name: `${agent.firstName} ${agent.lastName}`,
+        totalAdaos,
+        totalCostFixed,
+        profitNet
+      };
+    });
+
+    // 4. Calculate metrics per distributor
+    const distributorsMetrics = partners.map(p => {
+      const data = distributorsDataMap.get(p.id);
+      if (!data) return { id: p.id, name: p.nume, profitNet: 0 };
+
+      const venitTva = parseFloat(data.venitTva || "0");
+      const achizitieTva = parseFloat(data.achizitieTva || "0");
+      const comisionPercent = parseFloat(data.comisionPercent || "0") / (data.count || 1); // Avg comision if multiple months
+      const cheltuieliMarketing = parseFloat(data.cheltuieliMarketing || "0");
+      const costTransport = parseFloat(data.costTransport || "0");
+      const costAmbalare = parseFloat(data.costAmbalare || "0");
+
+      const venitNet = venitTva / 1.19;
+      const achizitieNet = achizitieTva / 1.19;
+      const adaos = venitNet - achizitieNet;
+      const comisionValoare = venitNet * (comisionPercent / 100);
+
+      const profitNet = adaos - comisionValoare - cheltuieliMarketing - costTransport - costAmbalare;
+
+      return {
+        id: p.id,
+        name: p.nume,
+        profitNet
+      };
+    });
+
+    // 5. Showroom Totals
+    const sediiList = await db.select().from(sedii);
+    const cheltuieliSediuList = await db.select().from(cheltuieliSediu).where(range(cheltuieliSediu));
+    const cheltuieliAgentList = await db.select().from(cheltuieliAgent).where(range(cheltuieliAgent));
+
+    const showroomTotals = sediiList.map(s => {
+      const expenses = cheltuieliSediuList.filter(c => c.sediuId === s.id);
+      const agentExps = cheltuieliAgentList.filter(c => c.sediuId === s.id);
+
+      const totalsByCat = {
+        chirie: 0,
+        utilitati: 0,
+        marketing: 0,
+        consumabile: 0,
+        investitii: 0,
+        alte: 0,
+        salarii: 0,
+        combustibil: 0,
+        auto: 0,
+        alteCheltuieliAgenti: 0,
+        cheltuieliAgenti: 0
+      };
+
+      expenses.forEach(e => {
+        const suma = parseFloat(e.suma);
+        const desc = e.descriere?.toLowerCase() || "";
+        if (e.subcategoryId === "c3b11246-7867-40f5-ba0b-511dad776321") totalsByCat.chirie += suma;
+        else if (desc.includes("utilit") || e.subcategoryId === "sub-alte" && desc.includes("utilit")) totalsByCat.utilitati += suma;
+        else if (e.subcategoryId === "eb6d1178-49ee-43ee-8d27-3c704182cb0f") totalsByCat.marketing += suma;
+        else if (e.subcategoryId === "sub-materiale" || desc.includes("consumabile")) totalsByCat.consumabile += suma;
+        else if (e.subcategoryId === "aec333c7-bb7a-4854-b029-7cd83be18a3a") totalsByCat.investitii += suma;
+        else totalsByCat.alte += suma;
+      });
+
+      agentExps.forEach(e => {
+        const suma = parseFloat(e.suma);
+        totalsByCat.cheltuieliAgenti += suma;
+
+        // Categorization for agents (simplified matching from getShowroomProfitabilityCosts)
+        const desc = e.descriere?.toLowerCase() || "";
+        if (desc.includes("salar") || desc.includes("comision")) totalsByCat.salarii += suma;
+        else if (desc.includes("combustibil")) totalsByCat.combustibil += suma;
+        else if (desc.includes("leasing") || desc.includes("asigur") || desc.includes("revizi")) totalsByCat.auto += suma;
+        else totalsByCat.alteCheltuieliAgenti += suma;
+      });
+
+      const total = totalsByCat.chirie + totalsByCat.utilitati + totalsByCat.marketing +
+        totalsByCat.consumabile + totalsByCat.investitii + totalsByCat.alte +
+        totalsByCat.cheltuieliAgenti;
+
+      return {
+        id: s.id,
+        name: s.nume,
+        ...totalsByCat,
+        total
+      };
+    });
+
+    // 6. Aggregate totals
+    let totalCostProductie = 0;
+    let totalCostIndirect = 0;
+    salariiAcrossRange.forEach(s => {
+      const cost = parseFloat(s.totalCost || "0");
+      if (s.tipAngajat === "PRODUCTIE") totalCostProductie += cost;
+      else if (s.tipAngajat === "INDIRECT") totalCostIndirect += cost;
+    });
+
+    const totalProfitAgents = agentsMetrics.reduce((sum, a) => sum + a.profitNet, 0);
+    const totalProfitDistributors = distributorsMetrics.reduce((sum, d) => sum + d.profitNet, 0);
+
+    const profitGrup = totalProfitAgents + totalProfitDistributors - totalCostIndirect - totalCostProductie;
+
+    return {
+      startMonth,
+      endMonth,
+      an,
+      agentsMetrics,
+      distributorsMetrics,
+      showroomTotals,
+      totals: {
+        totalProfitAgents,
+        totalProfitDistributors,
+        totalCostIndirect,
+        totalCostProductie,
+        profitGrup
+      }
     };
   }
 }
