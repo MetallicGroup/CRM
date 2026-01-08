@@ -1785,39 +1785,47 @@ export async function registerRoutes(
   app.post("/api/files/upload", requireAuth, upload.single('file'), async (req: AuthRequest, res: Response) => {
     try {
       if (!req.file) {
+        console.error("[Upload API] No file in request");
         return res.status(400).json({ message: "Niciun fișier nu a fost încărcat" });
       }
 
       const { clientId, fileType, folder } = req.body;
+      console.log(`[Upload API] Uploading ${req.file.originalname} (${req.file.size} bytes). ClientId: ${clientId}, FileType: ${fileType}, Folder: ${folder}`);
 
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
 
       // Use folder for general uploads (cheltuieli, etc) or clientId/fileType for client files
       if (folder) {
-        // General upload - just return the URL
+        console.log(`[Upload API] General upload to folder: ${folder}`);
         const objectName = objectStorageService.generateObjectPath(req.file.originalname, folder);
         const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
+        console.log(`[Upload API] General upload success: ${objectPath}`);
         return res.json({ success: true, url: objectPath, filename: req.file.originalname });
       }
 
       if (!clientId || !fileType) {
+        console.error("[Upload API] Missing clientId or fileType");
         return res.status(400).json({ message: "clientId și fileType sunt obligatorii (sau folder pentru upload general)" });
       }
 
       const objectName = objectStorageService.generateObjectPath(req.file.originalname);
+      console.log(`[Upload API] Uploading to object storage: ${objectName}`);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
 
       if (fileType === "oferta1") {
+        console.log(`[Upload API] Updating client ${clientId} with oferta1: ${objectPath}`);
         await storage.updateClient(clientId, { ofertaFilename: objectPath });
       } else if (fileType === "oferta2") {
+        console.log(`[Upload API] Updating client ${clientId} with oferta2: ${objectPath}`);
         await storage.updateClient(clientId, { ofertaFilename2: objectPath });
       }
 
+      console.log(`[Upload API] Client upload success: ${objectPath}`);
       res.json({ success: true, objectPath, filename: req.file.originalname });
     } catch (error) {
-      console.error("File upload error:", error);
-      res.status(500).json({ message: "Eroare la încărcarea fișierului" });
+      console.error("[Upload API] Server Error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea fișierului", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

@@ -1,8 +1,21 @@
 import { Client } from "@replit/object-storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
+import fs from "fs";
+import path from "path";
 
-export const objectStorageClient = new Client();
+// Initialize client tentatively. It might fail if not in Replit.
+let objectStorageClient: Client | null = null;
+try {
+  objectStorageClient = new Client();
+} catch (e) {
+  console.warn("[ObjectStorage] Failed to initialize Replit Object Storage client. Using disk fallback.");
+}
+
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -13,7 +26,7 @@ export class ObjectNotFoundError extends Error {
 }
 
 export class ObjectStorageService {
-  constructor() {}
+  constructor() { }
 
   generateObjectPath(originalFilename?: string, folder?: string): string {
     const objectId = randomUUID();
@@ -24,10 +37,27 @@ export class ObjectStorageService {
   }
 
   async uploadFromBuffer(buffer: Buffer, objectName: string): Promise<string> {
-    const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
-    if (!result.ok) {
-      throw new Error("Failed to upload file to storage");
+    // Try Replit Object Storage first
+    if (objectStorageClient) {
+      try {
+        const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
+        if (result.ok) {
+          return `/objects/${objectName}`;
+        }
+      } catch (e) {
+        console.warn("[ObjectStorage] Replit upload failed, falling back to disk:", e);
+      }
     }
+
+    // Disk Fallback
+    const filePath = path.join(process.cwd(), objectName);
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, buffer);
+    console.log(`[ObjectStorage] Saved to disk: ${filePath}`);
     return `/objects/${objectName}`;
   }
 
@@ -42,13 +72,22 @@ export class ObjectStorageService {
     }
 
     const objectName = parts.slice(1).join("/");
-    const existsResult = await objectStorageClient.exists(objectName);
-    
-    if (!existsResult.ok || !existsResult.value) {
-      throw new ObjectNotFoundError();
+
+    // Check Replit first
+    if (objectStorageClient) {
+      const existsResult = await objectStorageClient.exists(objectName);
+      if (existsResult.ok && existsResult.value) {
+        return { objectName, exists: true };
+      }
     }
-    
-    return { objectName, exists: true };
+
+    // Check disk
+    const filePath = path.join(process.cwd(), objectName);
+    if (fs.existsSync(filePath)) {
+      return { objectName, exists: true };
+    }
+
+    throw new ObjectNotFoundError();
   }
 
   async downloadObject(objectPath: string, res: Response, cacheTtlSec: number = 3600) {
@@ -60,21 +99,37 @@ export class ObjectStorageService {
       const parts = objectPath.slice(1).split("/");
       const objectName = parts.slice(1).join("/");
 
-      const downloadResult = await objectStorageClient.downloadAsBytes(objectName);
-      
-      if (!downloadResult.ok) {
+      let data: Buffer | null = null;
+
+      // Try Replit first
+      if (objectStorageClient) {
+        const downloadResult = await objectStorageClient.downloadAsBytes(objectName);
+        if (downloadResult.ok) {
+          data = Buffer.from(downloadResult.value as any);
+        }
+      }
+
+      // Try disk if not found or no client
+      if (!data) {
+        const filePath = path.join(process.cwd(), objectName);
+        if (fs.existsSync(filePath)) {
+          data = fs.readFileSync(filePath);
+        }
+      }
+
+      if (!data) {
         throw new ObjectNotFoundError();
       }
 
       const contentType = getContentType(objectName);
-      
+
       res.set({
         "Content-Type": contentType,
-        "Content-Length": downloadResult.value.length,
+        "Content-Length": data.length,
         "Cache-Control": `public, max-age=${cacheTtlSec}`,
       });
 
-      res.send(downloadResult.value);
+      res.send(data);
     } catch (error) {
       console.error("Error downloading file:", error);
       if (!res.headersSent) {
@@ -96,8 +151,22 @@ export class ObjectStorageService {
       const parts = objectPath.slice(1).split("/");
       const objectName = parts.slice(1).join("/");
 
-      const result = await objectStorageClient.delete(objectName);
-      return result.ok;
+      let deleted = false;
+
+      // Try Replit first
+      if (objectStorageClient) {
+        const result = await objectStorageClient.delete(objectName);
+        deleted = result.ok;
+      }
+
+      // Try disk
+      const filePath = path.join(process.cwd(), objectName);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        deleted = true;
+      }
+
+      return deleted;
     } catch (error) {
       console.error("Error deleting file:", error);
       return false;
