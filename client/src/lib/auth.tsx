@@ -86,9 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       loginRequest(email, password),
     onSuccess: (data) => {
+      // Use the returned user data to update the query cache immediately
       queryClient.setQueryData(["auth", "session"], data);
-      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
     },
+    onSettled: () => {
+      // Re-validate to ensure the cache stays in sync, but it's okay if this async
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    }
   });
 
   const logoutMutation = useMutation({

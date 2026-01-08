@@ -70,8 +70,14 @@ export async function registerRoutes(
 
       await storage.updateLastLogin(user.id);
 
-      const { passwordHash, ...safeUser } = user;
-      res.json({ user: safeUser });
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Eroare la salvarea sesiunii" });
+        }
+        const { passwordHash, ...safeUser } = user;
+        res.json({ user: safeUser });
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
