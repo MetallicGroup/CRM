@@ -355,8 +355,9 @@ export default function Clienti() {
           }
           toast.success("Client creat și fișiere încărcate cu succes");
         } catch (uploadError) {
-          console.error("File upload error:", uploadError);
-          toast.warning("Client creat, dar unele fișiere nu au putut fi încărcate. Le puteți încărca din nou la editare.");
+          console.error("[Clienti] File upload error:", uploadError);
+          const msg = uploadError instanceof Error ? uploadError.message : "Eroare necunoscută";
+          toast.warning(`Client creat, dar încărcarea fișierelor a eșuat: ${msg}. Încercați din nou la editare.`);
         }
       } else {
         toast.success("Client creat cu succes");
@@ -618,11 +619,12 @@ export default function Clienti() {
                 <TableRow>
                   <TableHead className="w-[18%]">Nume</TableHead>
                   <TableHead className="w-[15%]">Contact</TableHead>
-                  <TableHead className="w-[18%]">Locație</TableHead>
-                  <TableHead className="w-[12%]">Stadiu</TableHead>
+                  <TableHead className="w-[15%]">Locație</TableHead>
+                  <TableHead className="w-[10%]">Stadiu</TableHead>
                   <TableHead className="w-[12%]">Categorie</TableHead>
                   <TableHead className="w-[10%]">Valoare</TableHead>
-                  <TableHead className="w-[15%] text-right">Acțiuni</TableHead>
+                  <TableHead className="w-[8%]">Doc</TableHead>
+                  <TableHead className="w-[12%] text-right">Acțiuni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -676,6 +678,38 @@ export default function Clienti() {
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-1">
+                        {client.ofertaFilename && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`${window.location.origin}${client.ofertaFilename}`, '_blank', 'noopener');
+                            }}
+                            title="Descarcă Ofertă 1"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {client.ofertaFilename2 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`${window.location.origin}${client.ofertaFilename2}`, '_blank', 'noopener');
+                            }}
+                            title="Descarcă Ofertă 2"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex items-center justify-end gap-0">

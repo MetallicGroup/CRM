@@ -42,11 +42,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { 
-  Receipt, 
-  Plus, 
-  Search, 
-  Edit, 
+import {
+  Receipt,
+  Plus,
+  Search,
+  Edit,
   Trash2,
   Building2,
   User,
@@ -137,7 +137,7 @@ export default function Cheltuieli() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const currentDate = new Date();
-  
+
   const [activeTab, setActiveTab] = useState<"agent" | "sediu" | "salarii">("agent");
   const [search, setSearch] = useState("");
   const [lunaFilter, setLunaFilter] = useState<string>(String(currentDate.getMonth() + 1));
@@ -146,16 +146,16 @@ export default function Cheltuieli() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sediuFilter, setSediuFilter] = useState<string>("all");
   const [firmaFilter, setFirmaFilter] = useState<string>("all");
-  
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCheltuiala, setEditingCheltuiala] = useState<CheltuialaAgent | CheltuialaSediu | null>(null);
   const [deleteCheltuiala, setDeleteCheltuiala] = useState<{ id: string; type: "agent" | "sediu" } | null>(null);
-  
+
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     agentId: "",
     sediuId: "",
@@ -489,23 +489,23 @@ export default function Cheltuieli() {
     }
     setIsDialogOpen(true);
   };
-  
+
   const handleFileUpload = async (file: File): Promise<string | null> => {
     const formDataUpload = new FormData();
     formDataUpload.append("file", file);
     formDataUpload.append("folder", "cheltuieli");
-    
+
     try {
       const res = await fetch("/api/files/upload", {
         method: "POST",
         body: formDataUpload,
       });
-      
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Eroare la încărcare");
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || `Eroare server: ${res.statusText} (${res.status})`);
       }
-      
+
       const result = await res.json();
       return result.url;
     } catch (err: any) {
@@ -516,26 +516,26 @@ export default function Cheltuieli() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     let documentUrl = formData.documentUrl;
-    
+
     if (selectedFile) {
       setIsUploading(true);
       const uploadedUrl = await handleFileUpload(selectedFile);
       setIsUploading(false);
-      
+
       if (uploadedUrl) {
         documentUrl = uploadedUrl;
       }
     }
-    
+
     const data = {
       ...formData,
       categoryId: selectedCategory,
       subcategoryId: selectedSubcategory,
       documentUrl,
     };
-    
+
     if (editingCheltuiala) {
       if (activeTab === "agent") {
         updateAgentMutation.mutate({ id: editingCheltuiala.id, data });
@@ -553,7 +553,7 @@ export default function Cheltuieli() {
 
   const handleDelete = () => {
     if (!deleteCheltuiala) return;
-    
+
     if (deleteCheltuiala.type === "agent") {
       deleteAgentMutation.mutate(deleteCheltuiala.id);
     } else {
@@ -820,9 +820,9 @@ export default function Cheltuieli() {
                         </TableCell>
                         <TableCell>
                           {c.documentUrl ? (
-                            <a 
-                              href={c.documentUrl} 
-                              target="_blank" 
+                            <a
+                              href={c.documentUrl}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-700"
                               title="Descarcă document"
@@ -903,9 +903,9 @@ export default function Cheltuieli() {
                         <TableCell className="max-w-[200px] truncate">{c.descriere || "-"}</TableCell>
                         <TableCell>
                           {c.documentUrl ? (
-                            <a 
-                              href={c.documentUrl} 
-                              target="_blank" 
+                            <a
+                              href={c.documentUrl}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-700"
                               title="Descarcă document"
@@ -1174,9 +1174,9 @@ export default function Cheltuieli() {
               {formData.documentUrl && !selectedFile && (
                 <div className="flex items-center gap-2 text-sm">
                   <FileText className="h-4 w-4 text-blue-500" />
-                  <a 
-                    href={formData.documentUrl} 
-                    target="_blank" 
+                  <a
+                    href={formData.documentUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
@@ -1201,8 +1201,8 @@ export default function Cheltuieli() {
               >
                 Anulează
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isUploading || createAgentMutation.isPending || createSediuMutation.isPending || updateAgentMutation.isPending || updateSediuMutation.isPending}
                 data-testid="button-submit"
               >

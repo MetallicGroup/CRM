@@ -83,7 +83,7 @@ export function SalariiNeproductivi({ luna, an }: Props) {
   const [deleteItem, setDeleteItem] = useState<SalariuNeproductiv | null>(null);
   const [tipFilter, setTipFilter] = useState<string>("all");
   const [uploadingFile, setUploadingFile] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     numeAngajat: "",
     tipAngajat: "PRODUCTIE" as "PRODUCTIE" | "INDIRECT",
@@ -225,13 +225,17 @@ export function SalariiNeproductivi({ luna, an }: Props) {
         body: uploadFormData
       });
 
-      if (!res.ok) throw new Error("Upload failed");
-      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Eroare server: ${res.statusText} (${res.status})`);
+      }
+
       const data = await res.json();
       setFormData(prev => ({ ...prev, documentUrl: data.url }));
-      toast.success("Fișier încărcat");
+      toast.success("Fișier încărcat cu succes");
     } catch (error) {
-      toast.error("Eroare la încărcare");
+      console.error("[SalariiNeproductivi] Upload error:", error);
+      toast.error(error instanceof Error ? error.message : "Eroare la încărcarea fișierului");
     } finally {
       setUploadingFile(false);
     }
@@ -355,9 +359,9 @@ export function SalariiNeproductivi({ luna, an }: Props) {
                     </TableCell>
                     <TableCell>
                       {s.documentUrl ? (
-                        <a 
-                          href={s.documentUrl} 
-                          target="_blank" 
+                        <a
+                          href={s.documentUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:text-blue-700"
                           title="Descarcă document"
@@ -521,8 +525,8 @@ export function SalariiNeproductivi({ luna, an }: Props) {
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 Anulează
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
                 data-testid="button-save-salariu"
               >

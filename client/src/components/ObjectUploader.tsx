@@ -67,7 +67,7 @@ export function ObjectUploader({
       formData.append('file', file);
       formData.append('clientId', clientId);
       formData.append('fileType', fileType);
-      
+
       const response = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
@@ -76,20 +76,22 @@ export function ObjectUploader({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+        const errorMessage = errorData.message || `Eroare server: ${response.statusText} (${response.status})`;
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      
+
       setUploadStatus("success");
       onComplete?.(result.objectPath, result.filename || file.name);
-      
+
       setTimeout(() => setUploadStatus("idle"), 3000);
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("[ObjectUploader] Upload error:", error);
       setUploadStatus("error");
-      onError?.(error instanceof Error ? error : new Error("Upload failed"));
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      const err = error instanceof Error ? error : new Error("Eroare la încărcare");
+      onError?.(err);
+      setTimeout(() => setUploadStatus("idle"), 5000);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -118,9 +120,9 @@ export function ObjectUploader({
         className="hidden"
         disabled={disabled || isUploading}
       />
-      <Button 
+      <Button
         type="button"
-        onClick={handleClick} 
+        onClick={handleClick}
         className={buttonClassName}
         disabled={disabled || isUploading}
         variant="outline"
@@ -157,7 +159,7 @@ export async function uploadFileForClient(file: File, clientId: string, fileType
   formData.append('file', file);
   formData.append('clientId', clientId);
   formData.append('fileType', fileType);
-  
+
   const response = await fetch('/api/files/upload', {
     method: 'POST',
     body: formData,
@@ -166,7 +168,8 @@ export async function uploadFileForClient(file: File, clientId: string, fileType
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+    const errorMessage = errorData.message || `Eroare server: ${response.statusText} (${response.status})`;
+    throw new Error(errorMessage);
   }
 
   return response.json();
