@@ -79,9 +79,13 @@ export class ObjectStorageService {
 
     // Check Replit first
     if (objectStorageClient) {
-      const existsResult = await objectStorageClient.exists(objectName);
-      if (existsResult.ok && existsResult.value) {
-        return { objectName, exists: true };
+      try {
+        const existsResult = await objectStorageClient.exists(objectName);
+        if (existsResult.ok && existsResult.value) {
+          return { objectName, exists: true };
+        }
+      } catch (e) {
+        console.warn("[ObjectStorage] Replit exists check failed, checking disk:", e);
       }
     }
 
@@ -157,8 +161,12 @@ export class ObjectStorageService {
 
       // Try Replit first
       if (objectStorageClient) {
-        const result = await objectStorageClient.delete(objectName);
-        deleted = result.ok;
+        try {
+          const result = await objectStorageClient.delete(objectName);
+          deleted = result.ok;
+        } catch (e) {
+          console.warn("[ObjectStorage] Replit delete failed, checking disk:", e);
+        }
       }
 
       // Try disk
