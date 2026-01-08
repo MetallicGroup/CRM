@@ -43,14 +43,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { 
-  Plus, 
-  Search, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Phone,
+  Mail,
+  MapPin,
+  Edit,
+  Trash2,
   Users,
   Filter,
   RefreshCw,
@@ -69,12 +69,12 @@ import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { 
-  Client, 
-  CreateClient, 
-  OfferStatus, 
+import type {
+  Client,
+  CreateClient,
+  OfferStatus,
   OrderStatus,
-  ClientSource, 
+  ClientSource,
   ProductCategory,
   ColorRAL,
   Thickness,
@@ -85,15 +85,13 @@ import type {
 } from "@shared/schema";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
-  { value: "NOU", label: "Nou", color: "bg-blue-100 text-blue-800" },
-  { value: "CONTACTAT", label: "Contactat", color: "bg-cyan-100 text-cyan-800" },
-  { value: "INFORMATII", label: "Informații", color: "bg-indigo-100 text-indigo-800" },
-  { value: "OFERTAT", label: "Ofertat", color: "bg-yellow-100 text-yellow-800" },
-  { value: "FOLLOW_UP", label: "Follow UP (Negociere)", color: "bg-purple-100 text-purple-800" },
-  { value: "PROSPECT", label: "Prospect", color: "bg-orange-100 text-orange-800" },
-  { value: "CUSTODIE", label: "Custodie", color: "bg-amber-100 text-amber-800" },
+  { value: "NOUA", label: "Nouă", color: "bg-blue-100 text-blue-800" },
+  { value: "TRIMISA", label: "Trimisă", color: "bg-cyan-100 text-cyan-800" },
+  { value: "IN_ASTEPTARE", label: "În Așteptare (Follow-up)", color: "bg-yellow-100 text-yellow-800" },
+  { value: "ACCEPTATA", label: "Acceptată", color: "bg-indigo-100 text-indigo-800" },
   { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
-  { value: "PIERDUT", label: "Pierdut", color: "bg-red-100 text-red-800" },
+  { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-100 text-red-800" },
+  { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -213,11 +211,11 @@ const COMMISSION_OPTIONS: { value: CommissionPercent; label: string }[] = [
 ];
 
 const JUDETE = [
-  "Alba", "Arad", "Argeș", "Bacău", "Bihor", "Bistrița-Năsăud", "Botoșani", 
-  "Brașov", "Brăila", "București", "Buzău", "Caraș-Severin", "Călărași", 
-  "Cluj", "Constanța", "Covasna", "Dâmbovița", "Dolj", "Galați", "Giurgiu", 
-  "Gorj", "Harghita", "Hunedoara", "Ialomița", "Iași", "Ilfov", "Maramureș", 
-  "Mehedinți", "Mureș", "Neamț", "Olt", "Prahova", "Satu Mare", "Sălaj", 
+  "Alba", "Arad", "Argeș", "Bacău", "Bihor", "Bistrița-Năsăud", "Botoșani",
+  "Brașov", "Brăila", "București", "Buzău", "Caraș-Severin", "Călărași",
+  "Cluj", "Constanța", "Covasna", "Dâmbovița", "Dolj", "Galați", "Giurgiu",
+  "Gorj", "Harghita", "Hunedoara", "Ialomița", "Iași", "Ilfov", "Maramureș",
+  "Mehedinți", "Mureș", "Neamț", "Olt", "Prahova", "Satu Mare", "Sălaj",
   "Sibiu", "Suceava", "Teleorman", "Timiș", "Tulcea", "Vaslui", "Vâlcea", "Vrancea"
 ];
 
@@ -250,7 +248,7 @@ const defaultFormData: Partial<CreateClient> = {
   mlRulouProd: "",
   smartDripstop: false,
   valoareOferta: "",
-  stadiuOferta: "NOU",
+  stadiuOferta: "NOUA",
   dataOfertarii: "",
   stadiuComanda: undefined,
   dataVanzarii: "",
@@ -297,7 +295,7 @@ export default function Clienti() {
       if (search) params.set("search", search);
       if (stadiuFilter && stadiuFilter !== "all") params.set("stadiuOferta", stadiuFilter);
       if (agentFilter && agentFilter !== "all") params.set("agentId", agentFilter);
-      
+
       const res = await fetch(`/api/clients?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea clienților");
       return res.json();
@@ -446,7 +444,11 @@ export default function Clienti() {
       mlRulouProd: client.mlRulouProd || "",
       smartDripstop: client.smartDripstop || false,
       valoareOferta: client.valoareOferta || "",
-      stadiuOferta: client.stadiuOferta || "NOU",
+      stadiuOferta: (client.stadiuOferta as any === "NOU" ? "NOUA" :
+        client.stadiuOferta as any === "FOLLOW_UP" ? "IN_ASTEPTARE" :
+          client.stadiuOferta as any === "OFERTAT" ? "TRIMISA" :
+            client.stadiuOferta as any === "PIERDUT" ? "REFUZAT" :
+              client.stadiuOferta) || "NOUA",
       dataOfertarii: client.dataOfertarii ? format(new Date(client.dataOfertarii), "yyyy-MM-dd") : "",
       stadiuComanda: client.stadiuComanda || undefined,
       dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
@@ -482,7 +484,7 @@ export default function Clienti() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nume || !formData.telefon) {
       toast.error("Numele și telefonul sunt obligatorii");
       return;
@@ -1077,11 +1079,11 @@ export default function Clienti() {
                       onChange={(e) => {
                         const newValoare = e.target.value;
                         const valoareOferta = parseFloat(newValoare || "0");
-                        const comisionCalculat = formData.procentComision 
+                        const comisionCalculat = formData.procentComision
                           ? (valoareOferta * parseInt(formData.procentComision) / 100).toFixed(2)
                           : "";
-                        setFormData({ 
-                          ...formData, 
+                        setFormData({
+                          ...formData,
                           valoareOferta: newValoare,
                           comisionOferta: comisionCalculat
                         });
@@ -1151,11 +1153,11 @@ export default function Clienti() {
                       onValueChange={(value) => {
                         const newProcentComision = value === "none" ? undefined : value as CommissionPercent;
                         const valoareOferta = parseFloat(formData.valoareOferta || "0");
-                        const comisionCalculat = newProcentComision 
+                        const comisionCalculat = newProcentComision
                           ? (valoareOferta * parseInt(newProcentComision) / 100).toFixed(2)
                           : "";
-                        setFormData({ 
-                          ...formData, 
+                        setFormData({
+                          ...formData,
                           procentComision: newProcentComision,
                           comisionOferta: comisionCalculat
                         });
@@ -1457,13 +1459,13 @@ export default function Clienti() {
               <Button type="button" variant="outline" onClick={closeDialog}>
                 Anulează
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
                 data-testid="button-submit-client"
               >
-                {createMutation.isPending || updateMutation.isPending 
-                  ? "Se salvează..." 
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Se salvează..."
                   : editingClient ? "Salvează" : "Adaugă"}
               </Button>
             </DialogFooter>
@@ -1479,7 +1481,7 @@ export default function Clienti() {
               {viewClient?.nume}
             </DialogDescription>
           </DialogHeader>
-          
+
           {viewClient && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -1551,16 +1553,16 @@ export default function Clienti() {
                   <div>
                     <p className="text-sm text-muted-foreground">Valoare</p>
                     <p className="font-medium">
-                      {viewClient.valoareOferta 
-                        ? `${Number(viewClient.valoareOferta).toLocaleString("ro-RO")} RON` 
+                      {viewClient.valoareOferta
+                        ? `${Number(viewClient.valoareOferta).toLocaleString("ro-RO")} RON`
                         : "-"}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Data Ofertării</p>
                     <p className="font-medium">
-                      {viewClient.dataOfertarii 
-                        ? format(new Date(viewClient.dataOfertarii), "dd MMM yyyy", { locale: ro }) 
+                      {viewClient.dataOfertarii
+                        ? format(new Date(viewClient.dataOfertarii), "dd MMM yyyy", { locale: ro })
                         : "-"}
                     </p>
                   </div>
