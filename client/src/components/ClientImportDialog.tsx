@@ -128,7 +128,7 @@ export function ClientImportDialog({
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
-  const [selectedAgentId, setSelectedAgentId] = useState<string>(isAdmin ? "" : (currentUserId || ""));
+  const [selectedAgentId, setSelectedAgentId] = useState<string>(isAdmin ? "unassigned" : (currentUserId || ""));
   const [duplicateStrategy, setDuplicateStrategy] = useState<"skip" | "update" | "create">("create");
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
@@ -140,7 +140,7 @@ export function ClientImportDialog({
     setParsedData([]);
     setHeaders([]);
     setColumnMapping({});
-    setSelectedAgentId(isAdmin ? "" : (currentUserId || ""));
+    setSelectedAgentId(isAdmin ? "unassigned" : (currentUserId || ""));
     setDuplicateStrategy("skip");
     setImporting(false);
     setImportProgress(0);
@@ -186,27 +186,43 @@ export function ClientImportDialog({
       skipEmptyLines: true,
       encoding: "UTF-8",
       complete: (results) => {
-        if (results.errors.length > 0) {
-          console.error("CSV parse errors:", results.errors);
-          toast.error("Eroare la citirea fișierului CSV");
-          return;
+        try {
+          if (results.errors.length > 0) {
+            console.warn("CSV parse warnings:", results.errors);
+            if (!results.data || results.data.length === 0) {
+              toast.error("Eroare la citirea fișierului CSV (format invalid)");
+              return;
+            }
+          }
+
+          const rawData = results.data as Record<string, string>[];
+          const validData = rawData.filter(row => Object.values(row).some(val => val && val.trim() !== ""));
+
+          if (validData.length === 0) {
+            toast.error("Fișierul CSV nu conține date");
+            return;
+          }
+
+          const rawHeaders = results.meta.fields || (validData.length > 0 ? Object.keys(validData[0]) : []);
+          const csvHeaders = rawHeaders.filter(h => h && h.trim() !== "");
+
+          if (csvHeaders.length === 0) {
+            toast.error("Nu s-au putut identifica coloanele CSV");
+            return;
+          }
+
+          setHeaders(csvHeaders);
+          setParsedData(validData);
+
+          const autoMapping = autoMapColumns(csvHeaders);
+          setColumnMapping(autoMapping);
+
+          toast.success(`${validData.length} rânduri găsite`);
+          setStep("mapping");
+        } catch (e) {
+          console.error("Error processing CSV:", e);
+          toast.error("A apărut o eroare la procesarea acestui fișier");
         }
-
-        const data = results.data as Record<string, string>[];
-        if (data.length === 0) {
-          toast.error("Fișierul CSV nu conține date");
-          return;
-        }
-
-        const csvHeaders = results.meta.fields || [];
-        setHeaders(csvHeaders);
-        setParsedData(data);
-
-        const autoMapping = autoMapColumns(csvHeaders);
-        setColumnMapping(autoMapping);
-
-        toast.success(`${data.length} rânduri găsite`);
-        setStep("mapping");
       },
       error: (error) => {
         console.error("CSV parse error:", error);
@@ -265,7 +281,7 @@ export function ClientImportDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rows,
-          agentId: selectedAgentId || undefined,
+          agentId: selectedAgentId === "unassigned" ? undefined : (selectedAgentId || undefined),
           duplicateStrategy,
         }),
       });
@@ -398,7 +414,7 @@ export function ClientImportDialog({
                       <SelectValue placeholder="Selectează agent (opțional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">-- Neatribuit --</SelectItem>
+                      <SelectItem value="unassigned">-- Neatribuit --</SelectItem>
                       {agents.filter(a => a.role === "AGENT").map((agent) => (
                         <SelectItem key={agent.id} value={agent.id}>
                           {agent.firstName} {agent.lastName}
