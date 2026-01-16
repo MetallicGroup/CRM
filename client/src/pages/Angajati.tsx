@@ -63,11 +63,13 @@ export default function Angajati() {
 
   const isLoadingData = loadingEmployees || loadingReport;
   const metricsMap = new Map(financialReport?.agentsMetrics?.map((m: any) => [m.id, m]));
-  const totals = financialReport?.totals || {
-    totalProductionCosts: 0,
-    totalIndirectCosts: 0,
-    totalVenitFirma: 0,
-    totalVenitGardFirma: 0
+  // FIX: Safely initialize totals with defaults to prevent crash
+  const rawTotals = financialReport?.totals || {};
+  const totals = {
+    totalProductionCosts: rawTotals.totalProductionCosts ?? 0,
+    totalIndirectCosts: rawTotals.totalIndirectCosts ?? 0,
+    totalVenitFirma: rawTotals.totalVenitFirma ?? 0,
+    totalVenitGardFirma: rawTotals.totalVenitGardFirma ?? 0
   };
 
   // No need for getFixedTotals as costs are server-side

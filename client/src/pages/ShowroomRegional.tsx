@@ -303,10 +303,13 @@ export default function ShowroomRegional() {
     };
   });
 
-  if (loadingReport) {
+
+
+  if (loadingReport && !report) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Se încarcă raportul financiar...</span>
       </div>
     );
   }

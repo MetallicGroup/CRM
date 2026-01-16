@@ -1,0 +1,6 @@
+Nume,Telefon,Email,Judet,Localitate,Sursa,Stadiu Oferta,Valoare Oferta,Categorie Produs
+Popescu Ioan,0722123456,popescu@test.ro,București,Sector 1,FACEBOOK,NOUA,1500,GARD
+Maria Ionescu,0733987654,maria@test.ro,Ilfov,Voluntari,RECOMANDARE,TRIMISA,5000,ACOPERIS
+SC Constructii SRL,0744555666,office@construct.ro,Cluj,Cluj-Napoca,SITE,VANDUT,12500,RULOURI_EXTERIOARE
+Andrei Popa,0755111222,,Timis,Timisoara,ALTELE,IN_ASTEPTARE,3000,GARD
+Elena Dumitrescu,0766333444,elena@test.ro,Constanta,Constanta,GOOGLE,NOUA,,FERESTRE_MANSARDA

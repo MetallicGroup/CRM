@@ -150,11 +150,11 @@ export function ClientImportDialog({
 
   const autoMapColumns = useCallback((csvHeaders: string[]) => {
     const mapping: Record<string, string> = {};
-    
+
     for (const field of CLIENT_FIELDS) {
       const possibleNames = COLUMN_MAPPINGS[field.key] || [field.key];
-      const matchingHeader = csvHeaders.find(header => 
-        possibleNames.some(name => 
+      const matchingHeader = csvHeaders.find(header =>
+        possibleNames.some(name =>
           header.toLowerCase().trim().includes(name.toLowerCase())
         )
       );
@@ -162,7 +162,7 @@ export function ClientImportDialog({
         mapping[field.key] = matchingHeader;
       }
     }
-    
+
     return mapping;
   }, []);
 
@@ -197,10 +197,10 @@ export function ClientImportDialog({
         const csvHeaders = results.meta.fields || [];
         setHeaders(csvHeaders);
         setParsedData(data);
-        
+
         const autoMapping = autoMapColumns(csvHeaders);
         setColumnMapping(autoMapping);
-        
+
         toast.success(`${data.length} rânduri găsite`);
         setStep("mapping");
       },
@@ -323,6 +323,22 @@ export function ClientImportDialog({
                 className="max-w-xs"
                 data-testid="input-import-file"
               />
+              <Button
+                variant="link"
+                className="mt-4 text-sm text-blue-600"
+                onClick={() => {
+                  const csvContent = "Nume,Telefon,Email,Judet,Localitate,Sursa,Stadiu Oferta,Valoare Oferta,Categorie Produs\nPopescu Ioan,0722123456,popescu@test.ro,București,Sector 1,FACEBOOK,NOUA,1500,GARD\nMaria Ionescu,0733987654,maria@test.ro,Ilfov,Voluntari,RECOMANDARE,TRIMISA,5000,ACOPERIS";
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.setAttribute('download', 'model_import_clienti.csv');
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                Descarcă model CSV
+              </Button>
             </div>
           )}
 

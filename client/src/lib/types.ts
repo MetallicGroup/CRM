@@ -74,6 +74,7 @@ export interface Employee {
   type: EmployeeType;
   showroomId: string | null;
   active: boolean;
+  monthlyData?: Record<Month, EmployeeMonthlyData>;
 }
 
 export interface Distributor {
