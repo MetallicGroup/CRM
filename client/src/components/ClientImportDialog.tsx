@@ -79,6 +79,8 @@ const CLIENT_FIELDS = [
   { key: "dataLivrarii", label: "Data Livrării", required: false },
   { key: "incasat", label: "Încasat", required: false },
   { key: "procentComision", label: "Procent Comision", required: false },
+  { key: "observatiiClient", label: "Observații", required: false },
+  { key: "dataAdaugare", label: "Data Adăugare", required: false },
 ];
 
 const COLUMN_MAPPINGS: Record<string, string[]> = {
@@ -109,6 +111,8 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   dataLivrarii: ["data livrarii", "data livrare", "livrat la", "data livrat"],
   incasat: ["incasat", "platit", "achitat"],
   procentComision: ["procent comision", "comision", "commission", "com", "procent"],
+  observatiiClient: ["observatii", "notes", "comentarii", "obs"],
+  dataAdaugare: ["data adaugare", "data creare", "created at"],
 };
 
 export function ClientImportDialog({
@@ -327,11 +331,24 @@ export function ClientImportDialog({
                 variant="link"
                 className="mt-4 text-sm text-blue-600"
                 onClick={() => {
-                  const csvContent = "Nume,Telefon,Email,Judet,Localitate,Sursa,Stadiu Oferta,Valoare Oferta,Categorie Produs\nPopescu Ioan,0722123456,popescu@test.ro,București,Sector 1,FACEBOOK,NOUA,1500,GARD\nMaria Ionescu,0733987654,maria@test.ro,Ilfov,Voluntari,RECOMANDARE,TRIMISA,5000,ACOPERIS";
+                  const headers = [
+                    "Nume Client", "Telefon", "Email", "Localitate", "Judet", "Sursa",
+                    "Categorie Produs", "Brand", "Model", "Culoare", "Valoare Oferta",
+                    "Stadiu Oferta", "Data Vanzarii", "Data Livrarii", "Incasat",
+                    "Comision", "Stadiu Comanda", "Observatii", "Data Adaugare"
+                  ];
+
+                  const rows = [
+                    "Popescu Ioan,0722123456,popescu@test.ro,Sector 1,București,FACEBOOK,GARD,METALLIC_GROUP,SIPCA_GARD,RAL_9005,1500,NOUA,,,NU,,Interesat,Client serios,2025-01-10",
+                    "Maria Ionescu,0733987654,maria@test.ro,Voluntari,Ilfov,RECOMANDARE,ACOPERIS,BILKA,BALCANIC,RAL_7016,5000,TRIMISA,,,NU,,Suna pt detalii,Vrea montaj,2025-01-12",
+                    "SC Constructii SRL,0744555666,office@construct.ro,Cluj-Napoca,Cluj,SITE,RULOURI_EXTERIOARE,SMART,ALTELE,RAL_8017,12500,VANDUT,2025-01-15,2025-01-25,DA,2,LIVRAT,Partener vechi,2025-01-05"
+                  ];
+
+                  const csvContent = [headers.join(","), ...rows].join("\n");
                   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                   const link = document.createElement('a');
                   link.href = URL.createObjectURL(blob);
-                  link.setAttribute('download', 'model_import_clienti.csv');
+                  link.setAttribute('download', 'model_import_clienti_personalizat.csv');
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
