@@ -287,6 +287,9 @@ export default function Clienti() {
   const [viewClient, setViewClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
   const [pendingFiles, setPendingFiles] = useState<{ oferta1?: File; oferta2?: File }>({});
+  const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false);
+  const [sheetId, setSheetId] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["clients", search, stadiuFilter, agentFilter],
@@ -414,6 +417,33 @@ export default function Clienti() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch("/api/integrations/google-sheets/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sheetId: id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Eroare la sincronizare");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast.success(data.message);
+      setIsSyncDialogOpen(false);
+      setSheetId("");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      setIsSyncing(false);
+    }
+  });
+
   const openCreateDialog = () => {
     setEditingClient(null);
     setFormData({
@@ -525,6 +555,10 @@ export default function Clienti() {
               Import CSV
             </Button>
           )}
+          <Button variant="outline" onClick={() => setIsSyncDialogOpen(true)} className="gap-2 text-green-700 border-green-200 hover:bg-green-50" data-testid="button-google-sync">
+            <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+            Sincronizează Google Sheets
+          </Button>
           <Button onClick={openCreateDialog} className="gap-2" data-testid="button-add-client">
             <Plus className="h-4 w-4" />
             Adaugă Client
@@ -1671,13 +1705,49 @@ export default function Clienti() {
       <ClientImportDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
-        onImportComplete={() => {
-          queryClient.invalidateQueries({ queryKey: ["clients"] });
-        }}
-        agents={agents}
+        onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["clients"] })}
         isAdmin={isAdmin}
         currentUserId={user?.id}
       />
+
+      <Dialog open={isSyncDialogOpen} onOpenChange={setIsSyncDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sincronizare Google Sheets</DialogTitle>
+            <DialogDescription>
+              Introdu ID-ul fișierului Google Sheets pentru a importa clienții.
+              Asigură-te că fișierul este partajat cu email-ul robotului de sincronizare.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sheetId">ID Fișier (din URL-ul Google Sheets)</Label>
+              <Input
+                id="sheetId"
+                placeholder="ex: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                value={sheetId}
+                onChange={(e) => setSheetId(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sincronizarea va importa rândurile care conțin Nume și Telefon, setând Sursa ca fiind Facebook.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSyncDialogOpen(false)}>Anulează</Button>
+            <Button
+              onClick={() => {
+                setIsSyncing(true);
+                syncMutation.mutate(sheetId);
+              }}
+              disabled={!sheetId || isSyncing}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSyncing ? "Se sincronizează..." : "Începe Sincronizarea"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

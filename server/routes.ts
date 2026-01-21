@@ -1,7 +1,10 @@
+```typescript
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
+import { db } from "./db";
+import { users, clients, partners, expenseCategories, cheltuieliAgent, cheltuieliSediu, sedii, salariiNeproductivi, employees, productCategoryEnum, clientSourceEnum, offerStatusEnum, orderStatusEnum, commissionPercentEnum, agentManualAchizitii, agentFixedCosts, loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
+import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
@@ -84,7 +87,7 @@ export async function registerRoutes(
       }
       console.error("Login error:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      res.status(500).json({ message: `Eroare la autentificare: ${errorMessage}` });
+      res.status(500).json({ message: `Eroare la autentificare: ${ errorMessage } ` });
     }
   });
 
@@ -1221,7 +1224,7 @@ export async function registerRoutes(
             categoryId,
             subcategoryId,
             suma,
-            descriere: `Import: ${row["Tip Cheltuiala"] || ""} - ${row["Cheltuieli Showroom"] || row["Cheltuieli Auto"] || ""}`.trim(),
+            descriere: `Import: ${ row["Tip Cheltuiala"] || "" } - ${ row["Cheltuieli Showroom"] || row["Cheltuieli Auto"] || "" } `.trim(),
             dataCheltuiala: dateInfo.date.toISOString(),
             luna: dateInfo.luna,
             an: dateInfo.an,
@@ -1234,7 +1237,7 @@ export async function registerRoutes(
           await storage.createCheltuialaAgent(cheltuialaData as any);
 
           if (agentId) {
-            affectedMonths.add(`${agentId}:${dateInfo.an}:${dateInfo.luna}`);
+            affectedMonths.add(`${ agentId }:${ dateInfo.an }:${ dateInfo.luna } `);
           }
 
           success++;
@@ -1469,7 +1472,7 @@ export async function registerRoutes(
           parseInt(an as string)
         );
         result[agent.id] = {
-          agentName: `${agent.firstName} ${agent.lastName}`,
+          agentName: `${ agent.firstName } ${ agent.lastName } `,
           ...costs
         };
       }
@@ -1550,7 +1553,7 @@ export async function registerRoutes(
       for (const agent of agents) {
         const profitResult = await storage.recomputeAgentMonthlyProfit(agent.id, an, luna);
         results.push({
-          agentName: `${agent.firstName} ${agent.lastName}`,
+          agentName: `${ agent.firstName } ${ agent.lastName } `,
           ...profitResult
         });
       }
@@ -1665,6 +1668,63 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Upsert fixed costs error:", error);
       res.status(500).json({ message: "Eroare la salvarea cheltuielilor fixe" });
+    }
+  });
+
+  // ============ GOOGLE SHEETS INTEGRATION ============
+
+  app.post("/api/integrations/google-sheets/sync", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { sheetId } = req.body;
+      const effectiveSheetId = sheetId || process.env.GOOGLE_SHEET_ID;
+
+      if (!effectiveSheetId) {
+        return res.status(400).json({ message: "Lipsă Sheet ID. Configurați GOOGLE_SHEET_ID sau trimiteți-l în request." });
+      }
+
+      console.log(`Starting sync from Google Sheet: ${ effectiveSheetId } `);
+      const sheetRows = await fetchClientsFromSheet(effectiveSheetId);
+      
+      let addedCount = 0;
+      let skippedCount = 0;
+      let errorsCount = 0;
+
+      for (const row of sheetRows) {
+        try {
+          // Check for existing phone number to avoid duplicates
+          // Normalize phone: remove spaces, dashes, etc. if needed, but strict match for now
+          const existing = await db.select().from(clients).where(eq(clients.telefon, row.telefon)).limit(1);
+          
+          if (existing.length > 0) {
+            skippedCount++;
+            continue;
+          }
+
+          await db.insert(clients).values({
+            nume: row.nume,
+            telefon: row.telefon,
+            sursa: "FACEBOOK", // Default per user request
+            stadiuOferta: "NOUA", // Default entry status
+            agentId: req.user?.id, // Assign to current user (the agent clicking sync)
+            dataAdaugare: new Date(),
+          });
+          addedCount++;
+        } catch (err) {
+          console.error(`Error inserting client ${ row.nume }: `, err);
+          errorsCount++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Sincronizare completă.Adăugați: ${ addedCount }, Săriți(există deja): ${ skippedCount }, Erori: ${ errorsCount } `,
+        stats: { addedCount, skippedCount, errorsCount }
+      });
+
+    } catch (error) {
+      console.error("Google Sheets Sync Error:", error);
+      const msg = error instanceof Error ? error.message : "Eroare la sincronizare";
+      res.status(500).json({ message: msg });
     }
   });
 
@@ -1790,17 +1850,17 @@ export async function registerRoutes(
       }
 
       const { clientId, fileType, folder } = req.body;
-      console.log(`[Upload API] Uploading ${req.file.originalname} (${req.file.size} bytes). ClientId: ${clientId}, FileType: ${fileType}, Folder: ${folder}`);
+      console.log(`[Upload API] Uploading ${ req.file.originalname } (${ req.file.size } bytes).ClientId: ${ clientId }, FileType: ${ fileType }, Folder: ${ folder } `);
 
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
 
       // Use folder for general uploads (cheltuieli, etc) or clientId/fileType for client files
       if (folder) {
-        console.log(`[Upload API] General upload to folder: ${folder}`);
+        console.log(`[Upload API] General upload to folder: ${ folder } `);
         const objectName = objectStorageService.generateObjectPath(req.file.originalname, folder);
         const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
-        console.log(`[Upload API] General upload success: ${objectPath}`);
+        console.log(`[Upload API] General upload success: ${ objectPath } `);
         return res.json({ success: true, url: objectPath, filename: req.file.originalname });
       }
 
@@ -1810,18 +1870,18 @@ export async function registerRoutes(
       }
 
       const objectName = objectStorageService.generateObjectPath(req.file.originalname);
-      console.log(`[Upload API] Uploading to object storage: ${objectName}`);
+      console.log(`[Upload API] Uploading to object storage: ${ objectName } `);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
 
       if (fileType === "oferta1") {
-        console.log(`[Upload API] Updating client ${clientId} with oferta1: ${objectPath}`);
+        console.log(`[Upload API] Updating client ${ clientId } with oferta1: ${ objectPath } `);
         await storage.updateClient(clientId, { ofertaFilename: objectPath });
       } else if (fileType === "oferta2") {
-        console.log(`[Upload API] Updating client ${clientId} with oferta2: ${objectPath}`);
+        console.log(`[Upload API] Updating client ${ clientId } with oferta2: ${ objectPath } `);
         await storage.updateClient(clientId, { ofertaFilename2: objectPath });
       }
 
-      console.log(`[Upload API] Client upload success: ${objectPath}`);
+      console.log(`[Upload API] Client upload success: ${ objectPath } `);
       res.json({ success: true, objectPath, filename: req.file.originalname });
     } catch (error) {
       console.error("[Upload API] Server Error:", error);
@@ -1836,7 +1896,7 @@ export async function registerRoutes(
       const objectStorageService = new ObjectStorageService();
 
       const objectPath = req.path;
-      console.log(`[Download API] Request for path: ${objectPath}`);
+      console.log(`[Download API] Request for path: ${ objectPath } `);
       await objectStorageService.getObjectEntityFile(objectPath);
 
       await objectStorageService.downloadObject(objectPath, res);
@@ -1844,7 +1904,7 @@ export async function registerRoutes(
       console.error("[Download API] Error:", error);
       const { ObjectNotFoundError } = await import("./objectStorage");
       if (error instanceof ObjectNotFoundError) {
-        console.warn(`[Download API] File not found: ${req.path}`);
+        console.warn(`[Download API] File not found: ${ req.path } `);
         return res.status(404).json({ message: "Fișierul nu a fost găsit" });
       }
       res.status(500).json({ message: "Eroare la descărcarea fișierului", error: error instanceof Error ? error.message : String(error) });
