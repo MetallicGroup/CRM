@@ -1,4 +1,3 @@
-```typescript
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -87,7 +86,7 @@ export async function registerRoutes(
       }
       console.error("Login error:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      res.status(500).json({ message: `Eroare la autentificare: ${ errorMessage } ` });
+      res.status(500).json({ message: "Eroare la autentificare: " + errorMessage });
     }
   });
 
