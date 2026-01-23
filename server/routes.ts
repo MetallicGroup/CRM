@@ -14,14 +14,37 @@ interface AuthRequest extends Request {
   specialKey?: string;
 }
 
-function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   if (!req.session.userId) {
     return res.status(401).json({ message: "Neautorizat - trebuie să vă autentificați" });
   }
-  req.userId = req.session.userId;
-  req.userRole = req.session.userRole;
-  req.specialKey = req.session.specialKey;
-  next();
+
+  try {
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ message: "Utilizator negăsit" });
+    }
+
+    if (!user.active) {
+      return res.status(401).json({ message: "Contul dvs. este inactiv" });
+    }
+
+    // Refresh request and session data
+    req.userId = user.id;
+    req.userRole = user.role;
+    req.specialKey = user.specialKey || undefined;
+
+    if (req.session.userRole !== user.role) {
+      req.session.userRole = user.role;
+      // Note: we don't necessarily need to await save here, 
+      // but it helps ensure consistency for the current request
+    }
+
+    next();
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+    res.status(500).json({ message: "Eroare la verificarea autorizării" });
+  }
 }
 
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
@@ -1223,7 +1246,7 @@ export async function registerRoutes(
             categoryId,
             subcategoryId,
             suma,
-            descriere: `Import: ${ row["Tip Cheltuiala"] || "" } - ${ row["Cheltuieli Showroom"] || row["Cheltuieli Auto"] || "" } `.trim(),
+            descriere: `Import: ${row["Tip Cheltuiala"] || ""} - ${row["Cheltuieli Showroom"] || row["Cheltuieli Auto"] || ""} `.trim(),
             dataCheltuiala: dateInfo.date.toISOString(),
             luna: dateInfo.luna,
             an: dateInfo.an,
@@ -1236,7 +1259,7 @@ export async function registerRoutes(
           await storage.createCheltuialaAgent(cheltuialaData as any);
 
           if (agentId) {
-            affectedMonths.add(`${ agentId }:${ dateInfo.an }:${ dateInfo.luna } `);
+            affectedMonths.add(`${agentId}:${dateInfo.an}:${dateInfo.luna} `);
           }
 
           success++;
@@ -1471,7 +1494,7 @@ export async function registerRoutes(
           parseInt(an as string)
         );
         result[agent.id] = {
-          agentName: `${ agent.firstName } ${ agent.lastName } `,
+          agentName: `${agent.firstName} ${agent.lastName} `,
           ...costs
         };
       }
@@ -1552,7 +1575,7 @@ export async function registerRoutes(
       for (const agent of agents) {
         const profitResult = await storage.recomputeAgentMonthlyProfit(agent.id, an, luna);
         results.push({
-          agentName: `${ agent.firstName } ${ agent.lastName } `,
+          agentName: `${agent.firstName} ${agent.lastName} `,
           ...profitResult
         });
       }
@@ -1681,9 +1704,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Lipsă Sheet ID. Configurați GOOGLE_SHEET_ID sau trimiteți-l în request." });
       }
 
-      console.log(`Starting sync from Google Sheet: ${ effectiveSheetId } `);
+      console.log(`Starting sync from Google Sheet: ${effectiveSheetId} `);
       const sheetRows = await fetchClientsFromSheet(effectiveSheetId);
-      
+
       let addedCount = 0;
       let skippedCount = 0;
       let errorsCount = 0;
@@ -1693,7 +1716,7 @@ export async function registerRoutes(
           // Check for existing phone number to avoid duplicates
           // Normalize phone: remove spaces, dashes, etc. if needed, but strict match for now
           const existing = await db.select().from(clients).where(eq(clients.telefon, row.telefon)).limit(1);
-          
+
           if (existing.length > 0) {
             skippedCount++;
             continue;
@@ -1709,14 +1732,14 @@ export async function registerRoutes(
           });
           addedCount++;
         } catch (err) {
-          console.error(`Error inserting client ${ row.nume }: `, err);
+          console.error(`Error inserting client ${row.nume}: `, err);
           errorsCount++;
         }
       }
 
       res.json({
         success: true,
-        message: `Sincronizare completă.Adăugați: ${ addedCount }, Săriți(există deja): ${ skippedCount }, Erori: ${ errorsCount } `,
+        message: `Sincronizare completă.Adăugați: ${addedCount}, Săriți(există deja): ${skippedCount}, Erori: ${errorsCount} `,
         stats: { addedCount, skippedCount, errorsCount }
       });
 
@@ -1849,17 +1872,17 @@ export async function registerRoutes(
       }
 
       const { clientId, fileType, folder } = req.body;
-      console.log(`[Upload API] Uploading ${ req.file.originalname } (${ req.file.size } bytes).ClientId: ${ clientId }, FileType: ${ fileType }, Folder: ${ folder } `);
+      console.log(`[Upload API] Uploading ${req.file.originalname} (${req.file.size} bytes).ClientId: ${clientId}, FileType: ${fileType}, Folder: ${folder} `);
 
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
 
       // Use folder for general uploads (cheltuieli, etc) or clientId/fileType for client files
       if (folder) {
-        console.log(`[Upload API] General upload to folder: ${ folder } `);
+        console.log(`[Upload API] General upload to folder: ${folder} `);
         const objectName = objectStorageService.generateObjectPath(req.file.originalname, folder);
         const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
-        console.log(`[Upload API] General upload success: ${ objectPath } `);
+        console.log(`[Upload API] General upload success: ${objectPath} `);
         return res.json({ success: true, url: objectPath, filename: req.file.originalname });
       }
 
@@ -1869,18 +1892,18 @@ export async function registerRoutes(
       }
 
       const objectName = objectStorageService.generateObjectPath(req.file.originalname);
-      console.log(`[Upload API] Uploading to object storage: ${ objectName } `);
+      console.log(`[Upload API] Uploading to object storage: ${objectName} `);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
 
       if (fileType === "oferta1") {
-        console.log(`[Upload API] Updating client ${ clientId } with oferta1: ${ objectPath } `);
+        console.log(`[Upload API] Updating client ${clientId} with oferta1: ${objectPath} `);
         await storage.updateClient(clientId, { ofertaFilename: objectPath });
       } else if (fileType === "oferta2") {
-        console.log(`[Upload API] Updating client ${ clientId } with oferta2: ${ objectPath } `);
+        console.log(`[Upload API] Updating client ${clientId} with oferta2: ${objectPath} `);
         await storage.updateClient(clientId, { ofertaFilename2: objectPath });
       }
 
-      console.log(`[Upload API] Client upload success: ${ objectPath } `);
+      console.log(`[Upload API] Client upload success: ${objectPath} `);
       res.json({ success: true, objectPath, filename: req.file.originalname });
     } catch (error) {
       console.error("[Upload API] Server Error:", error);
@@ -1895,7 +1918,7 @@ export async function registerRoutes(
       const objectStorageService = new ObjectStorageService();
 
       const objectPath = req.path;
-      console.log(`[Download API] Request for path: ${ objectPath } `);
+      console.log(`[Download API] Request for path: ${objectPath} `);
       await objectStorageService.getObjectEntityFile(objectPath);
 
       await objectStorageService.downloadObject(objectPath, res);
@@ -1903,7 +1926,7 @@ export async function registerRoutes(
       console.error("[Download API] Error:", error);
       const { ObjectNotFoundError } = await import("./objectStorage");
       if (error instanceof ObjectNotFoundError) {
-        console.warn(`[Download API] File not found: ${ req.path } `);
+        console.warn(`[Download API] File not found: ${req.path} `);
         return res.status(404).json({ message: "Fișierul nu a fost găsit" });
       }
       res.status(500).json({ message: "Eroare la descărcarea fișierului", error: error instanceof Error ? error.message : String(error) });
