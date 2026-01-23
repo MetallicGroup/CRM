@@ -393,7 +393,7 @@ export class DatabaseStorage implements IStorage {
       dataAdaugare: parseDate(data.dataAdaugare) || new Date(),
       isPartnerOrder: data.isPartnerOrder || false,
       partnerId: data.partnerId || null,
-      categorieProdus: data.categorieProdus || "GARD_METALIC",
+      categorieProdus: data.categorieProdus || "GARD",
       brand: data.brand || null,
       model: data.model || null,
       suprafataMp: parseDecimal(data.suprafataMp),
