@@ -655,19 +655,23 @@ export default function Clienti() {
             <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[18%]">Nume</TableHead>
+                  <TableHead className="w-[5%]">Nr.</TableHead>
+                  <TableHead className="w-[15%]">Nume</TableHead>
                   <TableHead className="w-[15%]">Contact</TableHead>
                   <TableHead className="w-[15%]">Locație</TableHead>
                   <TableHead className="w-[10%]">Stadiu</TableHead>
                   <TableHead className="w-[12%]">Categorie</TableHead>
                   <TableHead className="w-[10%]">Valoare</TableHead>
                   <TableHead className="w-[8%]">Doc</TableHead>
-                  <TableHead className="w-[12%] text-right">Acțiuni</TableHead>
+                  <TableHead className="w-[10%] text-right">Acțiuni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
                   <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
+                    <TableCell className="py-2 text-center text-xs font-mono text-muted-foreground">
+                      {client.numCriteriu || ""}
+                    </TableCell>
                     <TableCell className="py-2">
                       <div className="truncate">
                         <div className="font-medium truncate" title={client.nume}>{client.nume}</div>
