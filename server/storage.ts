@@ -388,7 +388,10 @@ export class DatabaseStorage implements IStorage {
     let numCriteriu: number | null = null;
     if (data.agentId) {
       const agent = await this.getUser(data.agentId);
-      if (agent && agent.firstName.toLowerCase().includes('alexandru') && agent.lastName.toLowerCase().includes('croitoru')) {
+      if (agent && (
+        agent.email === 'alexandru@metallicgroup.ro' ||
+        (agent.firstName.toLowerCase().includes('alexandru') && agent.lastName.toLowerCase().includes('croitoru'))
+      )) {
         numCriteriu = await this.getNextCriteriumNumber(data.agentId);
       }
     }

@@ -5,11 +5,12 @@ import { eq, like, or } from 'drizzle-orm';
 
 async function findUser() {
     try {
-        console.log('Searching for users with name like Madalina...');
+        console.log('Searching for users with name like Croitoru...');
         const results = await db.select().from(users).where(
             or(
-                like(users.firstName, '%Madalina%'),
-                like(users.lastName, '%Madalina%')
+                like(users.firstName, '%Croitoru%'),
+                like(users.lastName, '%Croitoru%'),
+                like(users.email, '%croitoru%')
             )
         );
 
