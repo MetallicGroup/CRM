@@ -12,6 +12,8 @@ export const clientSourceEnum = pgEnum("client_source", [
   "SITE",
   "RECOMANDARE",
   "TARG",
+  "OLX",
+  "TELEFON",
   "ALTELE"
 ]);
 
@@ -39,7 +41,8 @@ export const offerStatusEnum = pgEnum("offer_status", [
   "ACCEPTATA",
   "VANDUT",
   "REFUZAT",
-  "ANULATA"
+  "ANULATA",
+  "INFORMATII"
 ]);
 
 export const employeeTypeEnum = pgEnum("employee_type", ["AGENT", "PRODUCTIE", "INDIRECT"]);
@@ -208,6 +211,7 @@ export const clients = pgTable("clients", {
   email: varchar("email", { length: 120 }),
   localitate: varchar("localitate", { length: 100 }),
   judet: varchar("judet", { length: 100 }),
+  numCriteriu: integer("num_criteriu"),
 
   // SECȚIUNEA 2: Informații partener
   isPartnerOrder: boolean("is_partner_order").default(false),
@@ -277,12 +281,13 @@ export const insertClientSchema = createInsertSchema(clients).omit({
 export const createClientSchema = z.object({
   // Secțiunea 1: Informații de bază
   dataAdaugare: z.string().optional(),
-  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "ALTELE"]).default("ALTELE"),
+  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "OLX", "TELEFON", "ALTELE"]).default("ALTELE"),
   nume: z.string().min(1, "Numele este obligatoriu"),
   telefon: z.string().min(1, "Telefonul este obligatoriu"),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
   localitate: z.string().optional(),
   judet: z.string().optional(),
+  numCriteriu: z.number().optional(),
 
   // Secțiunea 2: Informații partener
   isPartnerOrder: z.boolean().optional().default(false),
@@ -301,7 +306,7 @@ export const createClientSchema = z.object({
 
   // Secțiunea 4: Ofertă și vânzare
   valoareOferta: z.string().optional(),
-  stadiuOferta: z.enum(["NOUA", "TRIMISA", "IN_ASTEPTARE", "ACCEPTATA", "VANDUT", "REFUZAT", "ANULATA"]).optional(),
+  stadiuOferta: z.enum(["NOUA", "TRIMISA", "IN_ASTEPTARE", "ACCEPTATA", "VANDUT", "REFUZAT", "ANULATA", "INFORMATII"]).optional(),
   dataOfertarii: z.string().optional(),
   stadiuComanda: z.enum(["CUSTODIE", "COMANDAT", "LISTAT", "IN_PRODUCTIE", "PRODUS", "LIVRAT"]).optional(),
   dataVanzarii: z.string().optional(),
@@ -341,9 +346,9 @@ export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
-export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "ALTELE";
+export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "OLX" | "TELEFON" | "ALTELE";
 export type ProductCategory = "GARD" | "ACOPERIS" | "RULOURI_EXTERIOARE" | "FATADA" | "SISTEM_PLUVIAL" | "FERESTRE_MANSARDA" | "SAGEAC" | "ACCESORII" | "ELEMENTE_SPECIALE" | "STORE_EXTERIOARE" | "JALUZELE_INTERIOARE" | "ROLETE" | "PLISEE";
-export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA";
+export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA" | "INFORMATII";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
 export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015";
 export type Thickness = "0.50" | "0.60";

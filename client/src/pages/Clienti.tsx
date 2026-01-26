@@ -62,7 +62,7 @@ import {
   Handshake,
   Download,
   File as FileIcon,
-  Upload
+  Upload,
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
@@ -92,6 +92,7 @@ const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }
   { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
   { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-100 text-red-800" },
   { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
+  { value: "INFORMATII", label: "Informații", color: "bg-purple-100 text-purple-800" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -110,6 +111,8 @@ const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
   { value: "SITE", label: "Site" },
   { value: "RECOMANDARE", label: "Recomandare" },
   { value: "TARG", label: "Târg" },
+  { value: "OLX", label: "OLX" },
+  { value: "TELEFON", label: "Telefon" },
   { value: "ALTELE", label: "Altele" },
 ];
 
@@ -503,6 +506,7 @@ export default function Clienti() {
       comentariiDupaContact: client.comentariiDupaContact || "",
       contactat: client.contactat || false,
       agentId: client.agentId || "",
+      numCriteriu: client.numCriteriu ?? undefined,
     });
     setIsDialogOpen(true);
   };
@@ -855,6 +859,17 @@ export default function Clienti() {
                     data-testid="input-email"
                   />
                 </div>
+                {formData.numCriteriu && (
+                  <div className="space-y-2">
+                    <Label>Nr. Criteriu</Label>
+                    <Input
+                      value={formData.numCriteriu}
+                      readOnly
+                      disabled
+                      className="bg-gray-100 font-mono text-center"
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="judet">Județ</Label>
@@ -1708,6 +1723,7 @@ export default function Clienti() {
         onImportComplete={() => queryClient.invalidateQueries({ queryKey: ["clients"] })}
         isAdmin={isAdmin}
         currentUserId={user?.id}
+        agents={agents}
       />
 
       <Dialog open={isSyncDialogOpen} onOpenChange={setIsSyncDialogOpen}>

@@ -80,6 +80,7 @@ export interface IStorage {
   getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
   bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update" | "create"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
   bulkImportAgentFixedCosts(rows: any[]): Promise<{ success: number; errors: number }>;
+  getNextCriteriumNumber(agentId: string): Promise<number>;
 
   // Employee methods
   getEmployee(id: string): Promise<Employee | undefined>;
@@ -383,6 +384,15 @@ export class DatabaseStorage implements IStorage {
       return isNaN(date.getTime()) ? null : date;
     };
 
+    // Check if this client is for Alexandru Croitoru and assign criteriu number
+    let numCriteriu: number | null = null;
+    if (data.agentId) {
+      const agent = await this.getUser(data.agentId);
+      if (agent && agent.firstName.toLowerCase().includes('alexandru') && agent.lastName.toLowerCase().includes('croitoru')) {
+        numCriteriu = await this.getNextCriteriumNumber(data.agentId);
+      }
+    }
+
     const clientData: any = {
       nume: data.nume,
       telefon: data.telefon,
@@ -427,6 +437,7 @@ export class DatabaseStorage implements IStorage {
       comentariiDupaContact: data.comentariiDupaContact || null,
       contactat: data.contactat || false,
       agentId: data.agentId || null,
+      numCriteriu: numCriteriu,
     };
 
     const [client] = await db.insert(clients).values(clientData).returning();
@@ -737,6 +748,24 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { success, errors, skipped, errorDetails };
+  }
+
+  async getNextCriteriumNumber(agentId: string): Promise<number> {
+    // Get the maximum criteriu number for this agent
+    const result = await db
+      .select({ maxCriteriu: sql<number>`MAX(${clients.numCriteriu})` })
+      .from(clients)
+      .where(eq(clients.agentId, agentId));
+
+    const maxCriteriu = result[0]?.maxCriteriu;
+
+    // If no criteriu numbers exist yet, start from 7984
+    if (maxCriteriu === null || maxCriteriu === undefined) {
+      return 7984;
+    }
+
+    // Otherwise, return the next number
+    return maxCriteriu + 1;
   }
 
   async getActiveAgentsCount(): Promise<number> {

@@ -7,6 +7,7 @@ import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
+import { eq } from "drizzle-orm";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -1727,7 +1728,7 @@ export async function registerRoutes(
             telefon: row.telefon,
             sursa: "FACEBOOK", // Default per user request
             stadiuOferta: "NOUA", // Default entry status
-            agentId: req.user?.id, // Assign to current user (the agent clicking sync)
+            agentId: req.userId, // Assign to current user (the agent clicking sync)
             dataAdaugare: new Date(),
           });
           addedCount++;
