@@ -14,6 +14,10 @@ export const clientSourceEnum = pgEnum("client_source", [
   "TARG",
   "OLX",
   "TELEFON",
+  "MONTATORI_COLABORATORI",
+  "BIROU",
+  "COMPLETARE_CLIENT_VECHI",
+  "TIKTOK",
   "ALTELE"
 ]);
 
@@ -282,7 +286,7 @@ export const insertClientSchema = createInsertSchema(clients).omit({
 export const createClientSchema = z.object({
   // Secțiunea 1: Informații de bază
   dataAdaugare: z.string().optional(),
-  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "OLX", "TELEFON", "ALTELE"]).default("ALTELE"),
+  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "OLX", "TELEFON", "MONTATORI_COLABORATORI", "BIROU", "COMPLETARE_CLIENT_VECHI", "TIKTOK", "ALTELE"]).default("ALTELE"),
   nume: z.string().min(1, "Numele este obligatoriu"),
   telefon: z.string().min(1, "Telefonul este obligatoriu"),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
@@ -348,7 +352,7 @@ export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
-export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "OLX" | "TELEFON" | "ALTELE";
+export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "OLX" | "TELEFON" | "MONTATORI_COLABORATORI" | "BIROU" | "COMPLETARE_CLIENT_VECHI" | "TIKTOK" | "ALTELE";
 export type ProductCategory = "GARD" | "ACOPERIS" | "RULOURI_EXTERIOARE" | "FATADA" | "SISTEM_PLUVIAL" | "FERESTRE_MANSARDA" | "SAGEAC" | "ACCESORII" | "ELEMENTE_SPECIALE" | "STORE_EXTERIOARE" | "JALUZELE_INTERIOARE" | "ROLETE" | "PLISEE";
 export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA" | "INFORMATII";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";

@@ -113,6 +113,10 @@ const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
   { value: "TARG", label: "Târg" },
   { value: "OLX", label: "OLX" },
   { value: "TELEFON", label: "Telefon" },
+  { value: "MONTATORI_COLABORATORI", label: "Montatori/Colaboratori" },
+  { value: "BIROU", label: "Birou" },
+  { value: "COMPLETARE_CLIENT_VECHI", label: "Completare / Client Vechi" },
+  { value: "TIKTOK", label: "Tik Tok" },
   { value: "ALTELE", label: "Altele" },
 ];
 
