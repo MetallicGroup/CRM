@@ -55,7 +55,7 @@ import {
   type AppSetting
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, and, or, ilike, sql, gte, lte, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -345,7 +345,10 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
 
     if (filters?.agentId) {
+      // When filtering by agentId, ensure we only get clients assigned to that agent
+      // and exclude clients with null agentId
       conditions.push(eq(clients.agentId, filters.agentId));
+      conditions.push(isNotNull(clients.agentId));
     }
 
     if (filters?.stadiuOferta) {
@@ -418,6 +421,7 @@ export class DatabaseStorage implements IStorage {
       valoareOferta: parseDecimal(data.valoareOferta),
       stadiuOferta: data.stadiuOferta || "NOUA",
       dataOfertarii: parseDate(data.dataOfertarii),
+      avans: data.avans || false,
       stadiuComanda: data.stadiuComanda || null,
       dataVanzarii: parseDate(data.dataVanzarii),
       dataLivrarii: parseDate(data.dataLivrarii),
@@ -483,6 +487,7 @@ export class DatabaseStorage implements IStorage {
     if (data.valoareOferta !== undefined) updateData.valoareOferta = parseDecimal(data.valoareOferta);
     if (data.stadiuOferta !== undefined) updateData.stadiuOferta = data.stadiuOferta;
     if (data.dataOfertarii !== undefined) updateData.dataOfertarii = parseDate(data.dataOfertarii);
+    if (data.avans !== undefined) updateData.avans = data.avans;
     if (data.stadiuComanda !== undefined) updateData.stadiuComanda = data.stadiuComanda || null;
     if (data.dataVanzarii !== undefined) updateData.dataVanzarii = parseDate(data.dataVanzarii);
     if (data.dataLivrarii !== undefined) updateData.dataLivrarii = parseDate(data.dataLivrarii);
@@ -530,7 +535,9 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(clients);
 
     if (agentId) {
-      query = query.where(eq(clients.agentId, agentId)) as any;
+      // When filtering by agentId, ensure we only get clients assigned to that agent
+      // and exclude clients with null agentId
+      query = query.where(and(eq(clients.agentId, agentId), isNotNull(clients.agentId))) as any;
     }
 
     const allClients = await query;

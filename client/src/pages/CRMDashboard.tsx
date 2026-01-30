@@ -68,10 +68,12 @@ export default function CRMDashboard() {
   const formattedTime = format(currentTime, "HH:mm:ss");
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats", selectedAgent],
+    queryKey: ["dashboard-stats", isAdmin ? selectedAgent : user?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedAgent && selectedAgent !== "all") {
+      // For admins, allow filtering by selected agent
+      // For non-admins, backend already filters by their userId, so we don't send agentId
+      if (isAdmin && selectedAgent && selectedAgent !== "all") {
         params.set("agentId", selectedAgent);
       }
       const res = await fetch(`/api/dashboard/stats?${params}`);
@@ -88,6 +90,7 @@ export default function CRMDashboard() {
       if (!res.ok) return [];
       return res.json();
     },
+    enabled: isAdmin, // Only load agents list for admins
   });
 
   const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0, wonValue: 0, pipelineValue: 0 };
@@ -232,29 +235,31 @@ export default function CRMDashboard() {
               </p>
             </div>
 
-            {/* Agent Selector */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <UserCheck className="h-4 w-4 text-blue-600" />
-                Selectează agent
-              </label>
-              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger data-testid="select-agent-filter">
-                  <SelectValue placeholder="Selectează agent" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toți agenții</SelectItem>
-                  {agents.filter(a => a.id).map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.firstName} {agent.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Selectează un agent specific sau lasă "Toți"
-              </p>
-            </div>
+            {/* Agent Selector - Only for admins */}
+            {isAdmin && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <UserCheck className="h-4 w-4 text-blue-600" />
+                  Selectează agent
+                </label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger data-testid="select-agent-filter">
+                    <SelectValue placeholder="Selectează agent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toți agenții</SelectItem>
+                    {agents.filter(a => a.id).map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.firstName} {agent.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selectează un agent specific sau lasă "Toți"
+                </p>
+              </div>
+            )}
 
             {/* Selected Dates Display */}
             <div className="space-y-2">
@@ -297,22 +302,24 @@ export default function CRMDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Agent:</span>
-              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toți agenții</SelectItem>
-                  {agents.filter(a => a.id).map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.firstName} {agent.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Agent:</span>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toți agenții</SelectItem>
+                    {agents.filter(a => a.id).map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.firstName} {agent.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
 

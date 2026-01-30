@@ -253,6 +253,7 @@ const defaultFormData: Partial<CreateClient> = {
   valoareOferta: "",
   stadiuOferta: "NOUA",
   dataOfertarii: "",
+  avans: false,
   stadiuComanda: undefined,
   dataVanzarii: "",
   dataLivrarii: "",
@@ -484,6 +485,7 @@ export default function Clienti() {
             client.stadiuOferta as any === "PIERDUT" ? "REFUZAT" :
               client.stadiuOferta) || "NOUA",
       dataOfertarii: client.dataOfertarii ? format(new Date(client.dataOfertarii), "yyyy-MM-dd") : "",
+      avans: client.avans || false,
       stadiuComanda: client.stadiuComanda || undefined,
       dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
       dataLivrarii: client.dataLivrarii ? format(new Date(client.dataLivrarii), "yyyy-MM-dd") : "",
@@ -1209,6 +1211,17 @@ export default function Clienti() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="avans"
+                    checked={formData.avans || false}
+                    onCheckedChange={(checked) => setFormData({ ...formData, avans: !!checked })}
+                    data-testid="checkbox-avans"
+                  />
+                  <Label htmlFor="avans" className="text-sm font-normal cursor-pointer">
+                    Avans
+                  </Label>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

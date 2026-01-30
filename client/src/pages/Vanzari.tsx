@@ -68,13 +68,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function Vanzari() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["clients", "won"],
+    queryKey: ["clients", "won", isAdmin ? selectedAgent : user?.id],
     queryFn: async () => {
       const res = await fetch("/api/clients?stadiuOferta=VANDUT");
       if (!res.ok) throw new Error("Eroare la încărcarea vânzărilor");
@@ -89,6 +89,7 @@ export default function Vanzari() {
       if (!res.ok) return [];
       return res.json();
     },
+    enabled: isAdmin, // Only load agents list for admins
   });
 
   const filteredClients = clients.filter((client) => {
@@ -96,7 +97,11 @@ export default function Vanzari() {
       client.nume.toLowerCase().includes(search.toLowerCase()) ||
       client.telefon.includes(search);
     
-    const matchesAgent = selectedAgent === "all" || client.agentId === selectedAgent;
+    // For non-admins, backend already filters by their agentId, so we don't need to filter by agent here
+    // For admins, allow filtering by selected agent
+    const matchesAgent = isAdmin 
+      ? (selectedAgent === "all" || client.agentId === selectedAgent)
+      : true; // Non-admins see only their own clients (already filtered by backend)
     const matchesCategory = selectedCategory === "all" || client.categorieProdus === selectedCategory;
     
     return matchesSearch && matchesAgent && matchesCategory;
