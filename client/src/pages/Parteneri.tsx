@@ -200,7 +200,8 @@ export default function Parteneri() {
       adresa: "",
       persoanaContact: "",
       note: "",
-      activ: true,
+      // Agenții creează parteneri neaprobați (inactivi)
+      activ: isAdmin,
     });
   };
 
@@ -262,12 +263,22 @@ export default function Parteneri() {
             </p>
           </div>
         </div>
-        {isAdmin && (
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {partners.some(p => !p.activ) && (
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-300">
+                  Parteneri de aprobat:{" "}
+                  {partners.filter(p => !p.activ).length}
+                </Badge>
+              )}
+            </div>
+          )}
           <Button onClick={openCreateDialog} className="gap-2" data-testid="button-add-partner">
             <Plus className="h-4 w-4" />
-            Adaugă Partener
+            {isAdmin ? "Adaugă Partener" : "Propune Partener"}
           </Button>
-        )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -545,14 +556,16 @@ export default function Parteneri() {
                 data-testid="input-note"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={formData.activ}
-                onCheckedChange={(checked) => setFormData({ ...formData, activ: checked })}
-                data-testid="switch-activ"
-              />
-              <Label>Partener activ</Label>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={formData.activ}
+                  onCheckedChange={(checked) => setFormData({ ...formData, activ: checked })}
+                  data-testid="switch-activ"
+                />
+                <Label>Partener activ</Label>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

@@ -745,11 +745,19 @@ export async function registerRoutes(
     }
   });
 
-  // Create partner (admin only)
-  app.post("/api/partners", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+  // Create partner
+  // Admin: poate crea parteneri deja activi
+  // Agent: poate propune parteneri (activ=false), apoi adminul îi aprobă
+  app.post("/api/partners", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const data = createPartnerSchema.parse(req.body);
-      const partner = await storage.createPartner(data);
+      const isAdmin = req.userRole === "ADMIN";
+
+      const partner = await storage.createPartner({
+        ...data,
+        // Agenții nu pot crea direct parteneri activi
+        activ: isAdmin ? (data as any).activ ?? true : false,
+      } as any);
       res.status(201).json(partner);
     } catch (error) {
       if (error instanceof z.ZodError) {
