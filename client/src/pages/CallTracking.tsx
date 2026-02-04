@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Phone, Search, User } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { addDays } from "date-fns";
 import { useAuth } from "@/lib/auth";
 import type { Client, OfferStatus } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -25,6 +30,9 @@ export default function CallTracking() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [onlyFollowUp, setOnlyFollowUp] = useState<boolean>(true);
   const [search, setSearch] = useState("");
+   // interval implicit: ultimele 30 de zile
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(addDays(new Date(), -30));
+  const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
 
   const { data: agents = [] } = useQuery<Agent[]>({
     queryKey: ["dashboard-agents"],
@@ -52,22 +60,31 @@ export default function CallTracking() {
     },
   });
 
-  const filteredClients = clients.filter((client) => {
-    if (onlyFollowUp && !FOLLOW_UP_STATUSES.includes((client.stadiuOferta || "NOUA") as OfferStatus)) {
-      return false;
-    }
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) => {
+      if (onlyFollowUp && !FOLLOW_UP_STATUSES.includes((client.stadiuOferta || "NOUA") as OfferStatus)) {
+        return false;
+      }
 
-    if (search) {
-      const term = search.toLowerCase();
-      const matchesSearch =
-        client.nume.toLowerCase().includes(term) ||
-        client.telefon?.toLowerCase().includes(term) ||
-        client.email?.toLowerCase().includes(term);
-      if (!matchesSearch) return false;
-    }
+      if (search) {
+        const term = search.toLowerCase();
+        const matchesSearch =
+          client.nume.toLowerCase().includes(term) ||
+          client.telefon?.toLowerCase().includes(term) ||
+          client.email?.toLowerCase().includes(term);
+        if (!matchesSearch) return false;
+      }
 
-    return true;
-  });
+      // Filtrare după interval de dată: folosim în primul rând data ultimului apel, altfel data adăugării clientului
+      const lastCallRaw = (client as any).lastCallAt as string | undefined;
+      const baseDate = lastCallRaw ? new Date(lastCallRaw) : client.createdAt ? new Date(client.createdAt as any) : undefined;
+
+      if (dateFrom && baseDate && baseDate < dateFrom) return false;
+      if (dateTo && baseDate && baseDate > addDays(dateTo, 1)) return false;
+
+      return true;
+    });
+  }, [clients, onlyFollowUp, search, dateFrom, dateTo]);
 
   const totalWithFollowUp = filteredClients.length;
   const totalCalled = filteredClients.filter((c) => (c as any).callCount && (c as any).callCount > 0).length;
@@ -179,6 +196,49 @@ export default function CallTracking() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-[260px] flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "justify-start text-left font-normal w-full",
+                      !dateFrom && !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom || dateTo ? (
+                      <>
+                        {dateFrom && dateFrom.toLocaleDateString("ro-RO")} –{" "}
+                        {dateTo && dateTo.toLocaleDateString("ro-RO")}
+                      </>
+                    ) : (
+                      <span>Interval dată</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="start">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">De la</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={(date) => setDateFrom(date || undefined)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Până la</p>
+                      <Calendar
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={(date) => setDateTo(date || undefined)}
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="flex items-center gap-2">
               <input
                 id="onlyFollowUp"
@@ -216,6 +276,7 @@ export default function CallTracking() {
                   <TableHead>Agent</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Stadiu ofertă</TableHead>
+                  <TableHead>Data adăugării</TableHead>
                   <TableHead>Apel</TableHead>
                   <TableHead>Nr. apeluri</TableHead>
                   <TableHead>Ultimul apel</TableHead>
@@ -227,6 +288,13 @@ export default function CallTracking() {
                   const lastCallAt = (client as any).lastCallAt
                     ? new Date((client as any).lastCallAt as any)
                     : null;
+                  const createdAt = client.createdAt ? new Date(client.createdAt as any) : null;
+                  const agentName =
+                    agents.find((a) => a.id === client.agentId)?.firstName +
+                      " " +
+                      (agents.find((a) => a.id === client.agentId)?.lastName || "") ||
+                    client.agentId ||
+                    "Neasignat";
 
                   return (
                     <TableRow key={client.id}>
@@ -242,8 +310,17 @@ export default function CallTracking() {
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <User className="h-3 w-3" />
-                          {client.agentId || "Neasignat"}
+                          {agentName.trim()}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {createdAt ? (
+                          <span className="text-xs text-muted-foreground">
+                            {createdAt.toLocaleDateString("ro-RO")}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1 text-sm">
