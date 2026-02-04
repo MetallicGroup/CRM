@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
-import { 
+import {
   LayoutDashboard, 
   Users, 
   Target, 
@@ -34,7 +34,8 @@ import {
   User,
   Settings,
   ChevronDown,
-  Key
+  Key,
+  PhoneCall,
 } from 'lucide-react';
 
 interface NavItem {
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
   { icon: Handshake, label: 'Parteneri', href: '/parteneri' },
   { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli', adminOnly: true },
   { icon: Calculator, label: 'Profitabilitate', href: '/profitabilitate', adminOnly: true },
+  { icon: PhoneCall, label: 'Apeluri Clienți', href: '/admin/apeluri', adminOnly: true },
 ];
 
 export function Header() {
