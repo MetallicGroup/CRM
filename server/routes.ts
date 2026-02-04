@@ -74,6 +74,36 @@ export async function registerRoutes(
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // ============ FACEBOOK LEAD WEBHOOK ============
+  // Verification endpoint for Facebook Webhooks (Lead Ads)
+  app.get("/api/facebook/lead", (req: Request, res: Response) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === process.env.FB_VERIFY_TOKEN) {
+      if (typeof challenge === "string" || typeof challenge === "number") {
+        return res.status(200).send(challenge.toString());
+      }
+      return res.status(200).send("");
+    }
+
+    return res.sendStatus(403);
+  });
+
+  // Receive lead notifications (we vom completa logica de creare client mai târziu)
+  app.post("/api/facebook/lead", async (req: Request, res: Response) => {
+    try {
+      // Pentru început doar confirmăm recepția, ca Facebook să considere webhook-ul valid
+      // Vom adăuga ulterior integrarea completă (Graph API → createClient).
+      console.log("Received Facebook lead webhook:", JSON.stringify(req.body));
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("Facebook lead webhook error:", error);
+      res.sendStatus(500);
+    }
+  });
+
   // ============ AUTH ROUTES ============
 
   // Login
