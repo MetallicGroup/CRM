@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,6 @@ import type {
   Thickness,
   FinishType,
   Brand,
-  Model,
   CommissionPercent
 } from "@shared/schema";
 
@@ -107,33 +106,33 @@ const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
 const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
   { value: "FACEBOOK", label: "Facebook" },
   { value: "GOOGLE", label: "Google" },
-  { value: "RECLAME", label: "Reclame" },
+  { value: "RECLAME_CAMPANII", label: "Reclame / Campanii" },
   { value: "SITE", label: "Site" },
   { value: "RECOMANDARE", label: "Recomandare" },
   { value: "TARG", label: "Târg" },
   { value: "OLX", label: "OLX" },
+  { value: "CEL_RO", label: "Cel.ro" },
+  { value: "OKAZII", label: "Okazii" },
+  { value: "PUBLI24", label: "Publi24" },
   { value: "TELEFON", label: "Telefon" },
-  { value: "MONTATORI_COLABORATORI", label: "Montatori/Colaboratori" },
-  { value: "BIROU", label: "Birou" },
-  { value: "COMPLETARE_CLIENT_VECHI", label: "Completare / Client Vechi" },
+  { value: "MONTATORI", label: "Montatori" },
+  { value: "BIROU_SHOWROOM", label: "Birou/Showroom" },
+  { value: "COMPLETARE", label: "Completare" },
   { value: "TIKTOK", label: "Tik Tok" },
-  { value: "ALTELE", label: "Altele" },
+  { value: "PARTENERI", label: "Parteneri" },
 ];
 
 const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
-  { value: "GARD", label: "Gard" },
   { value: "ACOPERIS", label: "Acoperiș" },
-  { value: "RULOURI_EXTERIOARE", label: "Rulouri Exterioare" },
+  { value: "GARD", label: "Gard" },
   { value: "FATADA", label: "Fațadă" },
-  { value: "SISTEM_PLUVIAL", label: "Sistem Pluvial" },
-  { value: "FERESTRE_MANSARDA", label: "Ferestre Mansardă" },
-  { value: "SAGEAC", label: "Șageac" },
-  { value: "ACCESORII", label: "Accesorii" },
-  { value: "ELEMENTE_SPECIALE", label: "Elemente Speciale" },
-  { value: "STORE_EXTERIOARE", label: "Store Exterioare" },
-  { value: "JALUZELE_INTERIOARE", label: "Jaluzele Interioare" },
-  { value: "ROLETE", label: "Rolete" },
-  { value: "PLISEE", label: "Plisee" },
+  { value: "SISTEM_PLUVIAL", label: "Sistem pluvial" },
+  { value: "SAGEAC", label: "Sageac" },
+  { value: "ELEMENTE_SPECIALE", label: "Elemente speciale" },
+  { value: "FERESTRE_MANSARDA", label: "Ferestre mansardă" },
+  { value: "SCARI_ACCES", label: "Scări acces" },
+  { value: "ACCESORII_FERESTRE", label: "Accesorii ferestre/usi" },
+  { value: "SCULE", label: "Scule" },
 ];
 
 const COLOR_OPTIONS: { value: ColorRAL; label: string }[] = [
@@ -181,10 +180,99 @@ const BRAND_OPTIONS: { value: Brand; label: string }[] = [
   { value: "STUBAI", label: "Stubai" },
   { value: "TPS", label: "TPS" },
   { value: "ROOF4YOU", label: "Roof4You" },
-  { value: "CUTATA", label: "Cutata" },
 ];
 
-const MODEL_OPTIONS: { value: Model; label: string }[] = [
+type ModelOption = { value: string; label: string };
+
+// Config: modele pe categorie + brand (bazat pe tabelul dat)
+const PRODUCT_MODEL_OPTIONS: Partial<
+  Record<ProductCategory, Partial<Record<Brand, ModelOption[]>>>
+> = {
+  ACOPERIS: {
+    CARETTA: [
+      { value: "Attica", label: "Attica" },
+      { value: "Daily", label: "Daily" },
+      { value: "Bello", label: "Bello" },
+      { value: "Regal", label: "Regal" },
+      { value: "Nobel", label: "Nobel" },
+      { value: "Canto", label: "Canto" },
+      { value: "Tabla cutata CRT 18", label: "Tabla cutată CRT 18" },
+      { value: "Tabla cutata CRT 20", label: "Tabla cutată CRT 20" },
+      { value: "Tabla cutata CRT 35", label: "Tabla cutată CRT 35" },
+    ],
+    BILKA: [
+      { value: "Classic", label: "Classic" },
+      { value: "Balcanic", label: "Balcanic" },
+      { value: "Gothic", label: "Gothic" },
+      { value: "Iberic", label: "Iberic" },
+      { value: "Romantic", label: "Romantic" },
+      { value: "Britanic", label: "Britanic" },
+      { value: "Adriatic", label: "Adriatic" },
+      { value: "Helenic", label: "Helenic" },
+      { value: "Click", label: "Click" },
+      { value: "Faltz", label: "Faltz" },
+      { value: "Tabla cutata T8", label: "Tabla cutată T8" },
+      { value: "Tabla cutata T12", label: "Tabla cutată T12" },
+      { value: "Tabla cutata T18", label: "Tabla cutată T18" },
+      { value: "Tabla cutata T35", label: "Tabla cutată T35" },
+      { value: "Tabla cutata T45", label: "Tabla cutată T45" },
+    ],
+    WETTERBEST: [
+      { value: "Classic", label: "Classic" },
+      { value: "Gladiator", label: "Gladiator" },
+      { value: "Cardinal", label: "Cardinal" },
+      { value: "Imperator", label: "Imperator" },
+      { value: "Plus", label: "Plus" },
+      { value: "Colosseum", label: "Colosseum" },
+      { value: "Click", label: "Click" },
+      { value: "Faltz", label: "Faltz" },
+      { value: "Tabla cutata W8", label: "Tabla cutată W8" },
+      { value: "Tabla cutata W10", label: "Tabla cutată W10" },
+      { value: "Tabla cutata W18", label: "Tabla cutată W18" },
+      { value: "Tabla cutata W35", label: "Tabla cutată W35" },
+      { value: "Tabla cutata W60", label: "Tabla cutată W60" },
+    ],
+  },
+  GARD: {
+    MX: [
+      { value: "MX 15", label: "MX 15" },
+      { value: "MX 25", label: "MX 25" },
+      { value: "MX 60", label: "MX 60" },
+      { value: "MC 75", label: "MC 75" },
+      { value: "MC 105", label: "MC 105" },
+      { value: "MX 15 DUO", label: "MX 15 DUO" },
+      { value: "MX 25 DUO", label: "MX 25 DUO" },
+      { value: "MX 60 DUO", label: "MX 60 DUO" },
+      { value: "MC 75 DUO", label: "MC 75 DUO" },
+      { value: "MC 105 DUO", label: "MC 105 DUO" },
+    ],
+    CARETTA: [
+      { value: "Sipca gard", label: "Șipcă gard" },
+      { value: "X 121", label: "X 121" },
+      { value: "X 135", label: "X 135" },
+      { value: "X 174", label: "X 174" },
+      { value: "X 121 2F", label: "X 121 2F" },
+      { value: "X 135 2F", label: "X 135 2F" },
+      { value: "X 120 caseta", label: "X 120 casetă" },
+      { value: "X 138 caseta", label: "X 138 casetă" },
+      { value: "X 140 caseta", label: "X 140 casetă" },
+    ],
+    WETTERBEST: [
+      { value: "Sipca W 91", label: "Șipcă W 91" },
+      { value: "Sipca W 107", label: "Șipcă W 107" },
+      { value: "Sipca B 93", label: "Șipcă B 93" },
+      { value: "Sipca B 105", label: "Șipcă B 105" },
+    ],
+    BILKA: [
+      { value: "Sipca Y 109", label: "Șipcă Y 109" },
+      { value: "Sipca Y 112", label: "Șipcă Y 112" },
+      { value: "Sipca Y 115", label: "Șipcă Y 115" },
+      { value: "Sipca Y 118", label: "Șipcă Y 118" },
+    ],
+  },
+};
+
+const LEGACY_MODEL_OPTIONS: ModelOption[] = [
   { value: "SIPCA_GARD", label: "Șipcă Gard" },
   { value: "TRAFORAT", label: "Traforat" },
   { value: "MX_15", label: "MX 15" },
@@ -210,6 +298,21 @@ const MODEL_OPTIONS: { value: Model; label: string }[] = [
   { value: "Y118", label: "Y118" },
   { value: "DAILY", label: "Daily" },
 ];
+
+const getAvailableModels = (
+  categorieProdus?: ProductCategory,
+  brand?: Brand
+): ModelOption[] => {
+  if (categorieProdus && PRODUCT_MODEL_OPTIONS[categorieProdus]) {
+    const byBrand = PRODUCT_MODEL_OPTIONS[categorieProdus]!;
+    if (brand && byBrand[brand] && byBrand[brand]!.length > 0) {
+      return byBrand[brand]!;
+    }
+    return Object.values(byBrand).flat();
+  }
+
+  return LEGACY_MODEL_OPTIONS;
+};
 
 const COMMISSION_OPTIONS: { value: CommissionPercent; label: string }[] = [
   { value: "1", label: "1%" },
@@ -1032,14 +1135,26 @@ export default function Clienti() {
                     <Label htmlFor="model">Model</Label>
                     <Select
                       value={formData.model || "none"}
-                      onValueChange={(value) => setFormData({ ...formData, model: value === "none" ? undefined : value as Model })}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          model: value === "none" ? undefined : value,
+                        })
+                      }
                     >
                       <SelectTrigger data-testid="select-model">
                         <SelectValue placeholder="Selectează" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Neselectat</SelectItem>
-                        {MODEL_OPTIONS.map((model) => (
+                        {useMemo(
+                          () =>
+                            getAvailableModels(
+                              formData.categorieProdus as ProductCategory | undefined,
+                              formData.brand as Brand | undefined
+                            ),
+                          [formData.categorieProdus, formData.brand]
+                        ).map((model) => (
                           <SelectItem key={model.value} value={model.value}>
                             {model.label}
                           </SelectItem>

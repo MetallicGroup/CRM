@@ -9,15 +9,23 @@ export const clientSourceEnum = pgEnum("client_source", [
   "FACEBOOK",
   "GOOGLE",
   "RECLAME",
+  "RECLAME_CAMPANII",
   "SITE",
   "RECOMANDARE",
   "TARG",
   "OLX",
+  "CEL_RO",
+  "OKAZII",
+  "PUBLI24",
   "TELEFON",
   "MONTATORI_COLABORATORI",
+  "MONTATORI",
   "BIROU",
+  "BIROU_SHOWROOM",
   "COMPLETARE_CLIENT_VECHI",
+  "COMPLETARE",
   "TIKTOK",
+  "PARTENERI",
   "ALTELE"
 ]);
 
@@ -35,7 +43,10 @@ export const productCategoryEnum = pgEnum("product_category", [
   "JALUZELE_INTERIOARE",
   "ROLETE",
   "PLISEE",
-  "VENTILATII"
+  "VENTILATII",
+  "SCARI_ACCES",
+  "ACCESORII_FERESTRE",
+  "SCULE"
 ]);
 
 export const offerStatusEnum = pgEnum("offer_status", [
@@ -286,7 +297,29 @@ export const insertClientSchema = createInsertSchema(clients).omit({
 export const createClientSchema = z.object({
   // Secțiunea 1: Informații de bază
   dataAdaugare: z.string().optional(),
-  sursa: z.enum(["FACEBOOK", "GOOGLE", "RECLAME", "SITE", "RECOMANDARE", "TARG", "OLX", "TELEFON", "MONTATORI_COLABORATORI", "BIROU", "COMPLETARE_CLIENT_VECHI", "TIKTOK", "ALTELE"]).default("ALTELE"),
+  sursa: z.enum([
+    "FACEBOOK",
+    "GOOGLE",
+    "RECLAME",
+    "RECLAME_CAMPANII",
+    "SITE",
+    "RECOMANDARE",
+    "TARG",
+    "OLX",
+    "CEL_RO",
+    "OKAZII",
+    "PUBLI24",
+    "TELEFON",
+    "MONTATORI_COLABORATORI",
+    "MONTATORI",
+    "BIROU",
+    "BIROU_SHOWROOM",
+    "COMPLETARE_CLIENT_VECHI",
+    "COMPLETARE",
+    "TIKTOK",
+    "PARTENERI",
+    "ALTELE"
+  ]).default("ALTELE"),
   nume: z.string().min(1, "Numele este obligatoriu"),
   telefon: z.string().min(1, "Telefonul este obligatoriu"),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
@@ -299,7 +332,25 @@ export const createClientSchema = z.object({
   partnerId: z.string().optional(),
 
   // Secțiunea 3: Detalii produs
-  categorieProdus: z.enum(["GARD", "ACOPERIS", "RULOURI_EXTERIOARE", "FATADA", "SISTEM_PLUVIAL", "FERESTRE_MANSARDA", "SAGEAC", "ACCESORII", "ELEMENTE_SPECIALE", "STORE_EXTERIOARE", "JALUZELE_INTERIOARE", "ROLETE", "PLISEE", "VENTILATII"]).optional(),
+  categorieProdus: z.enum([
+    "GARD",
+    "ACOPERIS",
+    "RULOURI_EXTERIOARE",
+    "FATADA",
+    "SISTEM_PLUVIAL",
+    "FERESTRE_MANSARDA",
+    "SAGEAC",
+    "ACCESORII",
+    "ELEMENTE_SPECIALE",
+    "STORE_EXTERIOARE",
+    "JALUZELE_INTERIOARE",
+    "ROLETE",
+    "PLISEE",
+    "VENTILATII",
+    "SCARI_ACCES",
+    "ACCESORII_FERESTRE",
+    "SCULE"
+  ]).optional(),
   brand: z.string().optional(),
   model: z.string().optional(),
   suprafataMp: z.string().optional(),
@@ -352,8 +403,46 @@ export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
-export type ClientSource = "FACEBOOK" | "GOOGLE" | "RECLAME" | "SITE" | "RECOMANDARE" | "TARG" | "OLX" | "TELEFON" | "MONTATORI_COLABORATORI" | "BIROU" | "COMPLETARE_CLIENT_VECHI" | "TIKTOK" | "ALTELE";
-export type ProductCategory = "GARD" | "ACOPERIS" | "RULOURI_EXTERIOARE" | "FATADA" | "SISTEM_PLUVIAL" | "FERESTRE_MANSARDA" | "SAGEAC" | "ACCESORII" | "ELEMENTE_SPECIALE" | "STORE_EXTERIOARE" | "JALUZELE_INTERIOARE" | "ROLETE" | "PLISEE";
+export type ClientSource =
+  | "FACEBOOK"
+  | "GOOGLE"
+  | "RECLAME"
+  | "RECLAME_CAMPANII"
+  | "SITE"
+  | "RECOMANDARE"
+  | "TARG"
+  | "OLX"
+  | "CEL_RO"
+  | "OKAZII"
+  | "PUBLI24"
+  | "TELEFON"
+  | "MONTATORI_COLABORATORI"
+  | "MONTATORI"
+  | "BIROU"
+  | "BIROU_SHOWROOM"
+  | "COMPLETARE_CLIENT_VECHI"
+  | "COMPLETARE"
+  | "TIKTOK"
+  | "PARTENERI"
+  | "ALTELE";
+export type ProductCategory =
+  | "GARD"
+  | "ACOPERIS"
+  | "RULOURI_EXTERIOARE"
+  | "FATADA"
+  | "SISTEM_PLUVIAL"
+  | "FERESTRE_MANSARDA"
+  | "SAGEAC"
+  | "ACCESORII"
+  | "ELEMENTE_SPECIALE"
+  | "STORE_EXTERIOARE"
+  | "JALUZELE_INTERIOARE"
+  | "ROLETE"
+  | "PLISEE"
+  | "VENTILATII"
+  | "SCARI_ACCES"
+  | "ACCESORII_FERESTRE"
+  | "SCULE";
 export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA" | "INFORMATII";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
 export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015";
