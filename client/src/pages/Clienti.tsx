@@ -792,7 +792,7 @@ export default function Clienti() {
                     <TableCell className="py-2">
                       <div className="text-xs space-y-0.5">
                         <a
-                          href={client.telefon ? `tel:${client.telefon.replace(/\\s+/g, \"\")}` : undefined}
+                          href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
                           className="flex items-center gap-1 text-blue-600 hover:underline"
                         >
                           <Phone className="h-3 w-3 flex-shrink-0" />
@@ -1714,7 +1714,7 @@ export default function Clienti() {
                   <p className="text-sm text-muted-foreground">Telefon</p>
                   {viewClient.telefon ? (
                     <a
-                      href={`tel:${viewClient.telefon.replace(/\\s+/g, \"\")}`}
+                      href={`tel:${viewClient.telefon.replace(/\s+/g, "")}`}
                       className="font-medium text-blue-600 hover:underline"
                     >
                       {viewClient.telefon}

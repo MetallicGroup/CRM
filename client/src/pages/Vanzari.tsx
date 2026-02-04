@@ -282,7 +282,7 @@ export default function Vanzari() {
                     <TableCell>
                       <div className="flex flex-col gap-1 text-sm">
                         <a
-                          href={client.telefon ? `tel:${client.telefon.replace(/\\s+/g, \"\")}` : undefined}
+                          href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
                           className="flex items-center gap-1 text-blue-600 hover:underline"
                         >
                           <Phone className="h-3 w-3" /> {client.telefon}

@@ -406,7 +406,7 @@ export default function Parteneri() {
                       <div className="flex flex-col gap-1 text-sm">
                         {partner.telefon && (
                           <a
-                            href={`tel:${partner.telefon.replace(/\\s+/g, \"\")}`}
+                            href={`tel:${partner.telefon.replace(/\s+/g, "")}`}
                             className="flex items-center gap-1 text-blue-600 hover:underline"
                           >
                             <Phone className="h-3 w-3" /> {partner.telefon}
