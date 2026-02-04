@@ -791,15 +791,21 @@ export default function Clienti() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="text-xs space-y-0.5">
-                        <div className="flex items-center gap-1">
+                        <a
+                          href={client.telefon ? `tel:${client.telefon.replace(/\\s+/g, \"\")}` : undefined}
+                          className="flex items-center gap-1 text-blue-600 hover:underline"
+                        >
                           <Phone className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{client.telefon}</span>
-                        </div>
+                        </a>
                         {client.email && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
+                          <a
+                            href={`mailto:${client.email}`}
+                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                          >
                             <Mail className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate" title={client.email}>{client.email}</span>
-                          </div>
+                          </a>
                         )}
                       </div>
                     </TableCell>
@@ -1706,11 +1712,29 @@ export default function Clienti() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Telefon</p>
-                  <p className="font-medium">{viewClient.telefon}</p>
+                  {viewClient.telefon ? (
+                    <a
+                      href={`tel:${viewClient.telefon.replace(/\\s+/g, \"\")}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {viewClient.telefon}
+                    </a>
+                  ) : (
+                    <p className="font-medium">-</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{viewClient.email || "-"}</p>
+                  {viewClient.email ? (
+                    <a
+                      href={`mailto:${viewClient.email}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {viewClient.email}
+                    </a>
+                  ) : (
+                    <p className="font-medium">-</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Locație</p>

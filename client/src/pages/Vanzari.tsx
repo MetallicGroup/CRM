@@ -281,13 +281,19 @@ export default function Vanzari() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 text-sm">
-                        <span className="flex items-center gap-1">
+                        <a
+                          href={client.telefon ? `tel:${client.telefon.replace(/\\s+/g, \"\")}` : undefined}
+                          className="flex items-center gap-1 text-blue-600 hover:underline"
+                        >
                           <Phone className="h-3 w-3" /> {client.telefon}
-                        </span>
+                        </a>
                         {client.email && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <a
+                            href={`mailto:${client.email}`}
+                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                          >
                             <Mail className="h-3 w-3" /> {client.email}
-                          </span>
+                          </a>
                         )}
                       </div>
                     </TableCell>

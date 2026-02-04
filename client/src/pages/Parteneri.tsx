@@ -405,14 +405,20 @@ export default function Parteneri() {
                     <TableCell>
                       <div className="flex flex-col gap-1 text-sm">
                         {partner.telefon && (
-                          <span className="flex items-center gap-1">
+                          <a
+                            href={`tel:${partner.telefon.replace(/\\s+/g, \"\")}`}
+                            className="flex items-center gap-1 text-blue-600 hover:underline"
+                          >
                             <Phone className="h-3 w-3" /> {partner.telefon}
-                          </span>
+                          </a>
                         )}
                         {partner.email && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <a
+                            href={`mailto:${partner.email}`}
+                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                          >
                             <Mail className="h-3 w-3" /> {partner.email}
-                          </span>
+                          </a>
                         )}
                       </div>
                     </TableCell>
