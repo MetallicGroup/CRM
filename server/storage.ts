@@ -105,6 +105,7 @@ export interface IStorage {
   getActiveAgentsCount(): Promise<number>;
   getAgents(): Promise<SafeUser[]>;
   getClientStatsWithPeriod(agentId?: string, startDate?: Date, endDate?: Date): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
+  registerClientCall(clientId: string, userId: string): Promise<void>;
 
   // Target methods
   getTarget(id: string): Promise<Target | undefined>;
@@ -523,6 +524,18 @@ export class DatabaseStorage implements IStorage {
   async deleteClient(id: string): Promise<boolean> {
     const result = await db.delete(clients).where(eq(clients.id, id)).returning();
     return result.length > 0;
+  }
+
+  async registerClientCall(clientId: string, userId: string): Promise<void> {
+    await db
+      .update(clients)
+      .set({
+        lastCallAt: new Date(),
+        lastCallById: userId,
+        callCount: sql`${clients.callCount} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(clients.id, clientId));
   }
 
   async getClientStats(agentId?: string): Promise<{

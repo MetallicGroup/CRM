@@ -18,6 +18,7 @@ import Targeturi from "@/pages/Targeturi";
 import Vanzari from "@/pages/Vanzari";
 import Parteneri from "@/pages/Parteneri";
 import Cheltuieli from "@/pages/Cheltuieli";
+import CallTracking from "@/pages/CallTracking";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -132,6 +133,9 @@ function Router() {
       {/* Admin Routes */}
       <Route path="/utilizatori">
         <ProtectedRoute component={UserManagement} adminOnly />
+      </Route>
+      <Route path="/admin/apeluri">
+        <ProtectedRoute component={CallTracking} adminOnly />
       </Route>
 
       {/* 404 */}

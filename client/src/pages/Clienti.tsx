@@ -792,8 +792,14 @@ export default function Clienti() {
                     <TableCell className="py-2">
                       <div className="text-xs space-y-0.5">
                         <a
-                          href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
+                        href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
                           className="flex items-center gap-1 text-blue-600 hover:underline"
+                        onClick={() => {
+                          fetch(`/api/clients/${client.id}/phone-click`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                          }).catch(() => {});
+                        }}
                         >
                           <Phone className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{client.telefon}</span>
@@ -1716,6 +1722,12 @@ export default function Clienti() {
                     <a
                       href={`tel:${viewClient.telefon.replace(/\s+/g, "")}`}
                       className="font-medium text-blue-600 hover:underline"
+                      onClick={() => {
+                        fetch(`/api/clients/${viewClient.id}/phone-click`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                        }).catch(() => {});
+                      }}
                     >
                       {viewClient.telefon}
                     </a>

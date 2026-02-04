@@ -376,6 +376,22 @@ export async function registerRoutes(
     }
   });
 
+  // Register phone click (call attempt) on client
+  app.post("/api/clients/:id/phone-click", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      if (!req.userId) {
+        return res.status(401).json({ message: "Neautorizat" });
+      }
+
+      await storage.registerClientCall(id, req.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Register client call error:", error);
+      res.status(500).json({ message: "Eroare la înregistrarea apelului" });
+    }
+  });
+
   // Create client
   app.post("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

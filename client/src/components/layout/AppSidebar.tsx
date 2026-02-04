@@ -12,7 +12,8 @@ import {
   UserPlus,
   FileText,
   Target,
-  Handshake
+  Handshake,
+  PhoneCall,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -73,6 +74,7 @@ const menuSections: MenuSection[] = [
     defaultOpen: false,
     items: [
       { icon: UserCog, label: 'Utilizatori', href: '/utilizatori' },
+      { icon: PhoneCall, label: 'Apeluri Clienți', href: '/admin/apeluri' },
     ],
   },
 ];

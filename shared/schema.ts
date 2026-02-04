@@ -286,6 +286,10 @@ export const clients = pgTable("clients", {
   // Metadata
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  // Tracking apeluri telefonice (click pe număr)
+  lastCallAt: timestamp("last_call_at"),
+  lastCallById: varchar("last_call_by_id", { length: 36 }),
+  callCount: integer("call_count").notNull().default(0),
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({
@@ -395,6 +399,10 @@ export const createClientSchema = z.object({
 
   // Relații
   agentId: z.string().optional(),
+  // Tracking apeluri
+  lastCallAt: z.string().optional(),
+  lastCallById: z.string().optional(),
+  callCount: z.number().optional(),
 });
 
 export const updateClientSchema = createClientSchema.partial();

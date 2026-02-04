@@ -284,6 +284,12 @@ export default function Vanzari() {
                         <a
                           href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
                           className="flex items-center gap-1 text-blue-600 hover:underline"
+                          onClick={() => {
+                            fetch(`/api/clients/${client.id}/phone-click`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                            }).catch(() => {});
+                          }}
                         >
                           <Phone className="h-3 w-3" /> {client.telefon}
                         </a>
