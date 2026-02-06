@@ -311,8 +311,10 @@ export async function registerRoutes(
   app.get("/api/dashboard/stats", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const dateFrom = req.query.dateFrom as string | undefined;
+      const dateTo = req.query.dateTo as string | undefined;
       const [clientStats, activeAgentsCount] = await Promise.all([
-        storage.getClientStats(agentId),
+        storage.getClientStats(agentId, dateFrom, dateTo),
         storage.getActiveAgentsCount()
       ]);
 
@@ -347,12 +349,54 @@ export async function registerRoutes(
     }
   });
 
+  // Get activity summary for agent
+  app.get("/api/activity/summary", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, from, to } = req.query;
+
+      // Non-admins can only see their own activity
+      let filterAgentId = agentId as string | undefined;
+      if (req.userRole !== "ADMIN") {
+        filterAgentId = req.userId;
+      }
+
+      if (!filterAgentId) {
+        return res.status(400).json({ message: "Agent ID este obligatoriu" });
+      }
+
+      if (!from || !to) {
+        return res.status(400).json({ message: "Perioada (from/to) este obligatorie" });
+      }
+
+      const fromDate = new Date(from as string);
+      const toDate = new Date(to as string);
+
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ message: "Date invalide pentru perioadă" });
+      }
+
+      // Set to end of day for 'to' date
+      toDate.setHours(23, 59, 59, 999);
+
+      const summary = await storage.getAgentActivitySummary({
+        agentId: filterAgentId,
+        from: fromDate,
+        to: toDate,
+      });
+
+      res.json(summary);
+    } catch (error) {
+      console.error("Get activity summary error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea raportului de activitate" });
+    }
+  });
+
   // ============ CLIENT ROUTES ============
 
   // Get all clients
   app.get("/api/clients", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const { agentId, stadiuOferta, search } = req.query;
+      const { agentId, stadiuOferta, search, underObservation, dateFrom, dateTo } = req.query;
 
       // Non-admins can only see their own clients
       let filterAgentId = agentId as string | undefined;
@@ -364,6 +408,9 @@ export async function registerRoutes(
         agentId: filterAgentId,
         stadiuOferta: stadiuOferta as string | undefined,
         search: search as string | undefined,
+        underObservation: underObservation === "true" ? true : underObservation === "false" ? false : undefined,
+        dateFrom: dateFrom as string | undefined,
+        dateTo: dateTo as string | undefined,
       });
 
       res.json(clients);
@@ -436,6 +483,15 @@ export async function registerRoutes(
       }
 
       const client = await storage.createClient(data);
+
+      // Log manual lead creation
+      if (client.agentId && req.userId) {
+        await storage.createActivityLog({
+          userId: client.agentId,
+          clientId: client.id,
+          type: "LEAD_MANUAL",
+        });
+      }
 
       // Auto-recalculate profitability if client is VANDUT with an agent
       if (client.stadiuOferta === "VANDUT" && client.agentId && client.dataVanzarii) {
@@ -538,7 +594,51 @@ export async function registerRoutes(
         delete data.agentId;
       }
 
+      // Track status changes and follow-up clicks
+      const oldStatus = existingClient.stadiuOferta;
+      const oldFollowUp1 = existingClient.followUpEfectuat1;
+      const oldFollowUp2 = existingClient.followUpEfectuat2;
+      const oldFollowUp3 = existingClient.followUpEfectuat3;
+
       const client = await storage.updateClient(req.params.id, data);
+
+      // Log status change
+      if (client && data.stadiuOferta && data.stadiuOferta !== oldStatus && client.agentId && req.userId) {
+        await storage.createActivityLog({
+          userId: client.agentId,
+          clientId: client.id,
+          type: "STATUS_CHANGE",
+          meta: { from: oldStatus, to: data.stadiuOferta },
+        });
+      }
+
+      // Log follow-up clicks
+      if (client && client.agentId && req.userId) {
+        if (data.followUpEfectuat1 && !oldFollowUp1) {
+          await storage.createActivityLog({
+            userId: client.agentId,
+            clientId: client.id,
+            type: "FOLLOWUP_CLICK",
+            meta: { followUpNumber: 1 },
+          });
+        }
+        if (data.followUpEfectuat2 && !oldFollowUp2) {
+          await storage.createActivityLog({
+            userId: client.agentId,
+            clientId: client.id,
+            type: "FOLLOWUP_CLICK",
+            meta: { followUpNumber: 2 },
+          });
+        }
+        if (data.followUpEfectuat3 && !oldFollowUp3) {
+          await storage.createActivityLog({
+            userId: client.agentId,
+            clientId: client.id,
+            type: "FOLLOWUP_CLICK",
+            meta: { followUpNumber: 3 },
+          });
+        }
+      }
 
       // Auto-recalculate profitability when relevant fields change
       const wasVandut = existingClient.stadiuOferta === "VANDUT";

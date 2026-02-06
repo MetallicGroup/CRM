@@ -29,10 +29,17 @@ import {
   Mail,
   MapPin,
   Eye,
-  Users
+  Users,
+  Calendar as CalendarIcon
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ro } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
@@ -48,6 +55,9 @@ interface Client {
   valoareOferta: string | null;
   agentId: string | null;
   updatedAt: string;
+  dataVanzarii: string | null;
+  isPartnerOrder: boolean | null;
+  partnerId: string | null;
 }
 
 interface Agent {
@@ -72,11 +82,22 @@ export default function Vanzari() {
   const [search, setSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [partnerFilter, setPartnerFilter] = useState<"all" | "with" | "without">("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["clients", "won", isAdmin ? selectedAgent : user?.id],
+    queryKey: ["clients", "won", isAdmin ? selectedAgent : user?.id, dateFrom, dateTo],
     queryFn: async () => {
-      const res = await fetch("/api/clients?stadiuOferta=VANDUT");
+      const params = new URLSearchParams();
+      params.set("stadiuOferta", "VANDUT");
+      if (dateFrom) {
+        params.set("dateFrom", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        params.set("dateTo", dateTo.toISOString());
+      }
+      const res = await fetch(`/api/clients?${params.toString()}`);
       if (!res.ok) throw new Error("Eroare la încărcarea vânzărilor");
       return res.json();
     },
@@ -104,7 +125,12 @@ export default function Vanzari() {
       : true; // Non-admins see only their own clients (already filtered by backend)
     const matchesCategory = selectedCategory === "all" || client.categorieProdus === selectedCategory;
     
-    return matchesSearch && matchesAgent && matchesCategory;
+    // Partner filter
+    const matchesPartner = partnerFilter === "all" ||
+      (partnerFilter === "with" && client.isPartnerOrder) ||
+      (partnerFilter === "without" && !client.isPartnerOrder);
+    
+    return matchesSearch && matchesAgent && matchesCategory && matchesPartner;
   });
 
   const totalValue = filteredClients.reduce((sum, client) => {
@@ -233,6 +259,70 @@ export default function Vanzari() {
                   <SelectItem value="AMBELE">Ambele</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="w-[180px]">
+              <Select value={partnerFilter} onValueChange={(value) => setPartnerFilter(value as "all" | "with" | "without")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtru partener" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate vânzările</SelectItem>
+                  <SelectItem value="without">Fără partener</SelectItem>
+                  <SelectItem value="with">Cu partener</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row gap-4 mt-4">
+            <div className="w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data de la</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "PPP", { locale: ro }) : "Selectați data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data până la</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "PPP", { locale: ro }) : "Selectați data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardContent>

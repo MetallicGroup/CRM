@@ -28,9 +28,10 @@ import {
   ShoppingCart,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,8 @@ export default function CRMDashboard() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [period, setPeriod] = useState<string>("luna");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -68,13 +71,19 @@ export default function CRMDashboard() {
   const formattedTime = format(currentTime, "HH:mm:ss");
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats", isAdmin ? selectedAgent : user?.id],
+    queryKey: ["dashboard-stats", isAdmin ? selectedAgent : user?.id, dateFrom, dateTo],
     queryFn: async () => {
       const params = new URLSearchParams();
       // For admins, allow filtering by selected agent
       // For non-admins, backend already filters by their userId, so we don't send agentId
       if (isAdmin && selectedAgent && selectedAgent !== "all") {
         params.set("agentId", selectedAgent);
+      }
+      if (dateFrom) {
+        params.set("dateFrom", dateFrom.toISOString());
+      }
+      if (dateTo) {
+        params.set("dateTo", dateTo.toISOString());
       }
       const res = await fetch(`/api/dashboard/stats?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea statisticilor");
@@ -145,6 +154,8 @@ export default function CRMDashboard() {
     setDate(undefined);
     setSelectedAgent("all");
     setPeriod("luna");
+    setDateFrom(startOfMonth(new Date()));
+    setDateTo(endOfMonth(new Date()));
   };
 
   return (
@@ -261,27 +272,122 @@ export default function CRMDashboard() {
               </div>
             )}
 
-            {/* Selected Dates Display */}
+            {/* Date Range Selector */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                Date selectate
+                <CalendarIcon className="h-4 w-4 text-blue-600" />
+                Perioadă (de la / până la)
               </label>
-              <div className="p-3 bg-gray-50 rounded-lg min-h-[40px]">
-                {date ? (
-                  <p className="text-sm font-medium">
-                    {format(date, "d MMMM yyyy", { locale: ro })}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    Nicio dată selectată - se afișează toate vânzările
-                  </p>
-                )}
+              <div className="grid grid-cols-2 gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal text-xs",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3 w-3" />
+                      {dateFrom ? format(dateFrom, "dd MMM", { locale: ro }) : "De la"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal text-xs",
+                        !dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3 w-3" />
+                      {dateTo ? format(dateTo, "dd MMM", { locale: ro }) : "Până la"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {dateFrom && dateTo 
+                  ? `${format(dateFrom, "d MMM", { locale: ro })} - ${format(dateTo, "d MMM yyyy", { locale: ro })}`
+                  : "Selectați perioada pentru statistici"}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Buttons for Agents */}
+      {!isAdmin && user?.id && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Raport Activitate
+            </CardTitle>
+            <CardDescription>
+              Exportă raportul tău de activitate pentru perioada selectată
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const today = new Date();
+                  const from = startOfDay(today);
+                  const to = endOfDay(today);
+                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Zilnic
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const now = new Date();
+                  const from = startOfWeek(now, { weekStartsOn: 1 });
+                  const to = endOfWeek(now, { weekStartsOn: 1 });
+                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Săptămânal
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const now = new Date();
+                  const from = startOfMonth(now);
+                  const to = endOfMonth(now);
+                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Lunar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Overview */}
       <div>

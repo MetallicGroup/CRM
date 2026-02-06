@@ -281,6 +281,7 @@ export const clients = pgTable("clients", {
   observatiiClient: text("observatii_client"),
   comentariiDupaContact: text("comentarii_dupa_contact"),
   contactat: boolean("contactat").default(false),
+  underObservation: boolean("under_observation").default(false), // Pentru pagina "Urmăriri clienți"
 
   // Relații
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
@@ -398,6 +399,7 @@ export const createClientSchema = z.object({
   observatiiClient: z.string().optional(),
   comentariiDupaContact: z.string().optional(),
   contactat: z.boolean().optional().default(false),
+  underObservation: z.boolean().optional().default(false),
 
   // Relații
   agentId: z.string().optional(),
@@ -565,6 +567,35 @@ export type InsertPartner = z.infer<typeof insertPartnerSchema>;
 export type CreatePartner = z.infer<typeof createPartnerSchema>;
 export type UpdatePartner = z.infer<typeof updatePartnerSchema>;
 export type PartnerType = "DISTRIBUITOR" | "COLABORATORI_PF" | "PARTENER_COMISIONAR";
+
+// ============ ACTIVITY LOG (Jurnal activitate agenți) ============
+
+export const activityTypeEnum = pgEnum("activity_type", [
+  "LEAD_AUTO",          // lead intrat automat (ex: Facebook)
+  "LEAD_MANUAL",        // lead adăugat manual de agent
+  "STATUS_CHANGE",      // schimbare stadiu ofertă
+  "PHONE_CLICK",        // click pe număr de telefon
+  "FOLLOWUP_CLICK",     // bifare follow-up efectuat
+]);
+
+export const activityLogs = pgTable("activity_logs", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 36 }).references(() => users.id).notNull(),
+  clientId: varchar("client_id", { length: 36 }).references(() => clients.id).notNull(),
+  type: activityTypeEnum("type").notNull(),
+  // detalii suplimentare (ex: de la ce status la ce status, ce follow-up, sursă, etc.)
+  meta: json("meta").$type<Record<string, unknown> | null>().default(null),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ActivityType = "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 
 // ============ SEDII (Locații/Showroom-uri) ============
 

@@ -63,6 +63,7 @@ import {
   Download,
   File as FileIcon,
   Upload,
+  Search as SearchIcon,
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
@@ -92,6 +93,8 @@ const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }
   { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-100 text-red-800" },
   { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
   { value: "INFORMATII", label: "Informații", color: "bg-purple-100 text-purple-800" },
+  { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-100 text-emerald-800" },
+  { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-100 text-orange-800" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -906,6 +909,37 @@ export default function Clienti() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex items-center justify-end gap-0">
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7",
+                              client.underObservation
+                                ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                : "text-gray-600 hover:text-gray-700"
+                            )}
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/clients/${client.id}/toggle-observation`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                });
+                                if (res.ok) {
+                                  queryClient.invalidateQueries({ queryKey: ["clients"] });
+                                  queryClient.invalidateQueries({ queryKey: ["observed-clients"] });
+                                  toast.success(client.underObservation ? "Client scos din urmărire" : "Client adăugat în urmărire");
+                                }
+                              } catch (error) {
+                                toast.error("Eroare la actualizarea observației");
+                              }
+                            }}
+                            title={client.underObservation ? "Scoate din urmărire" : "Adaugă în urmărire"}
+                          >
+                            <SearchIcon className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1110,23 +1144,14 @@ export default function Clienti() {
                 </div>
                 {formData.isPartnerOrder && (
                   <div className="space-y-2">
-                    <Label htmlFor="partnerId">Partener</Label>
-                    <Select
-                      value={formData.partnerId || "none"}
-                      onValueChange={(value) => setFormData({ ...formData, partnerId: value === "none" ? "" : value })}
-                    >
-                      <SelectTrigger data-testid="select-partner">
-                        <SelectValue placeholder="Selectează partenerul" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Neselectat</SelectItem>
-                        {partners.map((partner: any) => (
-                          <SelectItem key={partner.id} value={partner.id}>
-                            {partner.nume}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="partnerId">Nume Partener</Label>
+                    <Input
+                      id="partnerId"
+                      value={formData.partnerId || ""}
+                      onChange={(e) => setFormData({ ...formData, partnerId: e.target.value })}
+                      placeholder="Introduceți numele partenerului"
+                      data-testid="input-partner"
+                    />
                   </div>
                 )}
               </TabsContent>

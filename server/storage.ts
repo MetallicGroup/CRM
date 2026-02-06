@@ -14,6 +14,7 @@ import {
   employees,
   partnerMonthlyData,
   appSettings,
+  activityLogs,
   type User,
   type InsertUser,
   type SafeUser,
@@ -55,7 +56,7 @@ import {
   type AppSetting
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, sql, gte, lte, isNotNull } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -77,7 +78,7 @@ export interface IStorage {
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
-  getClientStats(agentId?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
+  getClientStats(agentId?: string, dateFrom?: string, dateTo?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
   bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update" | "create"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
   bulkImportAgentFixedCosts(rows: any[]): Promise<{ success: number; errors: number }>;
   getNextCriteriumNumber(agentId: string): Promise<number>;
@@ -121,6 +122,27 @@ export interface IStorage {
   createPartner(data: CreatePartner): Promise<Partner>;
   updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined>;
   deletePartner(id: string): Promise<boolean>;
+
+  // Activity logs
+  createActivityLog(data: {
+    userId: string;
+    clientId: string;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    meta?: Record<string, unknown>;
+  }): Promise<void>;
+  getAgentActivitySummary(params: {
+    agentId: string;
+    from: Date;
+    to: Date;
+  }): Promise<{
+    totalLeadsAuto: number;
+    totalLeadsManual: number;
+    totalPhoneClicks: number;
+    totalStatusChanges: number;
+    totalFollowupClicks: number;
+    totalInactivitySeconds: number;
+    inactivityIntervals: Array<{ start: string; end: string; duration: string }>;
+  }>;
 
   // Sedii methods
   getSediu(id: string): Promise<Sediu | undefined>;
@@ -356,6 +378,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(clients.stadiuOferta, filters.stadiuOferta as any));
     }
 
+    if (filters?.underObservation !== undefined) {
+      conditions.push(eq(clients.underObservation, filters.underObservation));
+    }
+
     if (filters?.search) {
       const searchTerm = `%${filters.search}%`;
       conditions.push(
@@ -366,6 +392,18 @@ export class DatabaseStorage implements IStorage {
           ilike(clients.localitate, searchTerm)
         )
       );
+    }
+
+    if (filters?.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      conditions.push(gte(clients.dataVanzarii, fromDate));
+    }
+
+    if (filters?.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(clients.dataVanzarii, toDate));
     }
 
     if (conditions.length > 0) {
@@ -432,7 +470,13 @@ export class DatabaseStorage implements IStorage {
       pretAchizitie: parseDecimal(data.pretAchizitie),
       ofertaFilename: data.ofertaFilename || null,
       ofertaFilename2: data.ofertaFilename2 || null,
-      dataRevenire1: parseDate(data.dataRevenire1),
+      // Auto-set dataRevenire1 to next day if status is IN_ASTEPTARE and dataRevenire1 is not provided
+      dataRevenire1: parseDate(data.dataRevenire1) || (data.stadiuOferta === "IN_ASTEPTARE" ? (() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        return tomorrow;
+      })() : null),
       comentariuObservatii1: data.comentariuObservatii1 || null,
       followUpEfectuat1: data.followUpEfectuat1 || false,
       dataRevenire2: parseDate(data.dataRevenire2),
@@ -444,6 +488,7 @@ export class DatabaseStorage implements IStorage {
       observatiiClient: data.observatiiClient || null,
       comentariiDupaContact: data.comentariiDupaContact || null,
       contactat: data.contactat || false,
+      underObservation: data.underObservation || false,
       agentId: data.agentId || null,
       numCriteriu: numCriteriu,
     };
@@ -486,7 +531,19 @@ export class DatabaseStorage implements IStorage {
     if (data.mlRulouProd !== undefined) updateData.mlRulouProd = parseDecimal(data.mlRulouProd);
     if (data.smartDripstop !== undefined) updateData.smartDripstop = data.smartDripstop;
     if (data.valoareOferta !== undefined) updateData.valoareOferta = parseDecimal(data.valoareOferta);
-    if (data.stadiuOferta !== undefined) updateData.stadiuOferta = data.stadiuOferta;
+    if (data.stadiuOferta !== undefined) {
+      updateData.stadiuOferta = data.stadiuOferta;
+      // Auto-set dataRevenire1 to next day if status is changed to IN_ASTEPTARE and dataRevenire1 is not set
+      if (data.stadiuOferta === "IN_ASTEPTARE" && !data.dataRevenire1) {
+        const existingClient = await this.getClient(id);
+        if (existingClient && !existingClient.dataRevenire1) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          updateData.dataRevenire1 = tomorrow;
+        }
+      }
+    }
     if (data.dataOfertarii !== undefined) updateData.dataOfertarii = parseDate(data.dataOfertarii);
     if (data.avans !== undefined) updateData.avans = data.avans;
     if (data.stadiuComanda !== undefined) updateData.stadiuComanda = data.stadiuComanda || null;
@@ -510,6 +567,7 @@ export class DatabaseStorage implements IStorage {
     if (data.observatiiClient !== undefined) updateData.observatiiClient = data.observatiiClient || null;
     if (data.comentariiDupaContact !== undefined) updateData.comentariiDupaContact = data.comentariiDupaContact || null;
     if (data.contactat !== undefined) updateData.contactat = data.contactat;
+    if (data.underObservation !== undefined) updateData.underObservation = data.underObservation;
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
 
     const [client] = await db
@@ -536,21 +594,208 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(clients.id, clientId));
+
+    // logăm și activitatea de tip PHONE_CLICK pentru rapoarte
+    await db.insert(activityLogs).values({
+      userId,
+      clientId,
+      type: "PHONE_CLICK",
+    });
   }
 
-  async getClientStats(agentId?: string): Promise<{
+  async createActivityLog(data: {
+    userId: string;
+    clientId: string;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    meta?: Record<string, unknown>;
+  }): Promise<void> {
+    await db.insert(activityLogs).values({
+      userId: data.userId,
+      clientId: data.clientId,
+      type: data.type,
+      meta: (data.meta || null) as any,
+    });
+  }
+
+  async getAgentActivitySummary(params: {
+    agentId: string;
+    from: Date;
+    to: Date;
+  }): Promise<{
+    totalLeadsAuto: number;
+    totalLeadsManual: number;
+    totalPhoneClicks: number;
+    totalStatusChanges: number;
+    totalFollowupClicks: number;
+    totalInactivitySeconds: number;
+    inactivityIntervals: Array<{ start: string; end: string; duration: string }>;
+  }> {
+    const { agentId, from, to } = params;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // Build conditions to include only clients that should appear in reports:
+    // 1. Clients without 3rd follow-up completed
+    // 2. Clients without future follow-up dates (all follow-up dates must be null or <= today)
+    const rows = await db
+      .select({
+        type: activityLogs.type,
+        createdAt: activityLogs.createdAt,
+      })
+      .from(activityLogs)
+      .innerJoin(clients, eq(activityLogs.clientId, clients.id))
+      .where(
+        and(
+          eq(activityLogs.userId, agentId),
+          gte(activityLogs.createdAt, from),
+          lte(activityLogs.createdAt, to),
+          // Exclude clients with 3rd follow-up done
+          eq(clients.followUpEfectuat3, false),
+          // Exclude clients with future follow-up dates - all dates must be null or <= today
+          and(
+            or(
+              sql`${clients.dataRevenire1} IS NULL`,
+              lte(clients.dataRevenire1, now)
+            ),
+            or(
+              sql`${clients.dataRevenire2} IS NULL`,
+              lte(clients.dataRevenire2, now)
+            ),
+            or(
+              sql`${clients.dataRevenire3} IS NULL`,
+              lte(clients.dataRevenire3, now)
+            )
+          )
+        )
+      )
+      .orderBy(asc(activityLogs.createdAt));
+
+    let totalLeadsAuto = 0;
+    let totalLeadsManual = 0;
+    let totalPhoneClicks = 0;
+    let totalStatusChanges = 0;
+    let totalFollowupClicks = 0;
+
+    // Calculate inactivity intervals (>30 seconds between events)
+    const INACTIVITY_THRESHOLD_MS = 30 * 1000; // 30 seconds
+    let totalInactivitySeconds = 0;
+    const inactivityIntervals: Array<{ start: Date; end: Date }> = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      
+      // Count activity types
+      switch (row.type) {
+        case "LEAD_AUTO":
+          totalLeadsAuto++;
+          break;
+        case "LEAD_MANUAL":
+          totalLeadsManual++;
+          break;
+        case "PHONE_CLICK":
+          totalPhoneClicks++;
+          break;
+        case "STATUS_CHANGE":
+          totalStatusChanges++;
+          break;
+        case "FOLLOWUP_CLICK":
+          totalFollowupClicks++;
+          break;
+      }
+
+      // Check for inactivity gap before this event
+      if (i > 0) {
+        const prevEvent = rows[i - 1];
+        const currentEvent = row;
+        const gapMs = currentEvent.createdAt.getTime() - prevEvent.createdAt.getTime();
+        
+        if (gapMs > INACTIVITY_THRESHOLD_MS) {
+          const gapSeconds = Math.floor(gapMs / 1000);
+          totalInactivitySeconds += gapSeconds;
+          inactivityIntervals.push({
+            start: prevEvent.createdAt,
+            end: currentEvent.createdAt,
+          });
+        }
+      }
+    }
+
+    // Format inactivity intervals
+    const formattedIntervals = inactivityIntervals.map((interval) => {
+      const startTime = interval.start.toLocaleTimeString("ro-RO", { 
+        hour: "2-digit", 
+        minute: "2-digit",
+        hour12: false 
+      });
+      const endTime = interval.end.toLocaleTimeString("ro-RO", { 
+        hour: "2-digit", 
+        minute: "2-digit",
+        hour12: false 
+      });
+      
+      const durationMs = interval.end.getTime() - interval.start.getTime();
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      
+      let durationStr = "";
+      if (hours > 0) {
+        durationStr = `${hours}h ${minutes}m`;
+      } else if (minutes > 0) {
+        durationStr = `${minutes}m ${seconds}s`;
+      } else {
+        durationStr = `${seconds}s`;
+      }
+
+      return {
+        start: startTime,
+        end: endTime,
+        duration: durationStr,
+      };
+    });
+
+    return {
+      totalLeadsAuto,
+      totalLeadsManual,
+      totalPhoneClicks,
+      totalStatusChanges,
+      totalFollowupClicks,
+      totalInactivitySeconds,
+      inactivityIntervals: formattedIntervals,
+    };
+  }
+
+  async getClientStats(agentId?: string, dateFrom?: string, dateTo?: string): Promise<{
     total: number;
     byStatus: Record<string, number>;
     totalValue: number;
     wonValue: number;
     pipelineValue: number;
   }> {
-    let query = db.select().from(clients);
+    const conditions = [];
 
     if (agentId) {
       // When filtering by agentId, ensure we only get clients assigned to that agent
       // and exclude clients with null agentId
-      query = query.where(and(eq(clients.agentId, agentId), isNotNull(clients.agentId))) as any;
+      conditions.push(eq(clients.agentId, agentId));
+      conditions.push(isNotNull(clients.agentId));
+    }
+
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      conditions.push(gte(clients.dataVanzarii, fromDate));
+    }
+
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(clients.dataVanzarii, toDate));
+    }
+
+    let query = db.select().from(clients);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
     }
 
     const allClients = await query;

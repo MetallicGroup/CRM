@@ -19,6 +19,8 @@ import Vanzari from "@/pages/Vanzari";
 import Parteneri from "@/pages/Parteneri";
 import Cheltuieli from "@/pages/Cheltuieli";
 import CallTracking from "@/pages/CallTracking";
+import Exporturi from "@/pages/Exporturi";
+import UrmaririClienti from "@/pages/UrmaririClienti";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -136,6 +138,12 @@ function Router() {
       </Route>
       <Route path="/admin/apeluri">
         <ProtectedRoute component={CallTracking} adminOnly />
+      </Route>
+      <Route path="/admin/exporturi">
+        <ProtectedRoute component={Exporturi} />
+      </Route>
+      <Route path="/admin/urmariri">
+        <ProtectedRoute component={UrmaririClienti} adminOnly />
       </Route>
 
       {/* 404 */}

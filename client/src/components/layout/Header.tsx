@@ -36,6 +36,8 @@ import {
   ChevronDown,
   Key,
   PhoneCall,
+  Download,
+  Eye,
 } from 'lucide-react';
 
 interface NavItem {
@@ -54,6 +56,8 @@ const navItems: NavItem[] = [
   { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli', adminOnly: true },
   { icon: Calculator, label: 'Profitabilitate', href: '/profitabilitate', adminOnly: true },
   { icon: PhoneCall, label: 'Apeluri Clienți', href: '/admin/apeluri', adminOnly: true },
+  { icon: Download, label: 'Exporturi', href: '/admin/exporturi', adminOnly: true },
+  { icon: Eye, label: 'Urmăriri Clienți', href: '/admin/urmariri', adminOnly: true },
 ];
 
 export function Header() {

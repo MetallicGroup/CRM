@@ -14,6 +14,8 @@ import {
   Target,
   Handshake,
   PhoneCall,
+  Download,
+  Eye,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -75,6 +77,8 @@ const menuSections: MenuSection[] = [
     items: [
       { icon: UserCog, label: 'Utilizatori', href: '/utilizatori' },
       { icon: PhoneCall, label: 'Apeluri Clienți', href: '/admin/apeluri' },
+      { icon: Download, label: 'Exporturi', href: '/admin/exporturi' },
+      { icon: Eye, label: 'Urmăriri Clienți', href: '/admin/urmariri' },
     ],
   },
 ];
