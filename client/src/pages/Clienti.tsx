@@ -391,6 +391,7 @@ export default function Clienti() {
   const [search, setSearch] = useState("");
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
   const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [contactStatusFilter, setContactStatusFilter] = useState<"all" | "contactat" | "necontactat">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -415,6 +416,16 @@ export default function Clienti() {
       return res.json();
     },
   });
+
+  const visibleClients = useMemo(() => {
+    if (contactStatusFilter === "contactat") {
+      return clients.filter((c) => c.contactat);
+    }
+    if (contactStatusFilter === "necontactat") {
+      return clients.filter((c) => !c.contactat);
+    }
+    return clients;
+  }, [clients, contactStatusFilter]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["users"],
@@ -734,6 +745,16 @@ export default function Clienti() {
                 </SelectContent>
               </Select>
             )}
+            <Select value={contactStatusFilter} onValueChange={(v) => setContactStatusFilter(v as any)}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Status contact" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toți (contactați și necontactați)</SelectItem>
+                <SelectItem value="contactat">Doar contactați</SelectItem>
+                <SelectItem value="necontactat">Doar necontactați</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -744,12 +765,12 @@ export default function Clienti() {
             <div className="flex items-center justify-center p-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : clients.length === 0 ? (
+          ) : visibleClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">Niciun client găsit</h3>
               <p className="text-muted-foreground mb-4">
-                {search || stadiuFilter !== "all" || agentFilter !== "all"
+                {search || stadiuFilter !== "all" || agentFilter !== "all" || contactStatusFilter !== "all"
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
               </p>
@@ -767,6 +788,7 @@ export default function Clienti() {
                   <TableHead className="w-[5%]">Nr.</TableHead>
                   <TableHead className="w-[15%]">Nume</TableHead>
                   <TableHead className="w-[15%]">Contact</TableHead>
+                  <TableHead className="w-[10%]">Status contact</TableHead>
                   <TableHead className="w-[15%]">Locație</TableHead>
                   <TableHead className="w-[10%]">Stadiu</TableHead>
                   <TableHead className="w-[12%]">Categorie</TableHead>
@@ -776,7 +798,7 @@ export default function Clienti() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client) => (
+                {visibleClients.map((client) => (
                   <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
                     <TableCell className="py-2 text-center text-xs font-mono text-muted-foreground">
                       {client.numCriteriu || ""}
@@ -814,6 +836,14 @@ export default function Clienti() {
                           </a>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge
+                        variant={client.contactat ? "default" : "outline"}
+                        className={client.contactat ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-gray-100 text-gray-700 border-gray-200"}
+                      >
+                        {client.contactat ? "Contactat" : "Necontactat"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-2">
                       {client.judet || client.localitate ? (
