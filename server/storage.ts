@@ -1016,13 +1016,16 @@ export class DatabaseStorage implements IStorage {
   async createPartner(data: CreatePartner): Promise<Partner> {
     const [partner] = await db.insert(partners).values({
       nume: data.nume,
-      tipPartener: data.tipPartener || "FURNIZOR",
+      tipPartener: data.tipPartener || "DISTRIBUITOR",
       cui: data.cui || null,
       telefon: data.telefon || null,
       email: data.email || null,
       adresa: data.adresa || null,
       persoanaContact: data.persoanaContact || null,
       note: data.note || null,
+      platitorTva: data.platitorTva ?? false,
+      file1: data.file1 || null,
+      file2: data.file2 || null,
       activ: data.activ !== undefined ? data.activ : true,
     }).returning();
     return partner;
@@ -1039,6 +1042,9 @@ export class DatabaseStorage implements IStorage {
     if (data.adresa !== undefined) updateData.adresa = data.adresa || null;
     if (data.persoanaContact !== undefined) updateData.persoanaContact = data.persoanaContact || null;
     if (data.note !== undefined) updateData.note = data.note || null;
+    if (data.platitorTva !== undefined) updateData.platitorTva = data.platitorTva;
+    if (data.file1 !== undefined) updateData.file1 = data.file1 || null;
+    if (data.file2 !== undefined) updateData.file2 = data.file2 || null;
     if (data.activ !== undefined) updateData.activ = data.activ;
 
     const [partner] = await db

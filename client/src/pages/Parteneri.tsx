@@ -67,14 +67,16 @@ interface Partner {
   adresa: string | null;
   persoanaContact: string | null;
   note: string | null;
+  platitorTva: boolean;
+  file1: string | null;
+  file2: string | null;
   activ: boolean;
 }
 
 const PARTNER_TYPES: { value: string; label: string; color: string }[] = [
-  { value: "FURNIZOR", label: "Furnizor", color: "bg-blue-100 text-blue-800" },
-  { value: "SUBCONTRACTOR", label: "Subcontractor", color: "bg-purple-100 text-purple-800" },
-  { value: "COLABORATOR", label: "Colaborator", color: "bg-green-100 text-green-800" },
-  { value: "DISTRIBUITOR", label: "Distribuitor", color: "bg-orange-100 text-orange-800" },
+  { value: "DISTRIBUITOR", label: "Distribuitor", color: "bg-blue-100 text-blue-800" },
+  { value: "COLABORATORI_PF", label: "Colaboratori PF", color: "bg-green-100 text-green-800" },
+  { value: "PARTENER_COMISIONAR", label: "Partener comisionar", color: "bg-orange-100 text-orange-800" },
 ];
 
 export default function Parteneri() {
@@ -89,13 +91,16 @@ export default function Parteneri() {
 
   const [formData, setFormData] = useState({
     nume: "",
-    tipPartener: "FURNIZOR",
+    tipPartener: "DISTRIBUITOR",
     cui: "",
     telefon: "",
     email: "",
     adresa: "",
     persoanaContact: "",
     note: "",
+    platitorTva: false,
+    file1: "",
+    file2: "",
     activ: true,
   });
 
@@ -193,13 +198,16 @@ export default function Parteneri() {
   const resetForm = () => {
     setFormData({
       nume: "",
-      tipPartener: "FURNIZOR",
+      tipPartener: "DISTRIBUITOR",
       cui: "",
       telefon: "",
       email: "",
       adresa: "",
       persoanaContact: "",
       note: "",
+      platitorTva: false,
+      file1: "",
+      file2: "",
       // Agenții creează parteneri neaprobați (inactivi)
       activ: isAdmin,
     });
@@ -221,6 +229,9 @@ export default function Parteneri() {
       adresa: partner.adresa || "",
       persoanaContact: partner.persoanaContact || "",
       note: partner.note || "",
+      platitorTva: partner.platitorTva,
+      file1: partner.file1 || "",
+      file2: partner.file2 || "",
       activ: partner.activ,
     });
     setEditingPartner(partner);
@@ -384,6 +395,8 @@ export default function Parteneri() {
                   <TableHead>Tip</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>CUI</TableHead>
+                  <TableHead>TVA</TableHead>
+                  <TableHead>Fișiere</TableHead>
                   <TableHead>Status</TableHead>
                   {isAdmin && <TableHead className="w-[100px]">Acțiuni</TableHead>}
                 </TableRow>
@@ -428,6 +441,35 @@ export default function Parteneri() {
                           <FileText className="h-3 w-3" /> {partner.cui}
                         </span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={partner.platitorTva ? "default" : "outline"}>
+                        {partner.platitorTva ? "TVA" : "Fără TVA"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2 text-xs">
+                        {partner.file1 && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => window.open(`${window.location.origin}${partner.file1}`, "_blank", "noopener")}
+                          >
+                            1
+                          </Button>
+                        )}
+                        {partner.file2 && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => window.open(`${window.location.origin}${partner.file2}`, "_blank", "noopener")}
+                          >
+                            2
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={partner.activ ? "default" : "secondary"}>
@@ -551,6 +593,97 @@ export default function Parteneri() {
                 placeholder="Adresa completă"
                 data-testid="input-adresa"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>TVA</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    checked={formData.platitorTva === true}
+                    onChange={() => setFormData({ ...formData, platitorTva: true })}
+                  />
+                  Plătitor de TVA
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    checked={formData.platitorTva === false}
+                    onChange={() => setFormData({ ...formData, platitorTva: false })}
+                  />
+                  Neplătitor de TVA
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Fișier 1</Label>
+                <Input
+                  type="file"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const form = new FormData();
+                    form.append("file", file);
+                    form.append("folder", "partners");
+                    try {
+                      const res = await fetch("/api/files/upload", {
+                        method: "POST",
+                        body: form,
+                      });
+                      if (!res.ok) throw new Error("Eroare la încărcarea fișierului");
+                      const data = await res.json();
+                      setFormData((prev) => ({ ...prev, file1: data.url }));
+                    } catch (error) {
+                      console.error("Upload file1 error", error);
+                      toast.error("Eroare la încărcarea fișierului 1");
+                    }
+                  }}
+                />
+                {formData.file1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`${window.location.origin}${formData.file1}`, "_blank", "noopener")}
+                  >
+                    Deschide fișier 1
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Fișier 2</Label>
+                <Input
+                  type="file"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const form = new FormData();
+                    form.append("file", file);
+                    form.append("folder", "partners");
+                    try {
+                      const res = await fetch("/api/files/upload", {
+                        method: "POST",
+                        body: form,
+                      });
+                      if (!res.ok) throw new Error("Eroare la încărcarea fișierului");
+                      const data = await res.json();
+                      setFormData((prev) => ({ ...prev, file2: data.url }));
+                    } catch (error) {
+                      console.error("Upload file2 error", error);
+                      toast.error("Eroare la încărcarea fișierului 2");
+                    }
+                  }}
+                />
+                {formData.file2 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`${window.location.origin}${formData.file2}`, "_blank", "noopener")}
+                  >
+                    Deschide fișier 2
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Note</Label>

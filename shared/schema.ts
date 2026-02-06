@@ -509,22 +509,29 @@ export type UpdateTarget = z.infer<typeof updateTargetSchema>;
 // ============ PARTNERS (Parteneri) ============
 
 export const partnerTypeEnum = pgEnum("partner_type", [
+  // valori vechi (păstrate pentru compatibilitate cu datele existente)
   "FURNIZOR",
   "SUBCONTRACTOR",
   "COLABORATOR",
-  "DISTRIBUITOR"
+  "DISTRIBUITOR",
+  // valori noi folosite în UI
+  "COLABORATORI_PF",
+  "PARTENER_COMISIONAR",
 ]);
 
 export const partners = pgTable("partners", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   nume: varchar("nume", { length: 150 }).notNull(),
-  tipPartener: partnerTypeEnum("tip_partener").notNull().default("FURNIZOR"),
+  tipPartener: partnerTypeEnum("tip_partener").notNull().default("DISTRIBUITOR"),
   cui: varchar("cui", { length: 20 }),
   telefon: varchar("telefon", { length: 20 }),
   email: varchar("email", { length: 120 }),
   adresa: text("adresa"),
   persoanaContact: varchar("persoana_contact", { length: 100 }),
   note: text("note"),
+  platitorTva: boolean("platitor_tva").notNull().default(false),
+  file1: varchar("file1", { length: 255 }),
+  file2: varchar("file2", { length: 255 }),
   activ: boolean("activ").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -538,13 +545,16 @@ export const insertPartnerSchema = createInsertSchema(partners).omit({
 
 export const createPartnerSchema = z.object({
   nume: z.string().min(1, "Numele este obligatoriu"),
-  tipPartener: z.enum(["FURNIZOR", "SUBCONTRACTOR", "COLABORATOR", "DISTRIBUITOR"]).default("FURNIZOR"),
+  tipPartener: z.enum(["DISTRIBUITOR", "COLABORATORI_PF", "PARTENER_COMISIONAR"]).default("DISTRIBUITOR"),
   cui: z.string().optional(),
   telefon: z.string().optional(),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
   adresa: z.string().optional(),
   persoanaContact: z.string().optional(),
   note: z.string().optional(),
+  platitorTva: z.boolean().optional().default(false),
+  file1: z.string().optional(),
+  file2: z.string().optional(),
   activ: z.boolean().default(true),
 });
 
@@ -554,7 +564,7 @@ export type Partner = typeof partners.$inferSelect;
 export type InsertPartner = z.infer<typeof insertPartnerSchema>;
 export type CreatePartner = z.infer<typeof createPartnerSchema>;
 export type UpdatePartner = z.infer<typeof updatePartnerSchema>;
-export type PartnerType = "FURNIZOR" | "SUBCONTRACTOR" | "COLABORATOR" | "DISTRIBUITOR";
+export type PartnerType = "DISTRIBUITOR" | "COLABORATORI_PF" | "PARTENER_COMISIONAR";
 
 // ============ SEDII (Locații/Showroom-uri) ============
 
