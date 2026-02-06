@@ -192,7 +192,9 @@ export default function CallTracking() {
                   <SelectItem value="VANDUT">Vândut</SelectItem>
                   <SelectItem value="REFUZAT">Refuzat</SelectItem>
                   <SelectItem value="ANULATA">Anulată</SelectItem>
-                  <SelectItem value="INFORMATII">Informații</SelectItem>
+                <SelectItem value="INFORMATII">Informații</SelectItem>
+                <SelectItem value="CONTACTAT">Contactat</SelectItem>
+                <SelectItem value="NECONTACTAT">Necontactat</SelectItem>
                 </SelectContent>
               </Select>
             </div>

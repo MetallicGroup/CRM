@@ -57,7 +57,9 @@ export const offerStatusEnum = pgEnum("offer_status", [
   "VANDUT",
   "REFUZAT",
   "ANULATA",
-  "INFORMATII"
+  "INFORMATII",
+  "CONTACTAT",
+  "NECONTACTAT"
 ]);
 
 export const employeeTypeEnum = pgEnum("employee_type", ["AGENT", "PRODUCTIE", "INDIRECT"]);
@@ -451,7 +453,17 @@ export type ProductCategory =
   | "SCARI_ACCES"
   | "ACCESORII_FERESTRE"
   | "SCULE";
-export type OfferStatus = "NOUA" | "TRIMISA" | "IN_ASTEPTARE" | "ACCEPTATA" | "VANDUT" | "REFUZAT" | "ANULATA" | "INFORMATII";
+export type OfferStatus =
+  | "NOUA"
+  | "TRIMISA"
+  | "IN_ASTEPTARE"
+  | "ACCEPTATA"
+  | "VANDUT"
+  | "REFUZAT"
+  | "ANULATA"
+  | "INFORMATII"
+  | "CONTACTAT"
+  | "NECONTACTAT";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
 export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015";
 export type Thickness = "0.50" | "0.60";
