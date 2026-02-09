@@ -675,6 +675,29 @@ export async function registerRoutes(
     }
   });
 
+  // Toggle client observation (admin only) - add/remove client from "Urmăriri clienți"
+  app.post("/api/clients/:id/toggle-observation", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const existingClient = await storage.getClient(id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client negăsit" });
+      }
+
+      const newValue = !existingClient.underObservation;
+      const updated = await storage.updateClient(id, { underObservation: newValue });
+
+      res.json({
+        success: true,
+        underObservation: updated?.underObservation ?? newValue,
+      });
+    } catch (error) {
+      console.error("Toggle client observation error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea observației clientului" });
+    }
+  });
+
   // Delete client (admin only)
   app.delete("/api/clients/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {

@@ -791,7 +791,7 @@ export default function Clienti() {
                   <TableHead className="w-[5%]">Nr.</TableHead>
                   <TableHead className="w-[15%]">Nume</TableHead>
                   <TableHead className="w-[15%]">Contact</TableHead>
-                  <TableHead className="w-[10%]">Status contact</TableHead>
+                  <TableHead className="w-[10%]">Data adăugare</TableHead>
                   <TableHead className="w-[15%]">Locație</TableHead>
                   <TableHead className="w-[10%]">Stadiu</TableHead>
                   <TableHead className="w-[12%]">Categorie</TableHead>
@@ -841,12 +841,13 @@ export default function Clienti() {
                       </div>
                     </TableCell>
                     <TableCell className="py-2">
-                      <Badge
-                        variant={client.contactat ? "default" : "outline"}
-                        className={client.contactat ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-gray-100 text-gray-700 border-gray-200"}
-                      >
-                        {client.contactat ? "Contactat" : "Necontactat"}
-                      </Badge>
+                      {client.dataAdaugare ? (
+                        <span className="text-xs whitespace-nowrap">
+                          {format(new Date(client.dataAdaugare), "dd.MM.yyyy")}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="py-2">
                       {client.judet || client.localitate ? (
