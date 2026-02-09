@@ -683,15 +683,6 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(activityLogs.createdAt));
 
-    // Limităm activitatea doar la programul de lucru: Luni–Vineri, 08:00–17:00
-    const filteredRows = rows.filter((row) => {
-      const d = row.createdAt;
-      const day = d.getDay(); // 0 = Duminică, 6 = Sâmbătă
-      if (day === 0 || day === 6) return false;
-      const hour = d.getHours();
-      return hour >= 8 && hour < 17;
-    });
-
     let totalLeadsAuto = 0;
     let totalLeadsManual = 0;
     let totalPhoneClicks = 0;
@@ -703,10 +694,8 @@ export class DatabaseStorage implements IStorage {
     let totalInactivitySeconds = 0;
     const inactivityIntervals: Array<{ start: Date; end: Date }> = [];
 
-    for (let i = 0; i < filteredRows.length; i++) {
-      const row = filteredRows[i];
-      
-      // Count activity types
+    // 1) Numărăm TOATE acțiunile din perioada selectată (indiferent de oră / zi)
+    for (const row of rows) {
       switch (row.type) {
         case "LEAD_AUTO":
           totalLeadsAuto++;
@@ -724,13 +713,26 @@ export class DatabaseStorage implements IStorage {
           totalFollowupClicks++;
           break;
       }
+    }
 
-      // Check for inactivity gap before this event (tot în interiorul programului)
+    // 2) Pentru inactivitate folosim DOAR evenimentele Luni–Vineri între 08:00–17:00
+    const workHoursRows = rows.filter((row) => {
+      const d = row.createdAt;
+      const day = d.getDay(); // 0 = Duminică, 6 = Sâmbătă
+      if (day === 0 || day === 6) return false;
+      const hour = d.getHours();
+      return hour >= 8 && hour < 17;
+    });
+
+    for (let i = 0; i < workHoursRows.length; i++) {
+      const row = workHoursRows[i];
+
+      // Check for inactivity gap înainte de acest eveniment (în program)
       if (i > 0) {
-        const prevEvent = filteredRows[i - 1];
+        const prevEvent = workHoursRows[i - 1];
         const currentEvent = row;
         const gapMs = currentEvent.createdAt.getTime() - prevEvent.createdAt.getTime();
-        
+
         if (gapMs > INACTIVITY_THRESHOLD_MS) {
           const gapSeconds = Math.floor(gapMs / 1000);
           totalInactivitySeconds += gapSeconds;
@@ -835,17 +837,8 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(activityLogs.createdAt));
 
-    // Limităm și aici la programul de lucru: Luni–Vineri, 08:00–17:00
-    const filteredRows = rows.filter((row) => {
-      const d = row.createdAt;
-      const day = d.getDay();
-      if (day === 0 || day === 6) return false;
-      const hour = d.getHours();
-      return hour >= 8 && hour < 17;
-    });
-
-    // Cast meta la obiect simplu pentru frontend
-    return filteredRows.map((row) => ({
+    // Cast meta la obiect simplu pentru frontend (fără filtru de oră/zi - vrem toate acțiunile)
+    return rows.map((row) => ({
       ...row,
       meta: (row.meta as any) || null,
       clientNotes: (row.clientNotes as any) || null,
