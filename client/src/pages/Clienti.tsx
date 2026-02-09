@@ -67,9 +67,7 @@ import {
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type {
@@ -399,8 +397,6 @@ export default function Clienti() {
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<"all" | "contactat" | "necontactat">("all");
-  const [followupDate, setFollowupDate] = useState<Date | null>(null);
-  const [followupOnly, setFollowupOnly] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -439,33 +435,14 @@ export default function Clienti() {
   }, [clients]);
 
   const visibleClients = useMemo(() => {
-    let result = clients;
-
     if (contactStatusFilter === "contactat") {
-      result = result.filter((c) => c.contactat);
-    } else if (contactStatusFilter === "necontactat") {
-      result = result.filter((c) => !c.contactat);
+      return clients.filter((c) => c.contactat);
     }
-
-    if (followupOnly && followupDate) {
-      result = result.filter((c) => {
-        const matchesFollowup = [
-          { date: c.dataRevenire1, done: c.followUpEfectuat1 },
-          { date: c.dataRevenire2, done: c.followUpEfectuat2 },
-          { date: c.dataRevenire3, done: c.followUpEfectuat3 },
-        ].some((f) => {
-          if (!f.date) return false;
-          const d = new Date(f.date as any);
-          if (isNaN(d.getTime())) return false;
-          // doar follow-up-uri care sunt scadente în ziua selectată și nu sunt bifate ca efectuate
-          return isSameDay(d, followupDate) && !f.done;
-        });
-        return matchesFollowup;
-      });
+    if (contactStatusFilter === "necontactat") {
+      return clients.filter((c) => !c.contactat);
     }
-
-    return result;
-  }, [clients, contactStatusFilter, followupOnly, followupDate]);
+    return clients;
+  }, [clients, contactStatusFilter]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["users"],
@@ -799,45 +776,6 @@ export default function Clienti() {
             </Select>
           </div>
 
-          <div className="mt-4 grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Zi follow-up</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !followupDate && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {followupDate
-                      ? format(followupDate, "PPP", { locale: ro })
-                      : "Selectează ziua de follow-up"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={followupDate || undefined}
-                    onSelect={(d) => setFollowupDate(d ?? null)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex items-center space-x-2 mt-6 md:mt-8">
-              <Checkbox
-                id="followupOnly"
-                checked={followupOnly}
-                onCheckedChange={(checked) => setFollowupOnly(!!checked)}
-              />
-              <Label htmlFor="followupOnly" className="text-sm">
-                Afișează doar clienții cu follow-up în ziua selectată
-              </Label>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
