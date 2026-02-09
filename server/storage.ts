@@ -505,6 +505,8 @@ export class DatabaseStorage implements IStorage {
       stadiuOferta: data.stadiuOferta || "NOUA",
       dataOfertarii: parseDate(data.dataOfertarii),
       avans: data.avans || false,
+      avansSuma: parseDecimal(data.avansSuma),
+      avansIncasat: data.avansIncasat || false,
       stadiuComanda: data.stadiuComanda || null,
       dataVanzarii: parseDate(data.dataVanzarii),
       dataLivrarii: parseDate(data.dataLivrarii),
@@ -575,6 +577,8 @@ export class DatabaseStorage implements IStorage {
     if (data.mlRulouProd !== undefined) updateData.mlRulouProd = parseDecimal(data.mlRulouProd);
     if (data.smartDripstop !== undefined) updateData.smartDripstop = data.smartDripstop;
     if (data.valoareOferta !== undefined) updateData.valoareOferta = parseDecimal(data.valoareOferta);
+    if (data.avansSuma !== undefined) updateData.avansSuma = parseDecimal(data.avansSuma);
+    if (data.avansIncasat !== undefined) updateData.avansIncasat = data.avansIncasat;
     if (data.stadiuOferta !== undefined) {
       updateData.stadiuOferta = data.stadiuOferta;
       // Auto-set dataRevenire1 to next day if status is changed to IN_ASTEPTARE and dataRevenire1 is not set

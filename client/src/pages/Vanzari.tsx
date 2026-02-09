@@ -58,6 +58,9 @@ interface Client {
   dataVanzarii: string | null;
   isPartnerOrder: boolean | null;
   partnerId: string | null;
+  avans: boolean | null;
+  avansSuma: string | null;
+  avansIncasat: boolean | null;
 }
 
 interface Agent {
@@ -133,8 +136,18 @@ export default function Vanzari() {
     return matchesSearch && matchesAgent && matchesCategory && matchesPartner;
   });
 
+  const getReportedValue = (client: Client): number => {
+    if (client.avans && !client.avansIncasat && client.avansSuma) {
+      return parseFloat(client.avansSuma);
+    }
+    if (client.valoareOferta) {
+      return parseFloat(client.valoareOferta);
+    }
+    return 0;
+  };
+
   const totalValue = filteredClients.reduce((sum, client) => {
-    return sum + (client.valoareOferta ? parseFloat(client.valoareOferta) : 0);
+    return sum + getReportedValue(client);
   }, 0);
 
   const getAgentName = (agentId: string | null) => {
@@ -407,8 +420,8 @@ export default function Vanzari() {
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold text-green-600">
-                      {client.valoareOferta 
-                        ? `${parseFloat(client.valoareOferta).toLocaleString("ro-RO")} RON`
+                      {getReportedValue(client)
+                        ? `${getReportedValue(client).toLocaleString("ro-RO")} RON`
                         : "-"}
                     </TableCell>
                     {isAdmin && (
