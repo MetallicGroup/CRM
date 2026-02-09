@@ -30,6 +30,16 @@ interface ActivitySummary {
   inactivityIntervals: Array<{ start: string; end: string; duration: string }>;
 }
 
+interface ActivityDetail {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientPhone: string | null;
+  type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+  createdAt: string;
+  meta: Record<string, any> | null;
+}
+
 export default function Exporturi() {
   const { isAdmin, user } = useAuth();
   const [location] = useLocation();
@@ -92,6 +102,22 @@ export default function Exporturi() {
 
       const res = await fetch(`/api/activity/summary?${params.toString()}`);
       if (!res.ok) throw new Error("Eroare la încărcarea raportului");
+      return res.json();
+    },
+    enabled: selectedAgent !== "all" && !!dateFrom && !!dateTo,
+  });
+
+  const { data: activityDetails = [], isLoading: isLoadingDetails } = useQuery<ActivityDetail[]>({
+    queryKey: ["activity-details", selectedAgent, dateFrom, dateTo],
+    queryFn: async () => {
+      if (selectedAgent === "all" || !dateFrom || !dateTo) return [];
+      const params = new URLSearchParams({
+        agentId: selectedAgent,
+        from: dateFrom.toISOString(),
+        to: dateTo.toISOString(),
+      });
+      const res = await fetch(`/api/activity/details?${params.toString()}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea detaliilor");
       return res.json();
     },
     enabled: selectedAgent !== "all" && !!dateFrom && !!dateTo,
@@ -350,6 +376,88 @@ export default function Exporturi() {
                     </TableRow>
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Detaliu acțiuni pe clienți</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Se afișează pe care clienți a lucrat agentul, ce tip de acțiune a făcut și din ce status în ce status a schimbat.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {isLoadingDetails ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : activityDetails.length === 0 ? (
+                <div className="py-6 text-center text-muted-foreground text-sm">
+                  Nu există acțiuni înregistrate în perioada selectată.
+                </div>
+              ) : (
+                <div className="max-h-[500px] overflow-y-auto border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data/Ora</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Telefon</TableHead>
+                        <TableHead>Tip acțiune</TableHead>
+                        <TableHead>Detaliu</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activityDetails.map((row) => {
+                        let actionLabel = "";
+                        let detail = "";
+
+                        if (row.type === "LEAD_AUTO") {
+                          actionLabel = "Lead automat";
+                          detail = "Client încărcat automat (ex. Facebook)";
+                        } else if (row.type === "LEAD_MANUAL") {
+                          actionLabel = "Lead manual";
+                          detail = "Client adăugat manual în CRM";
+                        } else if (row.type === "PHONE_CLICK") {
+                          actionLabel = "Click telefon";
+                          detail = "S-a dat click pe numărul de telefon";
+                        } else if (row.type === "STATUS_CHANGE") {
+                          actionLabel = "Schimbare status";
+                          const fromStatus = (row.meta?.from as string | undefined) || "";
+                          const toStatus = (row.meta?.to as string | undefined) || "";
+                          detail = fromStatus && toStatus
+                            ? `Din ${fromStatus} în ${toStatus}`
+                            : "Schimbare stadiu ofertă";
+                        } else if (row.type === "FOLLOWUP_CLICK") {
+                          actionLabel = "Follow-up efectuat";
+                          const nr = row.meta?.followUpNumber as number | undefined;
+                          detail = nr ? `Follow-up ${nr} bifat ca efectuat` : "Follow-up bifat ca efectuat";
+                        }
+
+                        return (
+                          <TableRow key={row.id}>
+                            <TableCell className="whitespace-nowrap text-xs">
+                              {format(new Date(row.createdAt), "dd.MM.yyyy HH:mm", { locale: ro })}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {row.clientName}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {row.clientPhone || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm font-medium">
+                              {actionLabel}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {detail}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>

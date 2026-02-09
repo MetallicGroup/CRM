@@ -391,6 +391,48 @@ export async function registerRoutes(
     }
   });
 
+  // Get detailed activity log (per client/action) for agent
+  app.get("/api/activity/details", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, from, to } = req.query;
+
+      // Non-admins can only see propriile lor activități
+      let filterAgentId = agentId as string | undefined;
+      if (req.userRole !== "ADMIN") {
+        filterAgentId = req.userId;
+      }
+
+      if (!filterAgentId) {
+        return res.status(400).json({ message: "Agent ID este obligatoriu" });
+      }
+
+      if (!from || !to) {
+        return res.status(400).json({ message: "Perioada (from/to) este obligatorie" });
+      }
+
+      const fromDate = new Date(from as string);
+      const toDate = new Date(to as string);
+
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ message: "Date invalide pentru perioadă" });
+      }
+
+      // Set to end of day pentru data de final
+      toDate.setHours(23, 59, 59, 999);
+
+      const details = await storage.getAgentActivityDetails({
+        agentId: filterAgentId,
+        from: fromDate,
+        to: toDate,
+      });
+
+      res.json(details);
+    } catch (error) {
+      console.error("Get activity details error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea detaliilor de activitate" });
+    }
+  });
+
   // ============ CLIENT ROUTES ============
 
   // Get all clients

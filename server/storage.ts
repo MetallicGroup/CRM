@@ -143,6 +143,19 @@ export interface IStorage {
     totalInactivitySeconds: number;
     inactivityIntervals: Array<{ start: string; end: string; duration: string }>;
   }>;
+  getAgentActivityDetails(params: {
+    agentId: string;
+    from: Date;
+    to: Date;
+  }): Promise<Array<{
+    id: string;
+    clientId: string;
+    clientName: string;
+    clientPhone: string | null;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    createdAt: Date;
+    meta: Record<string, unknown> | null;
+  }>>;
 
   // Sedii methods
   getSediu(id: string): Promise<Sediu | undefined>;
@@ -763,6 +776,59 @@ export class DatabaseStorage implements IStorage {
       totalInactivitySeconds,
       inactivityIntervals: formattedIntervals,
     };
+  }
+
+  async getAgentActivityDetails(params: {
+    agentId: string;
+    from: Date;
+    to: Date;
+  }): Promise<Array<{
+    id: string;
+    clientId: string;
+    clientName: string;
+    clientPhone: string | null;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    createdAt: Date;
+    meta: Record<string, unknown> | null;
+  }>> {
+    const { agentId, from, to } = params;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const rows = await db
+      .select({
+        id: activityLogs.id,
+        clientId: clients.id,
+        clientName: clients.nume,
+        clientPhone: clients.telefon,
+        type: activityLogs.type,
+        createdAt: activityLogs.createdAt,
+        meta: activityLogs.meta,
+      })
+      .from(activityLogs)
+      .innerJoin(clients, eq(activityLogs.clientId, clients.id))
+      .where(
+        and(
+          eq(activityLogs.userId, agentId),
+          gte(activityLogs.createdAt, from),
+          lte(activityLogs.createdAt, to),
+          // Exclude clients cu follow-up 3 efectuat
+          eq(clients.followUpEfectuat3, false),
+          // Exclude clienți cu follow-up în viitor
+          and(
+            or(sql`${clients.dataRevenire1} IS NULL`, lte(clients.dataRevenire1, now)),
+            or(sql`${clients.dataRevenire2} IS NULL`, lte(clients.dataRevenire2, now)),
+            or(sql`${clients.dataRevenire3} IS NULL`, lte(clients.dataRevenire3, now)),
+          ),
+        ),
+      )
+      .orderBy(asc(activityLogs.createdAt));
+
+    // Cast meta la obiect simplu pentru frontend
+    return rows.map((row) => ({
+      ...row,
+      meta: (row.meta as any) || null,
+    }));
   }
 
   async getClientStats(agentId?: string, dateFrom?: string, dateTo?: string): Promise<{
