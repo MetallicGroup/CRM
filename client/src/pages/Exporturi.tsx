@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CalendarIcon, Download, FileText, Search } from "lucide-react";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -42,10 +48,10 @@ interface ActivityDetail {
 
 export default function Exporturi() {
   const { isAdmin, user } = useAuth();
-  const [location, navigate] = useLocation();
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfDay(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfDay(new Date()));
+  const [selectedActivity, setSelectedActivity] = useState<ActivityDetail | null>(null);
 
   // Parse URL parameters on mount
   useEffect(() => {
@@ -444,7 +450,7 @@ export default function Exporturi() {
                               <button
                                 type="button"
                                 className="text-blue-600 hover:underline"
-                                onClick={() => navigate(`/clienti?clientId=${row.clientId}`)}
+                                onClick={() => setSelectedActivity(row)}
                               >
                                 {row.clientName}
                               </button>
@@ -506,6 +512,67 @@ export default function Exporturi() {
             Selectați un agent pentru a vedea raportul de activitate
           </CardContent>
         </Card>
+      )}
+
+      {selectedActivity && (
+        <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Detalii client - {selectedActivity.clientName}</DialogTitle>
+              <DialogDescription>
+                Activitate efectuată de agent în perioada selectată
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Telefon</p>
+                  <p className="font-medium">
+                    {selectedActivity.clientPhone || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Data/Ora acțiunii</p>
+                  <p className="font-medium">
+                    {format(new Date(selectedActivity.createdAt), "dd.MM.yyyy HH:mm", { locale: ro })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Tip acțiune</p>
+                  <p className="font-medium">
+                    {selectedActivity.type === "LEAD_AUTO" && "Lead automat"}
+                    {selectedActivity.type === "LEAD_MANUAL" && "Lead manual"}
+                    {selectedActivity.type === "PHONE_CLICK" && "Click telefon"}
+                    {selectedActivity.type === "STATUS_CHANGE" && "Schimbare status"}
+                    {selectedActivity.type === "FOLLOWUP_CLICK" && "Follow-up efectuat"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Detaliu</p>
+                  <p className="font-medium">
+                    {selectedActivity.type === "LEAD_AUTO" && "Client încărcat automat (ex. Facebook)"}
+                    {selectedActivity.type === "LEAD_MANUAL" && "Client adăugat manual în CRM"}
+                    {selectedActivity.type === "PHONE_CLICK" && "S-a dat click pe numărul de telefon"}
+                    {selectedActivity.type === "STATUS_CHANGE" && (() => {
+                      const fromStatus = (selectedActivity.meta?.from as string | undefined) || "";
+                      const toStatus = (selectedActivity.meta?.to as string | undefined) || "";
+                      return fromStatus && toStatus
+                        ? `Din ${fromStatus} în ${toStatus}`
+                        : "Schimbare stadiu ofertă";
+                    })()}
+                    {selectedActivity.type === "FOLLOWUP_CLICK" && (() => {
+                      const nr = selectedActivity.meta?.followUpNumber as number | undefined;
+                      return nr ? `Follow-up ${nr} bifat ca efectuat` : "Follow-up bifat ca efectuat";
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
