@@ -44,6 +44,7 @@ interface ActivityDetail {
   type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
   createdAt: string;
   meta: Record<string, any> | null;
+  clientNotes: string | null;
 }
 
 export default function Exporturi() {
@@ -569,6 +570,15 @@ export default function Exporturi() {
                     })()}
                   </p>
                 </div>
+              </div>
+
+              <div className="space-y-1 text-sm">
+                <p className="text-muted-foreground">Observații client</p>
+                <p className="font-medium whitespace-pre-wrap">
+                  {selectedActivity.clientNotes && selectedActivity.clientNotes.trim().length > 0
+                    ? selectedActivity.clientNotes
+                    : "Nu există observații salvate pentru acest client."}
+                </p>
               </div>
             </div>
           </DialogContent>

@@ -683,6 +683,15 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(activityLogs.createdAt));
 
+    // Limităm activitatea doar la programul de lucru: Luni–Vineri, 08:00–17:00
+    const filteredRows = rows.filter((row) => {
+      const d = row.createdAt;
+      const day = d.getDay(); // 0 = Duminică, 6 = Sâmbătă
+      if (day === 0 || day === 6) return false;
+      const hour = d.getHours();
+      return hour >= 8 && hour < 17;
+    });
+
     let totalLeadsAuto = 0;
     let totalLeadsManual = 0;
     let totalPhoneClicks = 0;
@@ -694,8 +703,8 @@ export class DatabaseStorage implements IStorage {
     let totalInactivitySeconds = 0;
     const inactivityIntervals: Array<{ start: Date; end: Date }> = [];
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (let i = 0; i < filteredRows.length; i++) {
+      const row = filteredRows[i];
       
       // Count activity types
       switch (row.type) {
@@ -716,9 +725,9 @@ export class DatabaseStorage implements IStorage {
           break;
       }
 
-      // Check for inactivity gap before this event
+      // Check for inactivity gap before this event (tot în interiorul programului)
       if (i > 0) {
-        const prevEvent = rows[i - 1];
+        const prevEvent = filteredRows[i - 1];
         const currentEvent = row;
         const gapMs = currentEvent.createdAt.getTime() - prevEvent.createdAt.getTime();
         
@@ -787,6 +796,7 @@ export class DatabaseStorage implements IStorage {
     clientId: string;
     clientName: string;
     clientPhone: string | null;
+    clientNotes: string | null;
     type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
     createdAt: Date;
     meta: Record<string, unknown> | null;
@@ -801,6 +811,7 @@ export class DatabaseStorage implements IStorage {
         clientId: clients.id,
         clientName: clients.nume,
         clientPhone: clients.telefon,
+        clientNotes: clients.observatiiClient,
         type: activityLogs.type,
         createdAt: activityLogs.createdAt,
         meta: activityLogs.meta,
@@ -824,10 +835,20 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(activityLogs.createdAt));
 
+    // Limităm și aici la programul de lucru: Luni–Vineri, 08:00–17:00
+    const filteredRows = rows.filter((row) => {
+      const d = row.createdAt;
+      const day = d.getDay();
+      if (day === 0 || day === 6) return false;
+      const hour = d.getHours();
+      return hour >= 8 && hour < 17;
+    });
+
     // Cast meta la obiect simplu pentru frontend
-    return rows.map((row) => ({
+    return filteredRows.map((row) => ({
       ...row,
       meta: (row.meta as any) || null,
+      clientNotes: (row.clientNotes as any) || null,
     }));
   }
 
