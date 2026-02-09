@@ -31,7 +31,7 @@ import {
   AlertCircle,
   Download
 } from "lucide-react";
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -236,7 +236,16 @@ export default function CRMDashboard() {
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(d) => {
+                      setDate(d);
+                      if (d) {
+                        const from = startOfDay(d);
+                        const to = endOfDay(d);
+                        setDateFrom(from);
+                        setDateTo(to);
+                        setPeriod("azi");
+                      }
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
@@ -393,10 +402,36 @@ export default function CRMDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Vedere Generală Sistem</h2>
-          <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Perioada:</span>
-              <Select value={period} onValueChange={setPeriod}>
+              <Select
+                value={period}
+                onValueChange={(value) => {
+                  setPeriod(value);
+                  const now = new Date();
+                  let from: Date;
+                  let to: Date;
+
+                  if (value === "azi") {
+                    from = startOfDay(now);
+                    to = endOfDay(now);
+                  } else if (value === "saptamana") {
+                    from = startOfWeek(now, { weekStartsOn: 1 });
+                    to = endOfWeek(now, { weekStartsOn: 1 });
+                  } else if (value === "luna") {
+                    from = startOfMonth(now);
+                    to = endOfMonth(now);
+                  } else {
+                    from = startOfYear(now);
+                    to = endOfYear(now);
+                  }
+
+                  setDate(undefined);
+                  setDateFrom(from);
+                  setDateTo(to);
+                }}
+              >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
