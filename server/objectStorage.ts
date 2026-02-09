@@ -1,21 +1,40 @@
-import { Client } from "@replit/object-storage";
+import { Client as ReplitClient } from "@replit/object-storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
+import { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-// Initialize client tentatively. It might fail if not in Replit.
-let objectStorageClient: Client | null = null;
+// --- R2 (S3-compatible) client ---
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+
+const hasR2Config = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME);
+
+const r2Client = hasR2Config
+  ? new S3Client({
+      region: "auto",
+      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID!,
+        secretAccessKey: R2_SECRET_ACCESS_KEY!,
+      },
+    })
+  : null;
+
+// --- Replit object storage (fallback, mostly local) ---
+let objectStorageClient: ReplitClient | null = null;
 try {
-  objectStorageClient = new Client();
+  objectStorageClient = new ReplitClient();
 } catch (e) {
-  console.warn("[ObjectStorage] Failed to initialize Replit Object Storage client. Using disk fallback.");
+  console.warn("[ObjectStorage] Failed to initialize Replit Object Storage client. Will use R2 or disk.");
 }
 
+// Disk fallback (for local dev) when neither R2, nor Replit is available
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-console.log(`[ObjectStorage] Uploads directory: ${UPLOADS_DIR}`);
 if (!fs.existsSync(UPLOADS_DIR)) {
-  console.log(`[ObjectStorage] Creating uploads directory...`);
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
@@ -39,7 +58,23 @@ export class ObjectStorageService {
   }
 
   async uploadFromBuffer(buffer: Buffer, objectName: string): Promise<string> {
-    // Try Replit Object Storage first
+    // 1) Prefer Cloudflare R2 (S3) dacă este configurat
+    if (r2Client && hasR2Config) {
+      try {
+        await r2Client.send(
+          new PutObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: objectName,
+            Body: buffer,
+          })
+        );
+        return `/objects/${objectName}`;
+      } catch (e) {
+        console.error("[ObjectStorage] R2 upload failed, falling back:", e);
+      }
+    }
+
+    // 2) Replit Object Storage (dacă există)
     if (objectStorageClient) {
       try {
         const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
@@ -51,7 +86,7 @@ export class ObjectStorageService {
       }
     }
 
-    // Disk Fallback
+    // 3) Disk fallback (local dev)
     const filePath = path.join(process.cwd(), objectName);
     const dir = path.dirname(filePath);
     console.log(`[ObjectStorage] Uploading to disk path: ${filePath}`);
@@ -77,7 +112,23 @@ export class ObjectStorageService {
 
     const objectName = parts.slice(1).join("/");
 
-    // Check Replit first
+    // 1) Check R2
+    if (r2Client && hasR2Config) {
+      try {
+        await r2Client.send(
+          new HeadObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: objectName,
+          })
+        );
+        return { objectName, exists: true };
+      } catch (e) {
+        // fall through to other backends
+        console.warn("[ObjectStorage] R2 exists check failed, checking other backends:", e);
+      }
+    }
+
+    // 2) Check Replit
     if (objectStorageClient) {
       try {
         const existsResult = await objectStorageClient.exists(objectName);
@@ -89,7 +140,7 @@ export class ObjectStorageService {
       }
     }
 
-    // Check disk
+    // 3) Check disk
     const filePath = path.join(process.cwd(), objectName);
     console.log(`[ObjectStorage] Checking disk existence: ${filePath}`);
     if (fs.existsSync(filePath)) {
@@ -109,8 +160,30 @@ export class ObjectStorageService {
 
     let data: Buffer | null = null;
 
-    // Try Replit first
-    if (objectStorageClient) {
+    // 1) Try R2
+    if (r2Client && hasR2Config) {
+      try {
+        const r2Result = await r2Client.send(
+          new GetObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: objectName,
+          })
+        );
+
+        if (r2Result.Body) {
+          const chunks: Buffer[] = [];
+          for await (const chunk of r2Result.Body as any) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+          }
+          data = Buffer.concat(chunks);
+        }
+      } catch (e) {
+        console.warn("[ObjectStorage] R2 download failed, trying other backends:", e);
+      }
+    }
+
+    // 2) Try Replit
+    if (!data && objectStorageClient) {
       try {
         const downloadResult = await objectStorageClient.downloadAsBytes(objectName);
         if (downloadResult.ok) {
@@ -121,7 +194,7 @@ export class ObjectStorageService {
       }
     }
 
-    // Try disk if not found or no client
+    // 3) Try disk if not found or no client
     if (!data) {
       const filePath = path.join(process.cwd(), objectName);
       console.log(`[ObjectStorage] Trying to read from disk: ${filePath}`);
@@ -159,7 +232,22 @@ export class ObjectStorageService {
 
       let deleted = false;
 
-      // Try Replit first
+      // 1) Try R2
+      if (r2Client && hasR2Config) {
+        try {
+          await r2Client.send(
+            new DeleteObjectCommand({
+              Bucket: R2_BUCKET_NAME,
+              Key: objectName,
+            })
+          );
+          deleted = true;
+        } catch (e) {
+          console.warn("[ObjectStorage] R2 delete failed, trying other backends:", e);
+        }
+      }
+
+      // 2) Try Replit
       if (objectStorageClient) {
         try {
           const result = await objectStorageClient.delete(objectName);
@@ -169,7 +257,7 @@ export class ObjectStorageService {
         }
       }
 
-      // Try disk
+      // 3) Try disk
       const filePath = path.join(process.cwd(), objectName);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
