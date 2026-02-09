@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -419,6 +419,18 @@ export default function Clienti() {
       return res.json();
     },
   });
+
+  // Dacă venim din Exporturi cu ?clientId=..., deschidem direct detaliile acelui client
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get("clientId");
+    if (!clientId || clients.length === 0) return;
+
+    const target = clients.find((c) => c.id === clientId);
+    if (target) {
+      setViewClient(target);
+    }
+  }, [clients]);
 
   const visibleClients = useMemo(() => {
     if (contactStatusFilter === "contactat") {

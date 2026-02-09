@@ -42,7 +42,7 @@ interface ActivityDetail {
 
 export default function Exporturi() {
   const { isAdmin, user } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfDay(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfDay(new Date()));
@@ -441,7 +441,13 @@ export default function Exporturi() {
                               {format(new Date(row.createdAt), "dd.MM.yyyy HH:mm", { locale: ro })}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {row.clientName}
+                              <button
+                                type="button"
+                                className="text-blue-600 hover:underline"
+                                onClick={() => navigate(`/clienti?clientId=${row.clientId}`)}
+                              >
+                                {row.clientName}
+                              </button>
                             </TableCell>
                             <TableCell className="text-sm">
                               {row.clientPhone || "-"}
