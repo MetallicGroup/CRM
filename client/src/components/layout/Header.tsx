@@ -38,6 +38,7 @@ import {
   PhoneCall,
   Download,
   Eye,
+  Clock,
 } from 'lucide-react';
 
 interface NavItem {
@@ -50,6 +51,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: Users, label: 'Clienți', href: '/clienti' },
+  { icon: Clock, label: 'Follow-up', href: '/followup' },
   { icon: Target, label: 'Target-uri', href: '/targeturi' },
   { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
   { icon: Handshake, label: 'Parteneri', href: '/parteneri' },

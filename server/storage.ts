@@ -75,6 +75,7 @@ export interface IStorage {
   getClient(id: string): Promise<Client | undefined>;
   getClientByPhone(telefon: string): Promise<Client | undefined>;
   getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]>;
+  getFollowupsForDate(agentId: string | undefined, date: Date): Promise<Client[]>;
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
@@ -424,6 +425,36 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(clients.createdAt));
+  }
+
+  async getFollowupsForDate(agentId: string | undefined, date: Date): Promise<Client[]> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const conditions: any[] = [];
+
+    if (agentId) {
+      conditions.push(eq(clients.agentId, agentId));
+      conditions.push(isNotNull(clients.agentId));
+    }
+
+    // orice follow-up 1/2/3 care pică în ziua selectată
+    conditions.push(
+      or(
+        and(gte(clients.dataRevenire1, dayStart), lte(clients.dataRevenire1, dayEnd)),
+        and(gte(clients.dataRevenire2, dayStart), lte(clients.dataRevenire2, dayEnd)),
+        and(gte(clients.dataRevenire3, dayStart), lte(clients.dataRevenire3, dayEnd)),
+      )
+    );
+
+    let query = db.select().from(clients);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    return await query.orderBy(asc(clients.nume));
   }
 
   async createClient(data: CreateClient): Promise<Client> {

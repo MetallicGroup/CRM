@@ -21,6 +21,7 @@ import Cheltuieli from "@/pages/Cheltuieli";
 import CallTracking from "@/pages/CallTracking";
 import Exporturi from "@/pages/Exporturi";
 import UrmaririClienti from "@/pages/UrmaririClienti";
+import Followup from "@/pages/Followup";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -98,6 +99,9 @@ function Router() {
       </Route>
       <Route path="/clienti">
         <ProtectedRoute component={Clienti} />
+      </Route>
+      <Route path="/followup">
+        <ProtectedRoute component={Followup} />
       </Route>
       <Route path="/targeturi">
         <ProtectedRoute component={Targeturi} />

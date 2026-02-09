@@ -462,6 +462,31 @@ export async function registerRoutes(
     }
   });
 
+  // Get follow-ups for a specific date (Follow-up Azi)
+  app.get("/api/followups", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, date } = req.query;
+
+      let filterAgentId = agentId as string | undefined;
+      if (req.userRole !== "ADMIN") {
+        filterAgentId = req.userId;
+      } else if (filterAgentId === "all") {
+        filterAgentId = undefined;
+      }
+
+      const targetDate = date ? new Date(date as string) : new Date();
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: "Dată invalidă" });
+      }
+
+      const clients = await storage.getFollowupsForDate(filterAgentId, targetDate);
+      res.json(clients);
+    } catch (error) {
+      console.error("Get followups error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea follow-up-urilor" });
+    }
+  });
+
   // Get client stats
   app.get("/api/clients/stats", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
