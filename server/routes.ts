@@ -688,8 +688,13 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Client negăsit" });
       }
 
-      // Non-admins can only update their own clients
-      if (req.userRole !== "ADMIN" && existingClient.agentId !== req.userId) {
+      const isRazvan =
+        !!req.userEmail?.toLowerCase().includes("razvan") ||
+        !!req.userFirstName?.toLowerCase().includes("razvan");
+
+      // Non-admins pot modifica doar propriii clienți,
+      // cu excepția lui Razvan care poate edita orice client.
+      if (req.userRole !== "ADMIN" && !isRazvan && existingClient.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest client" });
       }
 
