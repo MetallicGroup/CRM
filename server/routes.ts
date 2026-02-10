@@ -13,6 +13,9 @@ interface AuthRequest extends Request {
   userId?: string;
   userRole?: string;
   specialKey?: string;
+  userEmail?: string;
+  userFirstName?: string;
+  userLastName?: string;
 }
 
 async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
@@ -34,6 +37,9 @@ async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) 
     req.userId = user.id;
     req.userRole = user.role;
     req.specialKey = user.specialKey || undefined;
+    req.userEmail = user.email;
+    req.userFirstName = user.firstName;
+    req.userLastName = user.lastName;
 
     if (req.session.userRole !== user.role) {
       req.session.userRole = user.role;
@@ -440,10 +446,22 @@ export async function registerRoutes(
     try {
       const { agentId, stadiuOferta, search, underObservation, dateFrom, dateTo } = req.query;
 
-      // Non-admins can only see their own clients
-      let filterAgentId = agentId as string | undefined;
+      const requestedAgentId = agentId as string | undefined;
+
+      // Non-admins pot vedea doar propriii clienți,
+      // cu excepția lui Razvan care poate filtra și clienții lui Alexandru.
+      let filterAgentId = requestedAgentId;
       if (req.userRole !== "ADMIN") {
-        filterAgentId = req.userId;
+        const isRazvan =
+          req.userEmail === "razvan@metallicgroup.ro" ||
+          (req.userFirstName?.toLowerCase() === "razvan" && req.userLastName?.toLowerCase() === "rosu");
+
+        if (isRazvan) {
+          // Dacă Razvan nu a ales un agent explicit, vede propriii clienți
+          filterAgentId = requestedAgentId || req.userId;
+        } else {
+          filterAgentId = req.userId;
+        }
       }
 
       const clients = await storage.getAllClients({

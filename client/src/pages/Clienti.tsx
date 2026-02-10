@@ -95,6 +95,8 @@ const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }
   { value: "INFORMATII", label: "Informații", color: "bg-purple-100 text-purple-800" },
   { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-100 text-emerald-800" },
   { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-100 text-orange-800" },
+  // Stadiu special folosit doar de Razvan / Alexandru
+  { value: "RAZVAN", label: "Razvan", color: "bg-pink-100 text-pink-800" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -392,6 +394,12 @@ const defaultFormData: Partial<CreateClient> = {
 
 export default function Clienti() {
   const { isAdmin, user } = useAuth();
+  const isRazvan =
+    user?.email === "razvan@metallicgroup.ro" ||
+    (user?.firstName?.toLowerCase() === "razvan" && user?.lastName?.toLowerCase() === "rosu");
+  const isAlexandruCroitoru =
+    user?.email === "alexandru@metallicgroup.ro" ||
+    (user?.firstName?.toLowerCase() === "alexandru" && user?.lastName?.toLowerCase().includes("croitoru"));
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
@@ -421,6 +429,12 @@ export default function Clienti() {
       return res.json();
     },
   });
+
+  const offerStatusOptionsForUser = useMemo(() => {
+    const canSeeRazvanStatus = isRazvan || isAlexandruCroitoru || isAdmin;
+    if (canSeeRazvanStatus) return OFFER_STATUS_OPTIONS;
+    return OFFER_STATUS_OPTIONS.filter((s) => s.value !== "RAZVAN");
+  }, [isRazvan, isAlexandruCroitoru, isAdmin]);
 
   // Dacă venim din Exporturi cu ?clientId=..., deschidem direct detaliile acelui client
   useEffect(() => {
@@ -455,7 +469,8 @@ export default function Clienti() {
         return [];
       }
     },
-    enabled: isAdmin,
+    // Pentru Razvan avem nevoie de lista de agenți ca să poată selecta Alexandru
+    enabled: isAdmin || isRazvan,
     retry: false,
   });
 
@@ -742,21 +757,31 @@ export default function Clienti() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toate stadiile</SelectItem>
-                {OFFER_STATUS_OPTIONS.map((status) => (
+                {offerStatusOptionsForUser.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {isAdmin && (
+            {(isAdmin || isRazvan) && (
               <Select value={agentFilter} onValueChange={setAgentFilter}>
                 <SelectTrigger className="w-full md:w-[200px]" data-testid="select-agent-filter">
                   <SelectValue placeholder="Toți agenții" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
-                  {agents.filter((a: any) => a.role === "AGENT" || a.role === "ADMIN").map((agent: any) => (
+                  {(
+                    isAdmin
+                      ? agents.filter((a: any) => a.role === "AGENT" || a.role === "ADMIN")
+                      : // Pentru Razvan, afișăm doar agentul Alexandru Croitoru
+                        agents.filter(
+                          (a: any) =>
+                            a.email === "alexandru@metallicgroup.ro" ||
+                            (a.firstName?.toLowerCase() === "alexandru" &&
+                              a.lastName?.toLowerCase().includes("croitoru"))
+                        )
+                  ).map((agent: any) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}
                     </SelectItem>
@@ -1378,7 +1403,7 @@ export default function Clienti() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {OFFER_STATUS_OPTIONS.map((status) => (
+                        {offerStatusOptionsForUser.map((status) => (
                           <SelectItem key={status.value} value={status.value}>
                             {status.label}
                           </SelectItem>

@@ -59,7 +59,9 @@ export const offerStatusEnum = pgEnum("offer_status", [
   "ANULATA",
   "INFORMATII",
   "CONTACTAT",
-  "NECONTACTAT"
+  "NECONTACTAT",
+  // Stadiu special, folosit doar de anumiți agenți (ex: Razvan / Alexandru)
+  "RAZVAN",
 ]);
 
 export const employeeTypeEnum = pgEnum("employee_type", ["AGENT", "PRODUCTIE", "INDIRECT"]);
@@ -371,7 +373,21 @@ export const createClientSchema = z.object({
 
   // Secțiunea 4: Ofertă și vânzare
   valoareOferta: z.string().optional(),
-  stadiuOferta: z.enum(["NOUA", "TRIMISA", "IN_ASTEPTARE", "ACCEPTATA", "VANDUT", "REFUZAT", "ANULATA", "INFORMATII"]).optional(),
+  stadiuOferta: z
+    .enum([
+      "NOUA",
+      "TRIMISA",
+      "IN_ASTEPTARE",
+      "ACCEPTATA",
+      "VANDUT",
+      "REFUZAT",
+      "ANULATA",
+      "INFORMATII",
+      "CONTACTAT",
+      "NECONTACTAT",
+      "RAZVAN",
+    ])
+    .optional(),
   dataOfertarii: z.string().optional(),
   avans: z.boolean().optional().default(false),
   avansSuma: z.string().optional(),
