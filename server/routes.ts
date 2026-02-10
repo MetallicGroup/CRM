@@ -421,7 +421,7 @@ export async function registerRoutes(
   // Get detailed activity log (per client/action) for agent
   app.get("/api/activity/details", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const { agentId, from, to } = req.query;
+      const { agentId, from, to, ownerAgentId } = req.query;
 
       // Non-admins can only see propriile lor activități
       let filterAgentId = agentId as string | undefined;
@@ -451,6 +451,7 @@ export async function registerRoutes(
         agentId: filterAgentId,
         from: fromDate,
         to: toDate,
+        ownerAgentId: ownerAgentId as string | undefined,
       });
 
       res.json(details);

@@ -148,6 +148,7 @@ export interface IStorage {
     agentId: string;
     from: Date;
     to: Date;
+    ownerAgentId?: string;
   }): Promise<Array<{
     id: string;
     clientId: string;
@@ -828,6 +829,7 @@ export class DatabaseStorage implements IStorage {
     agentId: string;
     from: Date;
     to: Date;
+    ownerAgentId?: string;
   }): Promise<Array<{
     id: string;
     clientId: string;
@@ -838,9 +840,27 @@ export class DatabaseStorage implements IStorage {
     createdAt: Date;
     meta: Record<string, unknown> | null;
   }>> {
-    const { agentId, from, to } = params;
+    const { agentId, from, to, ownerAgentId } = params;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
+
+    const baseConditions = [
+      eq(activityLogs.userId, agentId),
+      gte(activityLogs.createdAt, from),
+      lte(activityLogs.createdAt, to),
+      // Exclude clients cu follow-up 3 efectuat
+      eq(clients.followUpEfectuat3, false),
+      // Exclude clienți cu follow-up în viitor
+      and(
+        or(sql`${clients.dataRevenire1} IS NULL`, lte(clients.dataRevenire1, now)),
+        or(sql`${clients.dataRevenire2} IS NULL`, lte(clients.dataRevenire2, now)),
+        or(sql`${clients.dataRevenire3} IS NULL`, lte(clients.dataRevenire3, now)),
+      ),
+    ];
+
+    if (ownerAgentId) {
+      baseConditions.push(eq(clients.agentId, ownerAgentId));
+    }
 
     const rows = await db
       .select({
@@ -855,21 +875,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(activityLogs)
       .innerJoin(clients, eq(activityLogs.clientId, clients.id))
-      .where(
-        and(
-          eq(activityLogs.userId, agentId),
-          gte(activityLogs.createdAt, from),
-          lte(activityLogs.createdAt, to),
-          // Exclude clients cu follow-up 3 efectuat
-          eq(clients.followUpEfectuat3, false),
-          // Exclude clienți cu follow-up în viitor
-          and(
-            or(sql`${clients.dataRevenire1} IS NULL`, lte(clients.dataRevenire1, now)),
-            or(sql`${clients.dataRevenire2} IS NULL`, lte(clients.dataRevenire2, now)),
-            or(sql`${clients.dataRevenire3} IS NULL`, lte(clients.dataRevenire3, now)),
-          ),
-        ),
-      )
+      .where(and(...baseConditions))
       .orderBy(asc(activityLogs.createdAt));
 
     // Cast meta la obiect simplu pentru frontend (fără filtru de oră/zi - vrem toate acțiunile)

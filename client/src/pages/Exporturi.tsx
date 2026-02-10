@@ -50,6 +50,7 @@ interface ActivityDetail {
 export default function Exporturi() {
   const { isAdmin, user } = useAuth();
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
+  const [ownerAgentId, setOwnerAgentId] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfDay(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfDay(new Date()));
   const [selectedActivity, setSelectedActivity] = useState<ActivityDetail | null>(null);
@@ -87,7 +88,7 @@ export default function Exporturi() {
   });
 
   const { data: activitySummary, isLoading } = useQuery<ActivitySummary>({
-    queryKey: ["activity-summary", selectedAgent, dateFrom, dateTo],
+    queryKey: ["activity-summary", selectedAgent, ownerAgentId, dateFrom, dateTo],
     queryFn: async () => {
       if (selectedAgent === "all" || !dateFrom || !dateTo) {
         return {
@@ -107,6 +108,10 @@ export default function Exporturi() {
         to: dateTo.toISOString(),
       });
 
+      if (ownerAgentId && ownerAgentId !== "all") {
+        params.set("ownerAgentId", ownerAgentId);
+      }
+
       const res = await fetch(`/api/activity/summary?${params.toString()}`);
       if (!res.ok) throw new Error("Eroare la încărcarea raportului");
       return res.json();
@@ -115,7 +120,7 @@ export default function Exporturi() {
   });
 
   const { data: activityDetails = [], isLoading: isLoadingDetails } = useQuery<ActivityDetail[]>({
-    queryKey: ["activity-details", selectedAgent, dateFrom, dateTo],
+    queryKey: ["activity-details", selectedAgent, ownerAgentId, dateFrom, dateTo],
     queryFn: async () => {
       if (selectedAgent === "all" || !dateFrom || !dateTo) return [];
       const params = new URLSearchParams({
@@ -123,6 +128,10 @@ export default function Exporturi() {
         from: dateFrom.toISOString(),
         to: dateTo.toISOString(),
       });
+
+      if (ownerAgentId && ownerAgentId !== "all") {
+        params.set("ownerAgentId", ownerAgentId);
+      }
       const res = await fetch(`/api/activity/details?${params.toString()}`);
       if (!res.ok) throw new Error("Eroare la încărcarea detaliilor");
       return res.json();
@@ -209,24 +218,43 @@ export default function Exporturi() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={cn("grid gap-4", isAdmin ? "md:grid-cols-4" : "md:grid-cols-3")}>
+          <div className={cn("grid gap-4", isAdmin ? "md:grid-cols-5" : "md:grid-cols-3")}>
             {isAdmin && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Agent</label>
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selectați agent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toți agenții</SelectItem>
-                    {agents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.firstName} {agent.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Agent (acțiune)</label>
+                  <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selectați agent" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toți agenții</SelectItem>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.firstName} {agent.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Proprietar client</label>
+                  <Select value={ownerAgentId} onValueChange={setOwnerAgentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Toți proprietarii" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toți proprietarii</SelectItem>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.firstName} {agent.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
