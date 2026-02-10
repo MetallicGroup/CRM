@@ -462,10 +462,10 @@ export default function Clienti() {
   }, [clients, contactStatusFilter]);
 
   const { data: agents = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["agents-minimal"],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/users");
+        const res = await fetch("/api/users/agents");
         if (!res.ok) return [];
         return res.json();
       } catch {

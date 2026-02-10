@@ -7,7 +7,7 @@ import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -214,6 +214,27 @@ export async function registerRoutes(
       }
       console.error("Create user error:", error);
       res.status(500).json({ message: "Eroare la crearea utilizatorului" });
+    }
+  });
+
+  // Lightweight list of agents (for filters) - accesibilă tuturor utilizatorilor autentificați
+  app.get("/api/users/agents", requireAuth, async (_req: AuthRequest, res: Response) => {
+    try {
+      const rows = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          role: users.role,
+        })
+        .from(users)
+        .where(inArray(users.role, ["AGENT", "ADMIN"]));
+
+      res.json(rows);
+    } catch (error) {
+      console.error("Get agent users error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea agenților" });
     }
   });
 
