@@ -395,8 +395,11 @@ const defaultFormData: Partial<CreateClient> = {
 export default function Clienti() {
   const { isAdmin, user } = useAuth();
   const isRazvan =
-    user?.email === "razvan@metallicgroup.ro" ||
-    (user?.firstName?.toLowerCase() === "razvan" && user?.lastName?.toLowerCase() === "rosu");
+    !!user &&
+    (
+      user.email?.toLowerCase().includes("razvan") ||
+      user.firstName?.toLowerCase().includes("razvan")
+    );
   const isAlexandruCroitoru =
     user?.email === "alexandru@metallicgroup.ro" ||
     (user?.firstName?.toLowerCase() === "alexandru" && user?.lastName?.toLowerCase().includes("croitoru"));

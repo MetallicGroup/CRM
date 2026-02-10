@@ -453,8 +453,8 @@ export async function registerRoutes(
       let filterAgentId = requestedAgentId;
       if (req.userRole !== "ADMIN") {
         const isRazvan =
-          req.userEmail === "razvan@metallicgroup.ro" ||
-          (req.userFirstName?.toLowerCase() === "razvan" && req.userLastName?.toLowerCase() === "rosu");
+          !!req.userEmail?.toLowerCase().includes("razvan") ||
+          !!req.userFirstName?.toLowerCase().includes("razvan");
 
         if (isRazvan) {
           // Dacă Razvan nu a ales un agent explicit, vede propriii clienți
