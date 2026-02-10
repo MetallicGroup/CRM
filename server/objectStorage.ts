@@ -25,11 +25,17 @@ const r2Client = hasR2Config
   : null;
 
 // --- Replit object storage (fallback, mostly local) ---
+// Disable Replit on Render/production to avoid connection errors
 let objectStorageClient: ReplitClient | null = null;
-try {
-  objectStorageClient = new ReplitClient();
-} catch (e) {
-  console.warn("[ObjectStorage] Failed to initialize Replit Object Storage client. Will use R2 or disk.");
+const isRender = !!process.env.RENDER;
+if (!isRender) {
+  try {
+    objectStorageClient = new ReplitClient();
+  } catch (e) {
+    console.warn("[ObjectStorage] Failed to initialize Replit Object Storage client. Will use R2 or disk.");
+  }
+} else {
+  console.log("[ObjectStorage] Replit Object Storage disabled on Render. Using R2 or disk.");
 }
 
 // Disk fallback (for local dev) when neither R2, nor Replit is available
