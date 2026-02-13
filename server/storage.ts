@@ -1168,13 +1168,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAgents(): Promise<SafeUser[]> {
+    // Lista agenților care trebuie să apară în filtre
+    const allowedAgentNames = [
+      { firstName: 'Dragos', lastName: 'Frangache' },
+      { firstName: 'Oana', lastName: 'Frangache' },
+      { firstName: 'Alexandru', lastName: 'Croitoru' },
+      { firstName: 'Marian', lastName: 'Toma' },
+      { firstName: 'Marian', lastName: 'Costache' },
+      { firstName: 'Razvan', lastName: 'Rosu' },
+      { firstName: 'Marcu', lastName: 'Iulian' }
+    ];
+
+    // Construiește condițiile pentru fiecare agent permis
+    const conditions = allowedAgentNames.map(agent => 
+      and(
+        eq(users.firstName, agent.firstName),
+        eq(users.lastName, agent.lastName)
+      )
+    );
+
     const agents = await db.select().from(users).where(
       and(
         eq(users.active, true),
         or(
           eq(users.role, "AGENT"),
           eq(users.role, "ADMIN")
-        )
+        ),
+        or(...conditions)
       )
     );
     return agents.map(u => {
