@@ -629,6 +629,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteClient(id: string): Promise<boolean> {
+    // Șterge mai întâi jurnalul de activitate legat de client (FK constraint)
+    await db.delete(activityLogs).where(eq(activityLogs.clientId, id));
     const result = await db.delete(clients).where(eq(clients.id, id)).returning();
     return result.length > 0;
   }
