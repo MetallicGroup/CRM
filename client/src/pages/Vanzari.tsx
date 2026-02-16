@@ -69,15 +69,18 @@ interface Agent {
   lastName: string;
 }
 
+// Etichete pentru categoriile de produs (aceleași ca la adăugare client)
 const CATEGORY_LABELS: Record<string, string> = {
-  GARD_METALIC: "Gard Metalic",
-  RULOU: "Rulou",
-  PANOU_SANDWICH: "Panou Sandwich",
-  TABLA_CUTATA: "Tablă Cutată",
-  JGHEABURI: "Jgheaburi",
-  ACCESORII: "Accesorii",
-  COAMA: "Coamă",
-  ALTELE: "Altele",
+  ACOPERIS: "Acoperiș",
+  GARD: "Gard",
+  FATADA: "Fațadă",
+  SISTEM_PLUVIAL: "Sistem pluvial",
+  SAGEAC: "Sageac",
+  ELEMENTE_SPECIALE: "Elemente speciale",
+  FERESTRE_MANSARDA: "Ferestre mansardă",
+  SCARI_ACCES: "Scări acces",
+  ACCESORII_FERESTRE: "Accesorii ferestre/usi",
+  SCULE: "Scule",
 };
 
 export default function Vanzari() {
@@ -267,9 +270,11 @@ export default function Vanzari() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toate</SelectItem>
-                  <SelectItem value="GARD">Gard</SelectItem>
-                  <SelectItem value="ACOPERIS">Acoperiș</SelectItem>
-                  <SelectItem value="AMBELE">Ambele</SelectItem>
+                  {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
