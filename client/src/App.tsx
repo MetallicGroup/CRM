@@ -23,6 +23,7 @@ import Exporturi from "@/pages/Exporturi";
 import UrmaririClienti from "@/pages/UrmaririClienti";
 import Followup from "@/pages/Followup";
 import Ofertare from "@/pages/Ofertare";
+import ComingSoon from "@/pages/ComingSoon";
 import { Layout } from "@/components/layout/Layout";
 
 function ProtectedRoute({ 
@@ -109,24 +110,21 @@ function Router() {
         <ProtectedRoute component={Cheltuieli} adminOnly />
       </Route>
 
-      {/* Profitabilitate - Financial Module */}
-      <Route path="/profitabilitate">
-        <ProtectedRoute component={Profitabilitate} adminOnly />
+      {/* Modul Financiar - deocamdată ecran \"În curând\" */}
+      <Route path="/financiar">
+        <ProtectedRoute component={ComingSoon} adminOnly />
       </Route>
-      <Route path="/profitabilitate/raport">
-        <ProtectedRoute component={FinancialDashboard} adminOnly />
+      <Route path="/financiar/angajati">
+        <ProtectedRoute component={ComingSoon} adminOnly />
       </Route>
-      <Route path="/profitabilitate/angajati">
-        <ProtectedRoute component={Angajati} adminOnly />
+      <Route path="/financiar/showroom-uri">
+        <ProtectedRoute component={ComingSoon} adminOnly />
       </Route>
-      <Route path="/profitabilitate/showroom-uri">
-        <ProtectedRoute component={ShowroomRegional} adminOnly />
+      <Route path="/financiar/distribuitori">
+        <ProtectedRoute component={ComingSoon} adminOnly />
       </Route>
-      <Route path="/profitabilitate/distribuitori">
-        <ProtectedRoute component={Distributors} adminOnly />
-      </Route>
-      <Route path="/profitabilitate/setari">
-        <ProtectedRoute component={Settings} adminOnly />
+      <Route path="/financiar/setari">
+        <ProtectedRoute component={ComingSoon} adminOnly />
       </Route>
 
       {/* Admin Routes */}

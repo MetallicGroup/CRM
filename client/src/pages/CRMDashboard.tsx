@@ -118,29 +118,29 @@ export default function CRMDashboard() {
       title: "Total Clienți",
       value: clientStats.total.toString(),
       icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-[#fbbf24]",
+      bgColor: "bg-[#111827]",
     },
     {
       title: "Oferte Trimise",
       value: (offersSent + waiting + accepted).toString(),
       icon: FileText,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
+      color: "text-[#fbbf24]",
+      bgColor: "bg-[#111827]",
     },
     {
       title: "Vânzări",
       value: won.toString(),
       icon: ShoppingCart,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      color: "text-[#fbbf24]",
+      bgColor: "bg-[#111827]",
     },
     {
       title: "Valoare Câștigată",
       value: `${clientStats.wonValue.toLocaleString("ro-RO")} RON`,
       icon: TrendingUp,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
+      color: "text-[#fbbf24]",
+      bgColor: "bg-[#111827]",
     },
   ];
 
@@ -466,16 +466,22 @@ export default function CRMDashboard() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statsCards.map((stat, index) => (
-            <Card key={index}>
+            <Card
+              key={index}
+              className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10"
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">{stat.title}</p>
-                    <p className="text-2xl font-bold" data-testid={`stat-${stat.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <p className="text-sm text-slate-400">{stat.title}</p>
+                    <p
+                      className="text-2xl font-bold text-slate-50"
+                      data-testid={`stat-${stat.title.toLowerCase().replace(/\s+/g, "-")}`}
+                    >
                       {statsLoading ? "..." : stat.value}
                     </p>
                   </div>
-                  <div className={cn("p-3 rounded-lg", stat.bgColor)}>
+                  <div className={cn("p-3 rounded-full border border-yellow-500/40", stat.bgColor)}>
                     <stat.icon className={cn("h-6 w-6", stat.color)} />
                   </div>
                 </div>
