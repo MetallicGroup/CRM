@@ -56,6 +56,7 @@ interface Client {
   agentId: string | null;
   updatedAt: string;
   dataVanzarii: string | null;
+  stadiuComanda: string | null;
   isPartnerOrder: boolean | null;
   partnerId: string | null;
   avans: boolean | null;
@@ -88,6 +89,7 @@ export default function Vanzari() {
   const [search, setSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string>("all");
   const [partnerFilter, setPartnerFilter] = useState<"all" | "with" | "without">("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
@@ -130,13 +132,14 @@ export default function Vanzari() {
       ? (selectedAgent === "all" || client.agentId === selectedAgent)
       : true; // Non-admins see only their own clients (already filtered by backend)
     const matchesCategory = selectedCategory === "all" || client.categorieProdus === selectedCategory;
+    const matchesOrderStatus = selectedOrderStatus === "all" || client.stadiuComanda === selectedOrderStatus;
     
     // Partner filter
     const matchesPartner = partnerFilter === "all" ||
       (partnerFilter === "with" && client.isPartnerOrder) ||
       (partnerFilter === "without" && !client.isPartnerOrder);
     
-    return matchesSearch && matchesAgent && matchesCategory && matchesPartner;
+    return matchesSearch && matchesAgent && matchesCategory && matchesOrderStatus && matchesPartner;
   });
 
   const getReportedValue = (client: Client): number => {
@@ -247,20 +250,38 @@ export default function Vanzari() {
               </div>
             </div>
             {isAdmin && (
-              <div className="w-[200px]">
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger data-testid="select-agent">
-                    <SelectValue placeholder="Toți agenții" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toți agenții</SelectItem>
-                    {agents.filter(a => a.id).map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.firstName} {agent.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-col gap-2">
+                <div className="w-[200px]">
+                  <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                    <SelectTrigger data-testid="select-agent">
+                      <SelectValue placeholder="Toți agenții" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toți agenții</SelectItem>
+                      {agents.filter(a => a.id).map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.firstName} {agent.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-[200px]">
+                  <Select value={selectedOrderStatus} onValueChange={setSelectedOrderStatus}>
+                    <SelectTrigger data-testid="select-order-status">
+                      <SelectValue placeholder="Stadiu comandă" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toate stadiile</SelectItem>
+                      <SelectItem value="CUSTODIE">Custodie</SelectItem>
+                      <SelectItem value="COMANDAT">Comandat</SelectItem>
+                      <SelectItem value="LISTAT">Listat</SelectItem>
+                      <SelectItem value="IN_PRODUCTIE">În producție</SelectItem>
+                      <SelectItem value="PRODUS">Produs</SelectItem>
+                      <SelectItem value="LIVRAT">Livrat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
             <div className="w-[150px]">
