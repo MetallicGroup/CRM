@@ -9,7 +9,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      // Stil global pentru toate cardurile: dark + accent gold
+      "rounded-2xl border border-[#4b5563] bg-black/40 text-slate-100 shadow-lg shadow-yellow-500/10",
       className
     )}
     {...props}
