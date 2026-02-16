@@ -39,6 +39,7 @@ import {
   Download,
   Eye,
   Clock,
+  FileEdit,
 } from 'lucide-react';
 
 interface NavItem {
@@ -51,6 +52,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: Users, label: 'Clienți', href: '/clienti' },
+  { icon: FileEdit, label: 'Ofertare', href: '/ofertare' },
   { icon: Clock, label: 'Follow-up', href: '/followup' },
   { icon: Target, label: 'Target-uri', href: '/targeturi' },
   { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },

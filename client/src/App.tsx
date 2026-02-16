@@ -22,6 +22,7 @@ import CallTracking from "@/pages/CallTracking";
 import Exporturi from "@/pages/Exporturi";
 import UrmaririClienti from "@/pages/UrmaririClienti";
 import Followup from "@/pages/Followup";
+import Ofertare from "@/pages/Ofertare";
 import { Header } from "@/components/layout/Header";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -111,6 +112,9 @@ function Router() {
       </Route>
       <Route path="/parteneri">
         <ProtectedRoute component={Parteneri} />
+      </Route>
+      <Route path="/ofertare">
+        <ProtectedRoute component={Ofertare} />
       </Route>
       <Route path="/cheltuieli">
         <ProtectedRoute component={Cheltuieli} adminOnly />
