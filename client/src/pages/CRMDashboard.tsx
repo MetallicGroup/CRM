@@ -194,17 +194,21 @@ export default function CRMDashboard() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <CalendarIcon className="h-5 w-5 text-blue-600" />
+              <div className="p-2 rounded-lg bg-[#111827] border border-yellow-500/40">
+                <CalendarIcon className="h-5 w-5 text-[#fbbf24]" />
               </div>
               <div>
-                <CardTitle className="text-lg">Filtru Calendar Vânzări</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg text-slate-50">Filtru Calendar Vânzări</CardTitle>
+                <CardDescription className="text-slate-400">
                   Selectează date și agent pentru a vizualiza vânzările
                 </CardDescription>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="gap-2" onClick={resetFilters}>
+            <Button
+              size="sm"
+              className="gap-2 bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
+              onClick={resetFilters}
+            >
               <RefreshCw className="h-4 w-4" />
               Resetează filtrul
             </Button>
@@ -221,10 +225,9 @@ export default function CRMDashboard() {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
+                      "w-full justify-start text-left font-normal bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
+                      !date && "text-slate-400"
                     )}
                     data-testid="button-date-picker"
                   >
@@ -291,10 +294,9 @@ export default function CRMDashboard() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal text-xs",
-                        !dateFrom && "text-muted-foreground"
+                        "w-full justify-start text-left font-normal text-xs bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
+                        !dateFrom && "text-slate-400"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-3 w-3" />
@@ -313,10 +315,9 @@ export default function CRMDashboard() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal text-xs",
-                        !dateTo && "text-muted-foreground"
+                        "w-full justify-start text-left font-normal text-xs bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
+                        !dateTo && "text-slate-400"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-3 w-3" />
@@ -358,7 +359,7 @@ export default function CRMDashboard() {
           <CardContent>
             <div className="flex flex-wrap gap-3">
               <Button
-                variant="outline"
+                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
                 onClick={() => {
                   const today = new Date();
                   const from = startOfDay(today);
@@ -370,7 +371,7 @@ export default function CRMDashboard() {
                 Export Zilnic
               </Button>
               <Button
-                variant="outline"
+                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
                 onClick={() => {
                   const now = new Date();
                   const from = startOfWeek(now, { weekStartsOn: 1 });
@@ -382,7 +383,7 @@ export default function CRMDashboard() {
                 Export Săptămânal
               </Button>
               <Button
-                variant="outline"
+                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
                 onClick={() => {
                   const now = new Date();
                   const from = startOfMonth(now);

@@ -64,11 +64,11 @@ const menuSections: MenuSection[] = [
     adminOnly: true,
     defaultOpen: false,
     items: [
-      { icon: LayoutDashboard, label: 'Raport Financiar', href: '/financiar' },
-      { icon: Users, label: 'Angajați', href: '/financiar/angajati' },
-      { icon: Building2, label: 'Showroom-uri', href: '/financiar/showroom-uri' },
-      { icon: Truck, label: 'Distribuitori', href: '/financiar/distribuitori' },
-      { icon: Settings, label: 'Setări Financiar', href: '/financiar/setari' },
+      { icon: LayoutDashboard, label: 'Raport Financiar', href: '/profitabilitate/raport' },
+      { icon: Users, label: 'Angajați', href: '/profitabilitate/angajati' },
+      { icon: Building2, label: 'Showroom-uri', href: '/profitabilitate/showroom-uri' },
+      { icon: Truck, label: 'Distribuitori', href: '/profitabilitate/distribuitori' },
+      { icon: Settings, label: 'Setări Financiar', href: '/profitabilitate/setari' },
     ],
   },
   {
