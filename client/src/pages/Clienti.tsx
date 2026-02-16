@@ -1201,14 +1201,14 @@ export default function Clienti() {
                         onValueChange={(value) => {
                           setFormData({ ...formData, partnerId: value });
                         }}
-                        value={partners.find((p: any) => p.nume === formData.partnerId) ? formData.partnerId || "" : ""}
+                        value={partners.find((p: any) => p.id === formData.partnerId) ? formData.partnerId || "" : ""}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Alege din lista de parteneri" />
                         </SelectTrigger>
                         <SelectContent>
                           {partners.map((partner: any) => (
-                            <SelectItem key={partner.id} value={partner.nume}>
+                            <SelectItem key={partner.id} value={partner.id}>
                               {partner.nume}
                             </SelectItem>
                           ))}
@@ -1216,9 +1216,10 @@ export default function Clienti() {
                       </Select>
                       <Input
                         id="partnerId"
-                        value={formData.partnerId || ""}
-                        onChange={(e) => setFormData({ ...formData, partnerId: e.target.value })}
-                        placeholder="Scrie numele partenerului"
+                        readOnly
+                        className="bg-muted"
+                        value={partners.find((p: any) => p.id === formData.partnerId)?.nume ?? ""}
+                        placeholder="Nume partener (selectat din listă)"
                         data-testid="input-partner"
                       />
                     </div>
