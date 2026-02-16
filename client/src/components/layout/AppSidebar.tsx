@@ -17,6 +17,7 @@ import {
   PhoneCall,
   Download,
   Eye,
+  Receipt,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ const menuSections: MenuSection[] = [
     defaultOpen: false,
     items: [
       { icon: LayoutDashboard, label: 'Raport Financiar', href: '/profitabilitate/raport' },
+      { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli' },
       { icon: Users, label: 'Angajați', href: '/profitabilitate/angajati' },
       { icon: Building2, label: 'Showroom-uri', href: '/profitabilitate/showroom-uri' },
       { icon: Truck, label: 'Distribuitori', href: '/profitabilitate/distribuitori' },
