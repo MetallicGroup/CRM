@@ -112,15 +112,20 @@ export function AppSidebar() {
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
   };
 
-  const filteredSections = menuSections.filter(section => !section.adminOnly || isAdmin);
+  const filteredSections = menuSections.filter((section) => !section.adminOnly || isAdmin);
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
-      <div className="flex h-14 items-center border-b px-6">
-        <span className="text-lg font-bold tracking-tight text-sidebar-primary-foreground">Metallic Group</span>
+    <div className="flex h-full w-64 flex-col border-r border-[#1f2933] bg-gradient-to-b from-[#050608] via-[#070910] to-[#050608] text-slate-200">
+      <div className="flex h-16 items-center border-b border-[#111827] px-6">
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold tracking-widest text-[#6b7280] uppercase">
+            Metallic Group
+          </span>
+          <span className="text-lg font-bold tracking-tight text-[#fbbf24]">CRM</span>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-2 px-2">
+        <nav className="space-y-3 px-3">
           {filteredSections.map((section) => {
             const isOpen = openSections.includes(section.title);
             const hasActiveItem = section.items.some(item => 
@@ -136,10 +141,10 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <button
                     className={cn(
-                      "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold transition-colors",
-                      hasActiveItem 
-                        ? "text-sidebar-primary-foreground" 
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-wide transition-all duration-200",
+                      hasActiveItem
+                        ? "bg-[#111827] text-[#fbbf24] shadow-sm"
+                        : "text-slate-400 hover:bg-[#111827]/70 hover:text-slate-100"
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -154,17 +159,21 @@ export function AppSidebar() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-1 space-y-1 pl-4">
                   {section.items.map((item) => {
-                    const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
+                    const isActive =
+                      location === item.href ||
+                      (item.href !== "/" && location.startsWith(item.href));
                     return (
                       <Link key={item.href} href={item.href}>
                         <div
                           className={cn(
-                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
-                            isActive 
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer transition-all duration-200",
+                            isActive
+                              ? "bg-[#fbbf24] text-black shadow-lg shadow-yellow-500/20"
+                              : "text-slate-300 hover:bg-[#1f2937] hover:text-[#fbbf24]"
                           )}
-                          data-testid={`nav-${item.href.replace(/\//g, '-').slice(1) || 'dashboard'}`}
+                          data-testid={`nav-${
+                            item.href.replace(/\//g, "-").slice(1) || "dashboard"
+                          }`}
                         >
                           <item.icon className="h-4 w-4" />
                           {item.label}
