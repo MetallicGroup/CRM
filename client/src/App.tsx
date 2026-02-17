@@ -23,6 +23,7 @@ import Exporturi from "@/pages/Exporturi";
 import UrmaririClienti from "@/pages/UrmaririClienti";
 import Followup from "@/pages/Followup";
 import Ofertare from "@/pages/Ofertare";
+import ComingSoon from "@/pages/ComingSoon";
 import { Layout } from "@/components/layout/Layout";
 
 function ProtectedRoute({ 
@@ -104,6 +105,9 @@ function Router() {
       </Route>
       <Route path="/ofertare">
         <ProtectedRoute component={Ofertare} />
+      </Route>
+      <Route path="/oferte">
+        <ProtectedRoute component={ComingSoon} />
       </Route>
       <Route path="/cheltuieli">
         <ProtectedRoute component={Cheltuieli} adminOnly />

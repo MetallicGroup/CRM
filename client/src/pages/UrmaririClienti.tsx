@@ -21,20 +21,20 @@ interface Agent {
 }
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
-  { value: "NOUA", label: "Nouă", color: "bg-blue-100 text-blue-800" },
-  { value: "TRIMISA", label: "Trimisă", color: "bg-cyan-100 text-cyan-800" },
-  { value: "IN_ASTEPTARE", label: "În Așteptare (Follow-up)", color: "bg-yellow-100 text-yellow-800" },
-  { value: "ACCEPTATA", label: "Acceptată", color: "bg-indigo-100 text-indigo-800" },
-  { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
-  { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-100 text-red-800" },
-  { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
-  { value: "INFORMATII", label: "Informații", color: "bg-purple-100 text-purple-800" },
-  { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-100 text-emerald-800" },
-  { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-100 text-orange-800" },
+  { value: "NOUA", label: "Nouă", color: "bg-blue-500/25 text-blue-200 border border-blue-500/40" },
+  { value: "TRIMISA", label: "Trimisă", color: "bg-cyan-500/25 text-cyan-200 border border-cyan-500/40" },
+  { value: "IN_ASTEPTARE", label: "În Așteptare (Follow-up)", color: "bg-yellow-500/25 text-yellow-200 border border-yellow-500/40" },
+  { value: "ACCEPTATA", label: "Acceptată", color: "bg-indigo-500/25 text-indigo-200 border border-indigo-500/40" },
+  { value: "VANDUT", label: "Vândut", color: "bg-green-500/25 text-green-200 border border-green-500/40" },
+  { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-500/25 text-red-200 border border-red-500/40" },
+  { value: "ANULATA", label: "Anulată", color: "bg-slate-500/25 text-slate-300 border border-slate-500/40" },
+  { value: "INFORMATII", label: "Informații", color: "bg-purple-500/25 text-purple-200 border border-purple-500/40" },
+  { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-500/25 text-emerald-200 border border-emerald-500/40" },
+  { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-500/25 text-orange-200 border border-orange-500/40" },
 ];
 
 function getOfferStatusBadge(status: OfferStatus | null) {
-  if (!status) return <Badge className="bg-gray-100 text-gray-800">-</Badge>;
+  if (!status) return <Badge className="bg-slate-700/60 text-slate-400 border border-slate-600/50">-</Badge>;
   const option = OFFER_STATUS_OPTIONS.find(s => s.value === status);
   return (
     <Badge className={cn("font-medium", option?.color)}>
@@ -117,7 +117,7 @@ export default function UrmaririClienti() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Urmăriri Clienți</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Clienți marcați pentru observație și analiză ulterioară
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function UrmaririClienti() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Căutare</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Caută după nume, telefon, email, localitate..."
                   value={search}
@@ -178,7 +178,7 @@ export default function UrmaririClienti() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               Nu există clienți sub observație
             </div>
           ) : (
@@ -200,7 +200,7 @@ export default function UrmaririClienti() {
                       <TableCell>
                         <div className="font-medium">{client.nume}</div>
                         {client.localitate && (
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <div className="text-sm text-slate-400 flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {client.localitate}
                             {client.judet && `, ${client.judet}`}
@@ -208,7 +208,7 @@ export default function UrmaririClienti() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 text-sm text-slate-400">
                           <User className="h-3 w-3" />
                           {getAgentName(client.agentId)}
                         </div>
@@ -240,11 +240,11 @@ export default function UrmaririClienti() {
                       </TableCell>
                       <TableCell>
                         {client.dataAdaugare ? (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-slate-400">
                             {format(new Date(client.dataAdaugare as any), "dd MMM yyyy", { locale: ro })}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

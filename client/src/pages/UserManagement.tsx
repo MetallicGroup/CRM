@@ -248,7 +248,7 @@ export default function UserManagement() {
             <UserCog className="h-8 w-8" />
             Gestionare Utilizatori
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-slate-400 mt-1">
             Administrează conturile și permisiunile utilizatorilor
           </p>
         </div>

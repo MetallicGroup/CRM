@@ -184,7 +184,7 @@ export default function Ofertare() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Ofertare</h1>
-        <p className="text-muted-foreground">Completează datele clientului și configurația pentru a genera oferta PDF.</p>
+        <p className="text-slate-400">Completează datele clientului și configurația pentru a genera oferta PDF.</p>
       </div>
 
       <Card>
@@ -284,7 +284,7 @@ export default function Ofertare() {
               </div>
             </div>
             {listPrice > 0 && (
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-slate-400">
                 Listă: {listPrice} lei/mp → Preț/mp (după discount): {pretPerMp.toFixed(2)} lei
               </p>
             )}
@@ -393,7 +393,7 @@ export default function Ofertare() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Discount: {discountPercent}% = preț achiziție</p>
+              <p className="text-sm text-slate-400">Discount: {discountPercent}% = preț achiziție</p>
               <p className="text-xl font-bold">TOTAL GENERAL: {totalGeneral.toFixed(2)} lei</p>
             </div>
             <Button onClick={handleDownloadPdf} size="lg" className="gap-2" data-testid="button-download-pdf">

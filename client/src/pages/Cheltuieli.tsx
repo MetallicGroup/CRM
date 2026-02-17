@@ -612,7 +612,7 @@ export default function Cheltuieli() {
             <Receipt className="h-8 w-8" />
             Cheltuieli
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-slate-400 mt-1">
             Gestionează cheltuielile pentru agenți și sedii
           </p>
         </div>
@@ -628,7 +628,7 @@ export default function Cheltuieli() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Cheltuieli</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -639,7 +639,7 @@ export default function Cheltuieli() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cheltuieli Agent</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
@@ -650,7 +650,7 @@ export default function Cheltuieli() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cheltuieli Sediu</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
@@ -777,9 +777,9 @@ export default function Cheltuieli() {
           <Card>
             <CardContent className="pt-6">
               {loadingAgent ? (
-                <p className="text-center py-8 text-muted-foreground">Se încarcă...</p>
+                <p className="text-center py-8 text-slate-400">Se încarcă...</p>
               ) : cheltuieliAgent.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">Nu există cheltuieli înregistrate</p>
+                <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -870,9 +870,9 @@ export default function Cheltuieli() {
           <Card>
             <CardContent className="pt-6">
               {loadingSediu ? (
-                <p className="text-center py-8 text-muted-foreground">Se încarcă...</p>
+                <p className="text-center py-8 text-slate-400">Se încarcă...</p>
               ) : cheltuieliSediu.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">Nu există cheltuieli înregistrate</p>
+                <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -1166,7 +1166,7 @@ export default function Cheltuieli() {
                   data-testid="input-document"
                 />
                 {selectedFile && (
-                  <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+                  <span className="text-sm text-slate-400 truncate max-w-[150px]">
                     {selectedFile.name}
                   </span>
                 )}
@@ -1184,7 +1184,7 @@ export default function Cheltuieli() {
                   </a>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-400">
                 Fișiere acceptate: PDF, Excel, Word, Imagini (max 10MB)
               </p>
             </div>

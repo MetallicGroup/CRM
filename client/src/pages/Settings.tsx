@@ -165,7 +165,7 @@ export default function Settings() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Setări</h1>
-        <p className="text-muted-foreground">Configurare tip angajat și asocieri showroom</p>
+        <p className="text-slate-400">Configurare tip angajat și asocieri showroom</p>
       </div>
 
       <Card>

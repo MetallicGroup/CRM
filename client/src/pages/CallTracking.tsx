@@ -98,7 +98,7 @@ export default function CallTracking() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Monitorizare Apeluri Clienți</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Vezi rapid câți clienți în follow-up au fost sunați și de către cine.
             </p>
           </div>
@@ -112,7 +112,7 @@ export default function CallTracking() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{totalWithFollowUp}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-400">
               Stări: {FOLLOW_UP_STATUSES.join(", ")}
             </p>
           </CardContent>
@@ -123,7 +123,7 @@ export default function CallTracking() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-emerald-600">{totalCalled}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-400">
               Cel puțin un click pe număr în CRM
             </p>
           </CardContent>
@@ -136,7 +136,7 @@ export default function CallTracking() {
             <p className="text-2xl font-bold">
               {totalWithFollowUp > 0 ? Math.round((totalCalled / totalWithFollowUp) * 100) : 0}%
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-400">
               Clienți sunați / clienți în follow-up
             </p>
           </CardContent>
@@ -154,7 +154,7 @@ export default function CallTracking() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Caută după nume, telefon sau email..."
                   value={search}
@@ -205,7 +205,7 @@ export default function CallTracking() {
                     variant="outline"
                     className={cn(
                       "justify-start text-left font-normal w-full",
-                      !dateFrom && !dateTo && "text-muted-foreground"
+                      !dateFrom && !dateTo && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -222,7 +222,7 @@ export default function CallTracking() {
                 <PopoverContent className="w-auto p-3" align="start">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">De la</p>
+                      <p className="text-xs text-slate-400">De la</p>
                       <Calendar
                         mode="single"
                         selected={dateFrom}
@@ -230,7 +230,7 @@ export default function CallTracking() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">Până la</p>
+                      <p className="text-xs text-slate-400">Până la</p>
                       <Calendar
                         mode="single"
                         selected={dateTo}
@@ -267,7 +267,7 @@ export default function CallTracking() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               Nu există clienți care să corespundă filtrului.
             </div>
           ) : (
@@ -303,25 +303,25 @@ export default function CallTracking() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{client.nume}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-slate-400">
                             {(client.localitate || client.judet) &&
                               [client.localitate, client.judet].filter(Boolean).join(", ")}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 text-sm text-slate-400">
                           <User className="h-3 w-3" />
                           {agentName.trim()}
                         </div>
                       </TableCell>
                       <TableCell>
                         {createdAt ? (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-slate-400">
                             {createdAt.toLocaleDateString("ro-RO")}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -333,7 +333,7 @@ export default function CallTracking() {
                             <Phone className="h-3 w-3" /> {client.telefon}
                           </a>
                           {client.email && (
-                            <span className="text-xs text-muted-foreground">{client.email}</span>
+                            <span className="text-xs text-slate-400">{client.email}</span>
                           )}
                         </div>
                       </TableCell>
@@ -349,21 +349,21 @@ export default function CallTracking() {
                             Sunat
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Fără click</span>
+                          <span className="text-xs text-slate-400">Fără click</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className={cn("text-sm", hasCalls ? "font-semibold" : "text-muted-foreground")}>
+                        <span className={cn("text-sm", hasCalls ? "font-semibold" : "text-slate-400")}>
                           {(client as any).callCount || 0}
                         </span>
                       </TableCell>
                       <TableCell>
                         {lastCallAt ? (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-slate-400">
                             {lastCallAt.toLocaleDateString("ro-RO")} {lastCallAt.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                     </TableRow>

@@ -124,7 +124,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard Financiar</h1>
-          <p className="text-muted-foreground">Privire de ansamblu - {getPeriodLabel()}</p>
+          <p className="text-slate-400">Privire de ansamblu - {getPeriodLabel()}</p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
@@ -216,7 +216,7 @@ export default function Dashboard() {
                   variant="outline"
                   className={cn(
                     "w-[280px] justify-start text-left font-normal",
-                    !dateRange && "text-muted-foreground"
+                    !dateRange && "text-slate-400"
                   )}
                   data-testid="button-date-range"
                 >
@@ -280,7 +280,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{totals.totalProfitAgents.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total profit net agenți</p>
+            <p className="text-xs text-slate-400">Total profit net agenți</p>
           </CardContent>
         </Card>
         <Card>
@@ -289,7 +289,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{totals.totalProfitDistributors.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total profit net distribuitori</p>
+            <p className="text-xs text-slate-400">Total profit net distribuitori</p>
           </CardContent>
         </Card>
         <Card>
@@ -298,7 +298,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{totals.totalCostProductie.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total costuri personal producție</p>
+            <p className="text-xs text-slate-400">Total costuri personal producție</p>
           </CardContent>
         </Card>
         <Card>
@@ -307,7 +307,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{totals.totalCostIndirect.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Total costuri personal indirect</p>
+            <p className="text-xs text-slate-400">Total costuri personal indirect</p>
           </CardContent>
         </Card>
         <Card>
@@ -318,7 +318,7 @@ export default function Dashboard() {
             <div className={`text-2xl font-bold ${totals.profitGrup >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {totals.profitGrup.toLocaleString('ro-RO')} RON
             </div>
-            <p className="text-xs text-muted-foreground">Profit final după toate costurile</p>
+            <p className="text-xs text-slate-400">Profit final după toate costurile</p>
           </CardContent>
         </Card>
       </div>

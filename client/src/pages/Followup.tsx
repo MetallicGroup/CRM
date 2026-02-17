@@ -80,12 +80,12 @@ export default function Followup() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-amber-100 rounded-lg">
-            <Clock className="h-8 w-8 text-amber-600" />
+          <div className="p-3 bg-amber-500/20 rounded-lg border border-amber-500/40">
+            <Clock className="h-8 w-8 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Follow-up azi</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-50">Follow-up azi</h1>
+            <p className="text-slate-400">
               Toți clienții care au follow-up programat în ziua selectată (1, 2 sau 3)
             </p>
           </div>
@@ -109,7 +109,7 @@ export default function Followup() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
+                      !selectedDate && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -161,7 +161,7 @@ export default function Followup() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : clients.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">
+            <div className="py-8 text-center text-slate-400 text-sm">
               Nu există follow-up-uri pentru data selectată.
             </div>
           ) : (
@@ -187,19 +187,19 @@ export default function Followup() {
                           {client.telefon && (
                             <a
                               href={`tel:${client.telefon.replace(/\s+/g, "")}`}
-                              className="flex items-center gap-1 text-blue-600 hover:underline"
+                              className="flex items-center gap-1 text-blue-400 hover:text-blue-300 hover:underline"
                             >
                               <Phone className="h-3 w-3" />
                               {client.telefon}
                             </a>
                           )}
                           {client.email && (
-                            <span className="text-xs text-muted-foreground">{client.email}</span>
+                            <span className="text-xs text-slate-400">{client.email}</span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 text-sm text-slate-400">
                           <MapPin className="h-3 w-3" />
                           <span>
                             {[client.localitate, client.judet].filter(Boolean).join(", ") || "-"}

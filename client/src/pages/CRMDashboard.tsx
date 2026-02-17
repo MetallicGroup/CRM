@@ -170,14 +170,14 @@ export default function CRMDashboard() {
             <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-welcome">
               Bună ziua, {user?.firstName}!
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               {isAdmin 
                 ? `Gestionezi întregul sistem CRM cu ${activeAgents} agenți activi`
                 : "Bine ai venit în sistemul CRM"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-sm text-slate-400">
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
             <span className="capitalize">{formattedDate}</span>
@@ -253,7 +253,7 @@ export default function CRMDashboard() {
                   />
                 </PopoverContent>
               </Popover>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-400">
                 Poți selecta mai multe zile, luni întregi sau combinații
               </p>
             </div>
@@ -278,7 +278,7 @@ export default function CRMDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-400">
                   Selectează un agent specific sau lasă "Toți"
                 </p>
               </div>
@@ -334,7 +334,7 @@ export default function CRMDashboard() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-400">
                 {dateFrom && dateTo 
                   ? `${format(dateFrom, "d MMM", { locale: ro })} - ${format(dateTo, "d MMM yyyy", { locale: ro })}`
                   : "Selectați perioada pentru statistici"}
@@ -405,7 +405,7 @@ export default function CRMDashboard() {
           <h2 className="text-xl font-semibold">Vedere Generală Sistem</h2>
               <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Perioada:</span>
+              <span className="text-sm text-slate-400">Perioada:</span>
               <Select
                 value={period}
                 onValueChange={(value) => {
@@ -446,7 +446,7 @@ export default function CRMDashboard() {
             </div>
             {isAdmin && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Agent:</span>
+                <span className="text-sm text-slate-400">Agent:</span>
                 <Select value={selectedAgent} onValueChange={setSelectedAgent}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue />
@@ -503,7 +503,7 @@ export default function CRMDashboard() {
                   <p className="text-2xl font-bold" data-testid={`status-${status.label.toLowerCase().replace(/\s+/g, '-')}`}>
                     {statsLoading ? "..." : status.value}
                   </p>
-                  <p className="text-sm text-muted-foreground">{status.label}</p>
+                  <p className="text-sm text-slate-400">{status.label}</p>
                 </div>
               </div>
             </CardContent>
@@ -524,7 +524,7 @@ export default function CRMDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 text-sm text-muted-foreground">
+            <ul className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 text-sm text-slate-400">
               <li className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500" />
                 Gestionare Clienți (CRUD complet)

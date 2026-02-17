@@ -19,6 +19,7 @@ import {
   Download,
   Eye,
   Receipt,
+  Clock,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ const menuSections: MenuSection[] = [
       { icon: UserPlus, label: 'Clienți', href: '/clienti' },
       { icon: FileText, label: 'Oferte', href: '/oferte' },
       { icon: FileEdit, label: 'Ofertare', href: '/ofertare' },
+      { icon: Clock, label: 'Follow-up', href: '/followup' },
       { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
       { icon: Target, label: 'Target-uri', href: '/targeturi' },
       { icon: Handshake, label: 'Parteneri', href: '/parteneri' },
@@ -201,7 +203,7 @@ export function AppSidebar() {
               <span className="text-sm font-medium truncate">
                 {user ? `${user.firstName} ${user.lastName}` : 'Utilizator'}
               </span>
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="text-xs text-slate-400 truncate">
                 {user?.email || ''}
               </span>
             </div>

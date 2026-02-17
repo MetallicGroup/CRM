@@ -203,7 +203,7 @@ export default function Exporturi() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Rapoarte Export</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Rapoarte de activitate pentru agenți - export zilnic, săptămânal sau lunar
             </p>
           </div>
@@ -265,7 +265,7 @@ export default function Exporturi() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
+                      !dateFrom && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -291,7 +291,7 @@ export default function Exporturi() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
+                      !dateTo && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -355,7 +355,7 @@ export default function Exporturi() {
                 Raport Activitate - {agents.find((a) => a.id === selectedAgent)?.firstName}{" "}
                 {agents.find((a) => a.id === selectedAgent)?.lastName}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-400">
                 Perioada: {format(dateFrom, "PPP", { locale: ro })} - {format(dateTo, "PPP", { locale: ro })}
               </p>
             </CardHeader>
@@ -418,7 +418,7 @@ export default function Exporturi() {
           <Card>
             <CardHeader>
               <CardTitle>Detaliu acțiuni pe clienți</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-400">
                 Se afișează pe care clienți a lucrat agentul, ce tip de acțiune a făcut și din ce status în ce status a schimbat.
               </p>
             </CardHeader>
@@ -428,7 +428,7 @@ export default function Exporturi() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : activityDetails.length === 0 ? (
-                <div className="py-6 text-center text-muted-foreground text-sm">
+                <div className="py-6 text-center text-slate-400 text-sm">
                   Nu există acțiuni înregistrate în perioada selectată.
                 </div>
               ) : (
@@ -490,7 +490,7 @@ export default function Exporturi() {
                             <TableCell className="text-sm font-medium">
                               {actionLabel}
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm text-slate-400">
                               {detail}
                             </TableCell>
                           </TableRow>
@@ -507,7 +507,7 @@ export default function Exporturi() {
             <Card>
               <CardHeader>
                 <CardTitle>Intervale de inactivitate</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-400">
                   Perioade în care nu a existat activitate în CRM (gap &gt;30 secunde)
                 </p>
               </CardHeader>
@@ -523,7 +523,7 @@ export default function Exporturi() {
                           {interval.start} - {interval.end}
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-slate-400">
                         {interval.duration}
                       </span>
                     </div>
@@ -537,7 +537,7 @@ export default function Exporturi() {
 
       {selectedAgent === "all" && isAdmin && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="py-8 text-center text-slate-400">
             Selectați un agent pentru a vedea raportul de activitate
           </CardContent>
         </Card>
@@ -555,13 +555,13 @@ export default function Exporturi() {
             <div className="space-y-4 mt-2">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Telefon</p>
+                  <p className="text-slate-400">Telefon</p>
                   <p className="font-medium">
                     {selectedActivity.clientPhone || "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Data/Ora acțiunii</p>
+                  <p className="text-slate-400">Data/Ora acțiunii</p>
                   <p className="font-medium">
                     {format(new Date(selectedActivity.createdAt), "dd.MM.yyyy HH:mm", { locale: ro })}
                   </p>
@@ -570,7 +570,7 @@ export default function Exporturi() {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Tip acțiune</p>
+                  <p className="text-slate-400">Tip acțiune</p>
                   <p className="font-medium">
                     {selectedActivity.type === "LEAD_AUTO" && "Lead automat"}
                     {selectedActivity.type === "LEAD_MANUAL" && "Lead manual"}
@@ -580,7 +580,7 @@ export default function Exporturi() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Detaliu</p>
+                  <p className="text-slate-400">Detaliu</p>
                   <p className="font-medium">
                     {selectedActivity.type === "LEAD_AUTO" && "Client încărcat automat (ex. Facebook)"}
                     {selectedActivity.type === "LEAD_MANUAL" && "Client adăugat manual în CRM"}
@@ -601,7 +601,7 @@ export default function Exporturi() {
               </div>
 
               <div className="space-y-1 text-sm">
-                <p className="text-muted-foreground">Observații client</p>
+                <p className="text-slate-400">Observații client</p>
                 <p className="font-medium whitespace-pre-wrap">
                   {selectedActivity.clientNotes && selectedActivity.clientNotes.trim().length > 0
                     ? selectedActivity.clientNotes

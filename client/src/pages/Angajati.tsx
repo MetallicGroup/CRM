@@ -220,7 +220,7 @@ export default function Angajati() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Angajați - {MONTHS[startMonth - 1]}</h1>
-          <p className="text-muted-foreground">Toți angajații: Agenți, Producție, Indirect/HQ</p>
+          <p className="text-slate-400">Toți angajații: Agenți, Producție, Indirect/HQ</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -243,12 +243,12 @@ export default function Angajati() {
         <CardContent className="pt-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-slate-400" />
               <Label className="text-sm font-medium">Perioada:</Label>
             </div>
 
             <div className="flex items-center gap-2">
-              <Label className="text-sm text-muted-foreground">De la:</Label>
+              <Label className="text-sm text-slate-400">De la:</Label>
               <Select
                 value={startMonth.toString()}
                 onValueChange={(v) => {
@@ -269,7 +269,7 @@ export default function Angajati() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Label className="text-sm text-muted-foreground">Până la:</Label>
+              <Label className="text-sm text-slate-400">Până la:</Label>
               <Select
                 value={endMonth.toString()}
                 onValueChange={(v) => {
@@ -290,7 +290,7 @@ export default function Angajati() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Label className="text-sm text-muted-foreground">An:</Label>
+              <Label className="text-sm text-slate-400">An:</Label>
               <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
                 <SelectTrigger className="w-24" data-testid="select-year">
                   <SelectValue />
@@ -347,7 +347,7 @@ export default function Angajati() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{totals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Se distribuie celor cu Venit Gard</p>
+            <p className="text-xs text-slate-400">Se distribuie celor cu Venit Gard</p>
           </CardContent>
         </Card>
         <Card>
@@ -356,7 +356,7 @@ export default function Angajati() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{totals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-muted-foreground">Include 80% București</p>
+            <p className="text-xs text-slate-400">Include 80% București</p>
           </CardContent>
         </Card>
         <Card>
@@ -469,7 +469,7 @@ export default function Angajati() {
                             <span className="font-semibold text-blue-600" data-testid={`text-venit-tva-${emp.id}`}>
                               {m.venitTVA.toFixed(0)}
                             </span>
-                          ) : <span className="text-muted-foreground">-</span>}
+                          ) : <span className="text-slate-400">-</span>}
                         </TableCell>
 
                         {/* Comision */}
@@ -478,7 +478,7 @@ export default function Angajati() {
                             <span className="font-semibold text-green-600" data-testid={`text-comision-${emp.id}`}>
                               {m.comisionPercent.toFixed(2)}%
                             </span>
-                          ) : <span className="text-muted-foreground">-</span>}
+                          ) : <span className="text-slate-400">-</span>}
                         </TableCell>
                         <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
 
@@ -511,7 +511,7 @@ export default function Angajati() {
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costProductie.toFixed(0) : '-'}</TableCell>
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costIndirecte.toFixed(0) : '-'}</TableCell>
 
-                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (m.profitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-muted-foreground border-gray-300'}`}>
+                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (m.profitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-slate-400 border-gray-300'}`}>
                           {isAgent ? m.profitFinal.toFixed(0) : '-'}
                         </TableCell>
 

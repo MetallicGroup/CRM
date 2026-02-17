@@ -238,7 +238,7 @@ export default function Targeturi() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-title">Target-uri</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Gestionează target-urile lunare pentru agenți
             </p>
           </div>
@@ -305,7 +305,7 @@ export default function Targeturi() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : targets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nu există target-uri pentru această perioadă</p>
               {isAdmin && (
@@ -329,7 +329,7 @@ export default function Targeturi() {
                   <TableRow key={target.id} data-testid={`row-target-${target.id}`}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <Users className="h-4 w-4 text-slate-400" />
                         {getAgentName(target.agentId)}
                       </div>
                     </TableCell>

@@ -143,9 +143,7 @@ export default function Vanzari() {
   });
 
   const getReportedValue = (client: Client): number => {
-    if (client.avans && !client.avansIncasat && client.avansSuma) {
-      return parseFloat(client.avansSuma);
-    }
+    // Întotdeauna afișăm suma totală (valoareOferta), nu doar avansul
     if (client.valoareOferta) {
       return parseFloat(client.valoareOferta);
     }
@@ -166,12 +164,12 @@ export default function Vanzari() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-green-100 rounded-lg">
-            <ShoppingCart className="h-8 w-8 text-green-600" />
+          <div className="p-3 bg-green-500/20 rounded-lg border border-green-500/40">
+            <ShoppingCart className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-title">Vânzări</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-50" data-testid="text-title">Vânzări</h1>
+            <p className="text-slate-400">
               Clienți câștigați și valoarea vânzărilor
             </p>
           </div>
@@ -183,13 +181,13 @@ export default function Vanzari() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Vânzări</p>
+                <p className="text-sm text-slate-400">Total Vânzări</p>
                 <p className="text-2xl font-bold" data-testid="stat-total-vanzari">
                   {filteredClients.length}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-green-100">
-                <ShoppingCart className="h-6 w-6 text-green-600" />
+              <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/40">
+                <ShoppingCart className="h-6 w-6 text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -198,13 +196,13 @@ export default function Vanzari() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Valoare Totală</p>
+                <p className="text-sm text-slate-400">Valoare Totală</p>
                 <p className="text-2xl font-bold" data-testid="stat-valoare-totala">
                   {totalValue.toLocaleString("ro-RO")} RON
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-purple-100">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+              <div className="p-3 rounded-lg bg-purple-500/20 border border-purple-500/40">
+                <TrendingUp className="h-6 w-6 text-purple-400" />
               </div>
             </div>
           </CardContent>
@@ -213,15 +211,15 @@ export default function Vanzari() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Valoare Medie</p>
+                <p className="text-sm text-slate-400">Valoare Medie</p>
                 <p className="text-2xl font-bold" data-testid="stat-valoare-medie">
                   {filteredClients.length > 0 
                     ? Math.round(totalValue / filteredClients.length).toLocaleString("ro-RO")
                     : 0} RON
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-blue-100">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-500/40">
+                <Calendar className="h-6 w-6 text-blue-400" />
               </div>
             </div>
           </CardContent>
@@ -239,7 +237,7 @@ export default function Vanzari() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                 <Input
                   placeholder="Caută după nume sau telefon..."
                   value={search}
@@ -321,7 +319,7 @@ export default function Vanzari() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
+                      !dateFrom && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -346,7 +344,7 @@ export default function Vanzari() {
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
+                      !dateTo && "text-slate-400"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -380,7 +378,7 @@ export default function Vanzari() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nu există vânzări înregistrate</p>
               <Link href="/clienti">
@@ -412,7 +410,7 @@ export default function Vanzari() {
                       <div className="flex flex-col gap-1 text-sm">
                         <a
                           href={client.telefon ? `tel:${client.telefon.replace(/\s+/g, "")}` : undefined}
-                          className="flex items-center gap-1 text-blue-600 hover:underline"
+                          className="flex items-center gap-1 text-blue-400 hover:text-blue-300 hover:underline"
                           onClick={() => {
                             fetch(`/api/clients/${client.id}/phone-click`, {
                               method: "POST",
@@ -425,7 +423,7 @@ export default function Vanzari() {
                         {client.email && (
                           <a
                             href={`mailto:${client.email}`}
-                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                            className="flex items-center gap-1 text-slate-400 hover:text-slate-200 hover:underline"
                           >
                             <Mail className="h-3 w-3" /> {client.email}
                           </a>
@@ -441,11 +439,11 @@ export default function Vanzari() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="border-slate-600 bg-slate-800/50 text-slate-200">
                         {client.categorieProdus ? (CATEGORY_LABELS[client.categorieProdus] || client.categorieProdus) : "-"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold text-green-600">
+                    <TableCell className="font-semibold text-green-400">
                       {getReportedValue(client)
                         ? `${getReportedValue(client).toLocaleString("ro-RO")} RON`
                         : "-"}
@@ -458,8 +456,8 @@ export default function Vanzari() {
                         </span>
                       </TableCell>
                     )}
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(client.updatedAt), "d MMM yyyy", { locale: ro })}
+                    <TableCell className="text-slate-400">
+                      {format(new Date(client.dataVanzarii || client.updatedAt), "d MMM yyyy", { locale: ro })}
                     </TableCell>
                   </TableRow>
                 ))}

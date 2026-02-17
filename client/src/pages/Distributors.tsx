@@ -52,7 +52,7 @@ export default function Distributors() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Distribuitori</h1>
-          <p className="text-muted-foreground">Logică nouă: Datele sunt salvate automat în baza de date</p>
+          <p className="text-slate-400">Logică nouă: Datele sunt salvate automat în baza de date</p>
         </div>
         <MonthSelector />
       </div>
@@ -160,7 +160,7 @@ export default function Distributors() {
           </ScrollArea>
         </CardContent>
       </Card>
-      <p className="text-xs text-muted-foreground italic">* Profitul net local nu include costurile de producție și indirecte distribuite de grup. Vezi raportul general pentru profitul final.</p>
+      <p className="text-xs text-slate-400 italic">* Profitul net local nu include costurile de producție și indirecte distribuite de grup. Vezi raportul general pentru profitul final.</p>
     </div>
   );
 }

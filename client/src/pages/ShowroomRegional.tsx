@@ -319,7 +319,7 @@ export default function ShowroomRegional() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Showroom-uri</h1>
-          <p className="text-muted-foreground">Cheltuieli pe locație - Luna {selectedMonth}/{selectedYear}</p>
+          <p className="text-slate-400">Cheltuieli pe locație - Luna {selectedMonth}/{selectedYear}</p>
         </div>
         <div className="flex items-center gap-4">
           <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
@@ -338,7 +338,7 @@ export default function ShowroomRegional() {
 
       {allShowrooms.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="py-8 text-center text-slate-400">
             Nu există showroom-uri configurate.
           </CardContent>
         </Card>
@@ -491,7 +491,7 @@ export default function ShowroomRegional() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Cost Total Luna {selectedMonth}</p>
+                        <p className="text-sm text-slate-400">Cost Total Luna {selectedMonth}</p>
                         <div className="text-3xl font-bold text-primary" data-testid={`text-total-${showroom.id}`}>
                           {costs.total.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON
                         </div>
@@ -499,13 +499,13 @@ export default function ShowroomRegional() {
 
                       <div className="grid grid-cols-2 gap-2 text-sm border-t pt-4">
                         <div>
-                          <span className="text-muted-foreground">Showroom:</span>
+                          <span className="text-slate-400">Showroom:</span>
                           <div className="font-bold text-blue-600">
                             {cheltuieliShowroom.toLocaleString('ro-RO', { maximumFractionDigits: 0 })} RON
                           </div>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Agenți:</span>
+                          <span className="text-slate-400">Agenți:</span>
                           <div className="font-bold text-green-600">
                             {(costs.cheltuieliAgenti || 0).toLocaleString('ro-RO', { maximumFractionDigits: 0 })} RON
                           </div>
@@ -514,7 +514,7 @@ export default function ShowroomRegional() {
 
                       {isBucuresti && cheltuieliShowroom > 0 && (
                         <div className="space-y-2 border-t pt-4">
-                          <p className="text-xs text-muted-foreground font-medium">Distribuție Cheltuieli Showroom (București):</p>
+                          <p className="text-xs text-slate-400 font-medium">Distribuție Cheltuieli Showroom (București):</p>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">20% → Agenți:</span>
                             <span className="font-bold text-blue-600">{costShowroomDistribuit.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
@@ -532,7 +532,7 @@ export default function ShowroomRegional() {
 
                       {!isBucuresti && costs.total > 0 && (
                         <div className="space-y-2 border-t pt-4">
-                          <p className="text-sm text-muted-foreground">100% cheltuieli showroom se distribuie agenților.</p>
+                          <p className="text-sm text-slate-400">100% cheltuieli showroom se distribuie agenților.</p>
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">Total → Agenți:</span>
                             <span className="font-bold text-emerald-600">{totalDistribuitAgenti.toLocaleString('ro-RO', { minimumFractionDigits: 0 })} RON</span>
@@ -541,7 +541,7 @@ export default function ShowroomRegional() {
                       )}
 
                       {costs.total === 0 && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-slate-400">
                           Nu există cheltuieli înregistrate pentru această lună.
                         </p>
                       )}
@@ -559,7 +559,7 @@ export default function ShowroomRegional() {
                         <Loader2 className="h-6 w-6 animate-spin" />
                       </div>
                     ) : cheltuieliSediu.length === 0 && cheltuieliAgenti.length === 0 ? (
-                      <p className="text-center py-8 text-muted-foreground">
+                      <p className="text-center py-8 text-slate-400">
                         Nu există cheltuieli înregistrate pentru această lună.
                       </p>
                     ) : (

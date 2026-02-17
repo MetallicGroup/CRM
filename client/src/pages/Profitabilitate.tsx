@@ -58,7 +58,7 @@ export default function Profitabilitate() {
         </div>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profitabilitate</h1>
-          <p className="text-muted-foreground">
+          <p className="text-slate-400">
             Modul financiar - calculează profituri, costuri și distribuții
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function Profitabilitate() {
                   <div className={`p-2 rounded-lg ${module.color}`}>
                     <module.icon className="h-5 w-5 text-white" />
                   </div>
-                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                  <ArrowRight className="h-5 w-5 text-slate-400" />
                 </div>
                 <CardTitle className="mt-4">{module.title}</CardTitle>
                 <CardDescription>{module.description}</CardDescription>
@@ -94,19 +94,19 @@ export default function Profitabilitate() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-3 bg-white rounded-lg">
               <p className="font-medium text-blue-800">Adaos fără TVA</p>
-              <p className="text-muted-foreground">= Adaos cu TVA × 79%</p>
+              <p className="text-slate-400">= Adaos cu TVA × 79%</p>
             </div>
             <div className="p-3 bg-white rounded-lg">
               <p className="font-medium text-blue-800">TVA</p>
-              <p className="text-muted-foreground">= Adaos cu TVA × 21%</p>
+              <p className="text-slate-400">= Adaos cu TVA × 21%</p>
             </div>
             <div className="p-3 bg-white rounded-lg">
               <p className="font-medium text-blue-800">Costuri Showroom</p>
-              <p className="text-muted-foreground">= Distribuite egal între agenți</p>
+              <p className="text-slate-400">= Distribuite egal între agenți</p>
             </div>
             <div className="p-3 bg-white rounded-lg">
               <p className="font-medium text-blue-800">București Special</p>
-              <p className="text-muted-foreground">= 20% local, 80% indirect</p>
+              <p className="text-slate-400">= 20% local, 80% indirect</p>
             </div>
           </div>
         </CardContent>

@@ -74,7 +74,7 @@ export interface IStorage {
   // Client methods
   getClient(id: string): Promise<Client | undefined>;
   getClientByPhone(telefon: string): Promise<Client | undefined>;
-  getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]>;
+  getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string; underObservation?: boolean; dateFrom?: string; dateTo?: string }): Promise<Client[]>;
   getFollowupsForDate(agentId: string | undefined, date: Date): Promise<Client[]>;
   createClient(data: CreateClient): Promise<Client>;
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
@@ -409,16 +409,22 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
+    // Pentru VANDUT: folosim COALESCE(dataVanzarii, updatedAt) ca vânzările fără data_vanzarii setată
+    // să apară tot (folosim updatedAt = când a fost marcat ca vândut)
     if (filters?.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
       fromDate.setHours(0, 0, 0, 0);
-      conditions.push(gte(clients.dataVanzarii, fromDate));
+      conditions.push(
+        sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) >= ${fromDate})`
+      );
     }
 
     if (filters?.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
-      conditions.push(lte(clients.dataVanzarii, toDate));
+      conditions.push(
+        sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) <= ${toDate})`
+      );
     }
 
     if (conditions.length > 0) {

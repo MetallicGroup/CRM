@@ -704,7 +704,7 @@ export default function Clienti() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Clienți</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Gestionează baza de date cu clienți și oferte
             </p>
           </div>
@@ -731,7 +731,7 @@ export default function Clienti() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Filter className="h-5 w-5 text-muted-foreground" />
+              <Filter className="h-5 w-5 text-slate-400" />
               <CardTitle className="text-lg">Filtre</CardTitle>
             </div>
             <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-2">
@@ -744,7 +744,7 @@ export default function Clienti() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Caută după nume, telefon, email..."
                   value={search}
@@ -815,9 +815,9 @@ export default function Clienti() {
             </div>
           ) : visibleClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
+              <Users className="h-12 w-12 text-slate-400 mb-4" />
               <h3 className="text-lg font-medium">Niciun client găsit</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-slate-400 mb-4">
                 {search || stadiuFilter !== "all" || agentFilter !== "all" || contactStatusFilter !== "all"
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
@@ -1192,7 +1192,7 @@ export default function Clienti() {
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <Label>Nume Partener</Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-slate-400">
                         Poți alege din listă sau poți scrie manual numele partenerului.
                       </p>
                     </div>
@@ -1611,7 +1611,7 @@ export default function Clienti() {
                       {formData.ofertaFilename ? (
                         <>
                           <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
-                            <FileIcon className="h-4 w-4 text-muted-foreground" />
+                            <FileIcon className="h-4 w-4 text-slate-400" />
                             <span className="text-sm truncate flex-1">
                               {formData.ofertaFilename.split('/').pop() || "Fișier încărcat"}
                             </span>
@@ -1662,7 +1662,7 @@ export default function Clienti() {
                       {formData.ofertaFilename2 ? (
                         <>
                           <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
-                            <FileIcon className="h-4 w-4 text-muted-foreground" />
+                            <FileIcon className="h-4 w-4 text-slate-400" />
                             <span className="text-sm truncate flex-1">
                               {formData.ofertaFilename2.split('/').pop() || "Fișier încărcat"}
                             </span>
@@ -1881,7 +1881,7 @@ export default function Clienti() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Telefon</p>
+                  <p className="text-sm text-slate-400">Telefon</p>
                   {viewClient.telefon ? (
                     <a
                       href={`tel:${viewClient.telefon.replace(/\s+/g, "")}`}
@@ -1900,7 +1900,7 @@ export default function Clienti() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="text-sm text-slate-400">Email</p>
                   {viewClient.email ? (
                     <a
                       href={`mailto:${viewClient.email}`}
@@ -1913,13 +1913,13 @@ export default function Clienti() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Locație</p>
+                  <p className="text-sm text-slate-400">Locație</p>
                   <p className="font-medium">
                     {[viewClient.localitate, viewClient.judet].filter(Boolean).join(", ") || "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Sursă</p>
+                  <p className="text-sm text-slate-400">Sursă</p>
                   <p className="font-medium">
                     {SOURCE_OPTIONS.find(s => s.value === viewClient.sursa)?.label || "-"}
                   </p>
@@ -1930,31 +1930,31 @@ export default function Clienti() {
                 <h4 className="font-medium mb-3">Detalii Produs</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Categorie</p>
+                    <p className="text-sm text-slate-400">Categorie</p>
                     <p className="font-medium">
                       {CATEGORY_OPTIONS.find(c => c.value === viewClient.categorieProdus)?.label || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Brand</p>
+                    <p className="text-sm text-slate-400">Brand</p>
                     <p className="font-medium">{viewClient.brand || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Model</p>
+                    <p className="text-sm text-slate-400">Model</p>
                     <p className="font-medium">{viewClient.model || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Suprafață</p>
+                    <p className="text-sm text-slate-400">Suprafață</p>
                     <p className="font-medium">{viewClient.suprafataMp ? `${viewClient.suprafataMp} mp` : "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Culoare</p>
+                    <p className="text-sm text-slate-400">Culoare</p>
                     <p className="font-medium">
                       {COLOR_OPTIONS.find(c => c.value === viewClient.culoare)?.label || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Grosime</p>
+                    <p className="text-sm text-slate-400">Grosime</p>
                     <p className="font-medium">
                       {THICKNESS_OPTIONS.find(t => t.value === viewClient.grosime)?.label || "-"}
                     </p>
@@ -1966,11 +1966,11 @@ export default function Clienti() {
                 <h4 className="font-medium mb-3">Ofertă</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Stadiu Ofertă</p>
+                    <p className="text-sm text-slate-400">Stadiu Ofertă</p>
                     {getOfferStatusBadge(viewClient.stadiuOferta)}
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Valoare</p>
+                    <p className="text-sm text-slate-400">Valoare</p>
                     <p className="font-medium">
                       {viewClient.valoareOferta
                         ? `${Number(viewClient.valoareOferta).toLocaleString("ro-RO")} RON`
@@ -1978,7 +1978,7 @@ export default function Clienti() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Data Ofertării</p>
+                    <p className="text-sm text-slate-400">Data Ofertării</p>
                     <p className="font-medium">
                       {viewClient.dataOfertarii
                         ? format(new Date(viewClient.dataOfertarii), "dd MMM yyyy", { locale: ro })
@@ -2081,7 +2081,7 @@ export default function Clienti() {
                 onChange={(e) => setSheetId(e.target.value)}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-400">
               Sincronizarea va importa rândurile care conțin Nume și Telefon, setând Sursa ca fiind Facebook.
             </p>
           </div>

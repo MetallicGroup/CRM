@@ -269,7 +269,7 @@ export default function Parteneri() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-title">Parteneri</h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-400">
               Gestionează furnizorii, subcontractorii și colaboratorii
             </p>
           </div>
@@ -300,7 +300,7 @@ export default function Parteneri() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">{type.label}</p>
+                    <p className="text-sm text-slate-400">{type.label}</p>
                     <p className="text-2xl font-bold">{count}</p>
                   </div>
                   <Badge className={cn("text-lg px-3 py-1", type.color)}>
@@ -324,7 +324,7 @@ export default function Parteneri() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Caută după nume, CUI sau persoană contact..."
                   value={search}
@@ -378,7 +378,7 @@ export default function Parteneri() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : filteredPartners.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               <Handshake className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nu există parteneri înregistrați</p>
               {isAdmin && (
@@ -408,7 +408,7 @@ export default function Parteneri() {
                       <div>
                         <p className="font-medium">{partner.nume}</p>
                         {partner.persoanaContact && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <p className="text-sm text-slate-400 flex items-center gap-1">
                             <User className="h-3 w-3" /> {partner.persoanaContact}
                           </p>
                         )}
@@ -428,7 +428,7 @@ export default function Parteneri() {
                         {partner.email && (
                           <a
                             href={`mailto:${partner.email}`}
-                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                            className="flex items-center gap-1 text-slate-400 hover:underline"
                           >
                             <Mail className="h-3 w-3" /> {partner.email}
                           </a>
