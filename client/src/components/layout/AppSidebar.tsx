@@ -61,6 +61,7 @@ const menuSections: MenuSection[] = [
       { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
       { icon: Target, label: 'Target-uri', href: '/targeturi' },
       { icon: Handshake, label: 'Parteneri', href: '/parteneri' },
+      { icon: Eye, label: 'Urmăriri Clienți', href: '/admin/urmariri', adminOnly: true },
     ],
   },
   {
@@ -86,7 +87,6 @@ const menuSections: MenuSection[] = [
       { icon: UserCog, label: 'Utilizatori', href: '/utilizatori' },
       { icon: PhoneCall, label: 'Apeluri Clienți', href: '/admin/apeluri' },
       { icon: Download, label: 'Exporturi', href: '/admin/exporturi' },
-      { icon: Eye, label: 'Urmăriri Clienți', href: '/admin/urmariri' },
     ],
   },
 ];
@@ -123,7 +123,9 @@ export function AppSidebar() {
   };
 
   const filteredSections = menuSections.filter((section) => !section.adminOnly || isAdmin);
-  const allItems = filteredSections.flatMap(s => s.items);
+  const allItems = filteredSections.flatMap(s =>
+    s.items.filter((item) => !item.adminOnly || isAdmin)
+  );
 
   return (
     <aside
@@ -190,7 +192,9 @@ export function AppSidebar() {
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-1 space-y-1 pl-4">
-                    {section.items.map((item) => {
+                    {section.items
+                      .filter((item) => !item.adminOnly || isAdmin)
+                      .map((item) => {
                       const isActive =
                         location === item.href ||
                         (item.href !== "/" && location.startsWith(item.href));
