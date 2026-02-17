@@ -85,18 +85,18 @@ import type {
 } from "@shared/schema";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
-  { value: "NOUA", label: "Nouă", color: "bg-blue-100 text-blue-800" },
-  { value: "TRIMISA", label: "Trimisă", color: "bg-cyan-100 text-cyan-800" },
-  { value: "IN_ASTEPTARE", label: "În Așteptare (Follow-up)", color: "bg-yellow-100 text-yellow-800" },
-  { value: "ACCEPTATA", label: "Acceptată", color: "bg-indigo-100 text-indigo-800" },
-  { value: "VANDUT", label: "Vândut", color: "bg-green-100 text-green-800" },
-  { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-100 text-red-800" },
-  { value: "ANULATA", label: "Anulată", color: "bg-gray-100 text-gray-800" },
-  { value: "INFORMATII", label: "Informații", color: "bg-purple-100 text-purple-800" },
-  { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-100 text-emerald-800" },
-  { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-100 text-orange-800" },
+  { value: "NOUA", label: "Nouă", color: "bg-blue-500/25 text-blue-200 border border-blue-500/40" },
+  { value: "TRIMISA", label: "Trimisă", color: "bg-cyan-500/25 text-cyan-200 border border-cyan-500/40" },
+  { value: "IN_ASTEPTARE", label: "În Așteptare (Follow-up)", color: "bg-yellow-500/25 text-yellow-200 border border-yellow-500/40" },
+  { value: "ACCEPTATA", label: "Acceptată", color: "bg-indigo-500/25 text-indigo-200 border border-indigo-500/40" },
+  { value: "VANDUT", label: "Vândut", color: "bg-green-500/25 text-green-200 border border-green-500/40" },
+  { value: "REFUZAT", label: "Refuzat/Pierdut", color: "bg-red-500/25 text-red-200 border border-red-500/40" },
+  { value: "ANULATA", label: "Anulată", color: "bg-slate-500/25 text-slate-300 border border-slate-500/40" },
+  { value: "INFORMATII", label: "Informații", color: "bg-purple-500/25 text-purple-200 border border-purple-500/40" },
+  { value: "CONTACTAT", label: "Contactat", color: "bg-emerald-500/25 text-emerald-200 border border-emerald-500/40" },
+  { value: "NECONTACTAT", label: "Necontactat", color: "bg-orange-500/25 text-orange-200 border border-orange-500/40" },
   // Stadiu special folosit doar de Razvan / Alexandru
-  { value: "RAZVAN", label: "Razvan", color: "bg-pink-100 text-pink-800" },
+  { value: "RAZVAN", label: "Razvan", color: "bg-pink-500/25 text-pink-200 border border-pink-500/40" },
 ];
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -335,7 +335,7 @@ const JUDETE = [
 ];
 
 function getOfferStatusBadge(status: OfferStatus | null) {
-  if (!status) return <Badge className="bg-gray-100 text-gray-800">-</Badge>;
+  if (!status) return <Badge className="bg-slate-700/60 text-slate-400 border border-slate-600/50">-</Badge>;
   const option = OFFER_STATUS_OPTIONS.find(s => s.value === status);
   return (
     <Badge className={cn("font-medium", option?.color)}>
@@ -848,13 +848,13 @@ export default function Clienti() {
               <TableBody>
                 {visibleClients.map((client) => (
                   <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
-                    <TableCell className="py-2 text-center text-xs font-mono text-muted-foreground">
+                    <TableCell className="py-2 text-center text-xs font-mono text-slate-400">
                       {client.numCriteriu || ""}
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="truncate">
                         <div className="font-medium truncate" title={client.nume}>{client.nume}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-slate-400">
                           {SOURCE_OPTIONS.find(s => s.value === client.sursa)?.label}
                         </div>
                       </div>
@@ -877,7 +877,7 @@ export default function Clienti() {
                         {client.email && (
                           <a
                             href={`mailto:${client.email}`}
-                            className="flex items-center gap-1 text-muted-foreground hover:underline"
+                            className="flex items-center gap-1 text-slate-400 hover:text-slate-200 hover:underline"
                           >
                             <Mail className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate" title={client.email}>{client.email}</span>
@@ -891,7 +891,7 @@ export default function Clienti() {
                           {format(new Date(client.dataAdaugare), "dd.MM.yyyy")}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground text-xs">-</span>
+                        <span className="text-slate-400 text-xs">-</span>
                       )}
                     </TableCell>
                     <TableCell className="py-2">
@@ -903,12 +903,12 @@ export default function Clienti() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-slate-400">-</span>
                       )}
                     </TableCell>
                     <TableCell className="py-2">{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
                     <TableCell className="py-2">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs border-slate-600 bg-slate-800/50 text-slate-200">
                         {CATEGORY_OPTIONS.find(c => c.value === client.categorieProdus)?.label || "-"}
                       </Badge>
                     </TableCell>
@@ -918,7 +918,7 @@ export default function Clienti() {
                           {Number(client.valoareOferta).toLocaleString("ro-RO")}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-slate-400">-</span>
                       )}
                     </TableCell>
                     <TableCell className="py-2">
@@ -927,7 +927,7 @@ export default function Clienti() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(`${window.location.origin}${client.ofertaFilename}`, '_blank', 'noopener');
@@ -941,7 +941,7 @@ export default function Clienti() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            className="h-7 w-7 text-orange-400 hover:text-orange-300 hover:bg-orange-500/20"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(`${window.location.origin}${client.ofertaFilename2}`, '_blank', 'noopener');
