@@ -50,6 +50,7 @@ interface Client {
   email: string | null;
   judet: string | null;
   localitate: string | null;
+  sursa: string | null;
   stadiuOferta: string | null;
   categorieProdus: string | null;
   valoareOferta: string | null;
@@ -84,6 +85,25 @@ const CATEGORY_LABELS: Record<string, string> = {
   SCULE: "Scule",
 };
 
+const SOURCE_OPTIONS: { value: string; label: string }[] = [
+  { value: "FACEBOOK", label: "Facebook" },
+  { value: "GOOGLE", label: "Google" },
+  { value: "RECLAME_CAMPANII", label: "Reclame / Campanii" },
+  { value: "SITE", label: "Site" },
+  { value: "RECOMANDARE", label: "Recomandare" },
+  { value: "TARG", label: "Târg" },
+  { value: "OLX", label: "OLX" },
+  { value: "CEL_RO", label: "Cel.ro" },
+  { value: "OKAZII", label: "Okazii" },
+  { value: "PUBLI24", label: "Publi24" },
+  { value: "TELEFON", label: "Telefon" },
+  { value: "MONTATORI", label: "Montatori" },
+  { value: "BIROU_SHOWROOM", label: "Birou/Showroom" },
+  { value: "COMPLETARE", label: "Completare" },
+  { value: "TIKTOK", label: "Tik Tok" },
+  { value: "PARTENERI", label: "Parteneri" },
+];
+
 export default function Vanzari() {
   const { isAdmin, user } = useAuth();
   const [search, setSearch] = useState("");
@@ -91,6 +111,7 @@ export default function Vanzari() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<string>("all");
   const [partnerFilter, setPartnerFilter] = useState<"all" | "with" | "without">("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
 
@@ -138,8 +159,10 @@ export default function Vanzari() {
     const matchesPartner = partnerFilter === "all" ||
       (partnerFilter === "with" && client.isPartnerOrder) ||
       (partnerFilter === "without" && !client.isPartnerOrder);
-    
-    return matchesSearch && matchesAgent && matchesCategory && matchesOrderStatus && matchesPartner;
+
+    const matchesSource = sourceFilter === "all" || client.sursa === sourceFilter;
+
+    return matchesSearch && matchesAgent && matchesCategory && matchesOrderStatus && matchesPartner && matchesSource;
   });
 
   const getReportedValue = (client: Client): number => {
@@ -306,6 +329,21 @@ export default function Vanzari() {
                   <SelectItem value="all">Toate vânzările</SelectItem>
                   <SelectItem value="without">Fără partener</SelectItem>
                   <SelectItem value="with">Cu partener</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-[200px]">
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Toate sursele" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate sursele</SelectItem>
+                  {SOURCE_OPTIONS.map((source) => (
+                    <SelectItem key={source.value} value={source.value}>
+                      {source.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

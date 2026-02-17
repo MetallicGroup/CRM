@@ -408,6 +408,7 @@ export default function Clienti() {
   const [stadiuFilter, setStadiuFilter] = useState<string>("all");
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<"all" | "contactat" | "necontactat">("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -452,14 +453,20 @@ export default function Clienti() {
   }, [clients]);
 
   const visibleClients = useMemo(() => {
+    let filtered = clients;
+
     if (contactStatusFilter === "contactat") {
-      return clients.filter((c) => c.contactat);
+      filtered = filtered.filter((c) => c.contactat);
+    } else if (contactStatusFilter === "necontactat") {
+      filtered = filtered.filter((c) => !c.contactat);
     }
-    if (contactStatusFilter === "necontactat") {
-      return clients.filter((c) => !c.contactat);
+
+    if (sourceFilter !== "all") {
+      filtered = filtered.filter((c) => c.sursa === sourceFilter);
     }
-    return clients;
-  }, [clients, contactStatusFilter]);
+
+    return filtered;
+  }, [clients, contactStatusFilter, sourceFilter]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["agents-minimal"],
@@ -800,6 +807,19 @@ export default function Clienti() {
                 <SelectItem value="all">Toți (contactați și necontactați)</SelectItem>
                 <SelectItem value="contactat">Doar contactați</SelectItem>
                 <SelectItem value="necontactat">Doar necontactați</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-full md:w-[220px]">
+                <SelectValue placeholder="Toate sursele" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate sursele</SelectItem>
+                {SOURCE_OPTIONS.map((source) => (
+                  <SelectItem key={source.value} value={source.value}>
+                    {source.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
