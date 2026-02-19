@@ -30,6 +30,22 @@ export interface OfertaPdfData {
   totalGeneral: number;
 }
 
+export interface AccesoriiPdfData {
+  agentName: string;
+  agentTitle: string;
+  agentPhone: string;
+  agentEmail: string;
+  agentAddress: string;
+  client: string;
+  cnpCui: string;
+  telefon: string;
+  strada: string;
+  localitate: string;
+  judet: string;
+  accesorii: { denumire: string; um: string; cant: number; pretBuc: number; total: number }[];
+  totalValoareAccesorii: number;
+}
+
 export function generateOfertaPdf(data: OfertaPdfData): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   let y = MARGIN;
@@ -167,3 +183,89 @@ export function generateOfertaPdf(data: OfertaPdfData): void {
 
   doc.save(`Oferta_${(data.client || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
+
+export function generateAccesoriiPdf(data: AccesoriiPdfData): void {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  let y = MARGIN;
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const drawText = (text: string, x: number, fontSize?: number, bold?: boolean) => {
+    doc.setFontSize(fontSize ?? FONT_SIZE);
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.text(text, x, y);
+    y += LINE_HEIGHT;
+  };
+
+  const drawLine = () => {
+    y += 2;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(MARGIN, y, pageWidth - MARGIN, y);
+    y += 4;
+  };
+
+  // Header
+  doc.setFontSize(TITLE_FONT);
+  doc.setFont('helvetica', 'bold');
+  doc.text('METALLIC GROUP', MARGIN, y);
+  y += 6;
+  doc.setFontSize(HEADER_FONT);
+  doc.text('ACCESORII AUXILIARE - OFERTĂ', MARGIN, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(FONT_SIZE);
+
+  // Agent
+  drawText(`${data.agentName}`, MARGIN);
+  drawText(`${data.agentTitle}`, MARGIN);
+  drawText(`Tel: ${data.agentPhone}  |  ${data.agentEmail}`, MARGIN);
+  drawText(`www.metallicgroup.ro`, MARGIN);
+  drawText(data.agentAddress, MARGIN);
+  y += 4;
+
+  // Client
+  drawText('DATE CLIENT', MARGIN, FONT_SIZE, true);
+  doc.setFont('helvetica', 'normal');
+  drawText(`Client: ${data.client}`, MARGIN);
+  drawText(`CNP / CUI: ${data.cnpCui}`, MARGIN);
+  drawText(`Telefon: ${data.telefon}`, MARGIN);
+  drawText(`Strada: ${data.strada}`, MARGIN);
+  drawText(`Localitate: ${data.localitate}`, MARGIN);
+  drawText(`Județ: ${data.judet}`, MARGIN);
+  drawLine();
+
+  // Accessories table
+  drawText('ACCESORII AUXILIARE', MARGIN, FONT_SIZE, true);
+  doc.setFont('helvetica', 'normal');
+  y += 2;
+
+  const accCols = [70, 20, 25, 30, 35];
+  const accHeaders = ['Denumire', 'U.M.', 'Cant.', 'Preț/buc', 'Total'];
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  let x = MARGIN;
+  accHeaders.forEach((h, i) => {
+    doc.text(h, x, y);
+    x += accCols[i];
+  });
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(FONT_SIZE);
+
+  data.accesorii.forEach((a) => {
+    if (a.cant <= 0) return;
+    x = MARGIN;
+    doc.text(a.denumire.substring(0, 40), x, y); x += accCols[0];
+    doc.text(a.um, x, y); x += accCols[1];
+    doc.text(String(a.cant), x, y); x += accCols[2];
+    doc.text(`${a.pretBuc} lei`, x, y); x += accCols[3];
+    doc.text(`${a.total.toFixed(2)} lei`, x, y);
+    y += 5;
+  });
+
+  y += 4;
+  doc.setFont('helvetica', 'bold');
+  doc.text(`TOTAL VALOARE ACCESORII: ${data.totalValoareAccesorii.toFixed(2)} lei`, MARGIN, y);
+
+  doc.save(`Accesorii_${(data.client || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+

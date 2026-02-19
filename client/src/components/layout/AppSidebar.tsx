@@ -57,6 +57,7 @@ const menuSections: MenuSection[] = [
       { icon: UserPlus, label: 'Clienți', href: '/clienti' },
       { icon: FileText, label: 'Oferte', href: '/oferte' },
       { icon: FileEdit, label: 'Ofertare', href: '/ofertare' },
+      { icon: FileText, label: 'Ofertare Accesorii', href: '/ofertare-accesorii' },
       { icon: Clock, label: 'Follow-up', href: '/followup' },
       { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
       { icon: Target, label: 'Target-uri', href: '/targeturi' },
