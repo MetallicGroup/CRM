@@ -64,7 +64,7 @@ export class ObjectStorageService {
   }
 
   async uploadFromBuffer(buffer: Buffer, objectName: string): Promise<string> {
-    // 1) Prefer Cloudflare R2 (S3) dacă este configurat
+    // 1) Cloudflare R2 – storage permanent; folosim întotdeauna când e configurat (inclusiv pe Render)
     if (r2Client && hasR2Config) {
       try {
         await r2Client.send(
@@ -76,11 +76,15 @@ export class ObjectStorageService {
         );
         return `/objects/${objectName}`;
       } catch (e) {
-        console.error("[ObjectStorage] R2 upload failed, falling back:", e);
+        console.error("[ObjectStorage] R2 upload failed:", e);
+        // În producție (Render) nu scriem pe disk efemer – documentele s-ar pierde la deploy
+        if (isRender) {
+          throw new Error("R2 upload failed. Verifică R2_* env vars. Documentele trebuie salvate permanent în R2.");
+        }
       }
     }
 
-    // 2) Replit Object Storage (dacă există)
+    // 2) Replit Object Storage (doar local, nu pe Render)
     if (objectStorageClient) {
       try {
         const result = await objectStorageClient.uploadFromBytes(objectName, buffer);
@@ -92,17 +96,16 @@ export class ObjectStorageService {
       }
     }
 
-    // 3) Disk fallback (local dev)
+    // 3) Disk doar local (niciodată pe Render) – ca să nu se piardă documente la deploy
+    if (isRender) {
+      throw new Error("R2 nu este configurat. Setează R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME pentru storage permanent.");
+    }
     const filePath = path.join(process.cwd(), objectName);
     const dir = path.dirname(filePath);
-    console.log(`[ObjectStorage] Uploading to disk path: ${filePath}`);
     if (!fs.existsSync(dir)) {
-      console.log(`[ObjectStorage] Creating directory: ${dir}`);
       fs.mkdirSync(dir, { recursive: true });
     }
-
     fs.writeFileSync(filePath, buffer);
-    console.log(`[ObjectStorage] Saved to disk: ${filePath}`);
     return `/objects/${objectName}`;
   }
 

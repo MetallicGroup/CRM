@@ -463,12 +463,15 @@ export default function Targeturi() {
             </div>
             <div className="space-y-2">
               <Label>Agent {formData.categoria !== "DIRECTOR" ? "*" : ""}</Label>
-              <Select value={formData.agentId} onValueChange={(v) => setFormData({ ...formData, agentId: v })}>
+              <Select
+                value={formData.agentId === "" || formData.agentId == null ? "__none__" : formData.agentId}
+                onValueChange={(v) => setFormData({ ...formData, agentId: v === "__none__" ? "" : v })}
+              >
                 <SelectTrigger data-testid="select-agent">
                   <SelectValue placeholder="Selectează agent" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Niciunul (Director)</SelectItem>
+                  <SelectItem value="__none__">— Niciunul (Director)</SelectItem>
                   {agents.filter(agent => agent.id).map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}

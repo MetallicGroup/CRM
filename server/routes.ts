@@ -1071,7 +1071,12 @@ export async function registerRoutes(
 
   app.get("/api/documente", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const categorie = req.query.categorie as string | undefined;
+      const isAdmin = req.userRole === "ADMIN";
+      let categorie = req.query.categorie as string | undefined;
+      // Non-admin: acces doar la Fișă tehnică
+      if (!isAdmin) {
+        categorie = "FISA_TEHNICA";
+      }
       const list = await storage.getDocumente(categorie ? { categorie } : undefined);
       res.json(list);
     } catch (error) {

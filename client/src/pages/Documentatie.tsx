@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,11 @@ export default function Documentatie() {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  // Non-admin: doar Fișă tehnică – forțează filtrul
+  const categoriiVizibile = isAdmin ? CATEGORII : CATEGORII.filter((c) => c.id === "FISA_TEHNICA");
+  useEffect(() => {
+    if (!isAdmin && categoryFilter !== "FISA_TEHNICA") setCategoryFilter("FISA_TEHNICA");
+  }, [isAdmin, categoryFilter]);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORII[0].id);
   const [numeDocument, setNumeDocument] = useState("");
@@ -167,7 +172,7 @@ export default function Documentatie() {
           <CardContent className="p-6">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Create</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {CATEGORII.map((cat) => (
+              {categoriiVizibile.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
@@ -194,8 +199,8 @@ export default function Documentatie() {
             <SelectValue placeholder="Categorie" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toate categoriile</SelectItem>
-            {CATEGORII.map((c) => (
+            {isAdmin && <SelectItem value="all">Toate categoriile</SelectItem>}
+            {categoriiVizibile.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
             ))}
           </SelectContent>
