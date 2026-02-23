@@ -3,6 +3,7 @@
  * Raluca, Madalina, Daniel, Iulian, Dana, Kuke, Marian, Laurentiu, Alexandra.
  * Rulează: npx tsx scripts/seed-angajati-cheltuieli.ts
  */
+import "dotenv/config";
 import { db } from "../server/db";
 import { users } from "../shared/schema";
 import bcrypt from "bcrypt";
