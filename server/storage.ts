@@ -58,7 +58,10 @@ import {
   type PartnerMonthlyData,
   type CreatePartnerMonthlyData,
   type UpdatePartnerMonthlyData,
-  type AppSetting
+  type AppSetting,
+  documente,
+  type Document,
+  type CreateDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, ne, isNotNull, inArray } from "drizzle-orm";
@@ -139,6 +142,11 @@ export interface IStorage {
   createTask(data: CreateTask): Promise<Task>;
   updateTask(id: string, data: UpdateTask): Promise<Task | undefined>;
   deleteTask(id: string): Promise<boolean>;
+
+  // Documentație
+  createDocument(data: CreateDocument): Promise<Document>;
+  getDocumente(filters?: { categorie?: string }): Promise<(Document & { uploadedByFirstName?: string; uploadedByLastName?: string })[]>;
+  deleteDocument(id: string): Promise<boolean>;
 
   // Partner methods
   getPartner(id: string): Promise<Partner | undefined>;
@@ -1698,6 +1706,57 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTask(id: string): Promise<boolean> {
     const result = await db.delete(tasks).where(eq(tasks.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // ============ DOCUMENTAȚIE ============
+
+  async createDocument(data: CreateDocument): Promise<Document> {
+    const [doc] = await db.insert(documente).values({
+      categorie: data.categorie as any,
+      nume: data.nume,
+      objectPath: data.objectPath,
+      fileName: data.fileName || null,
+      uploadedById: data.uploadedById || null,
+    }).returning();
+    if (!doc) throw new Error("Failed to create document");
+    return doc;
+  }
+
+  async getDocumente(filters?: { categorie?: string }): Promise<(Document & { uploadedByFirstName?: string; uploadedByLastName?: string })[]> {
+    const base = db
+      .select({
+        id: documente.id,
+        categorie: documente.categorie,
+        nume: documente.nume,
+        objectPath: documente.objectPath,
+        fileName: documente.fileName,
+        uploadedById: documente.uploadedById,
+        uploadedAt: documente.uploadedAt,
+        uploadedByFirstName: users.firstName,
+        uploadedByLastName: users.lastName,
+      })
+      .from(documente)
+      .leftJoin(users, eq(documente.uploadedById, users.id));
+    const withWhere = filters?.categorie
+      ? base.where(eq(documente.categorie, filters.categorie as any))
+      : base;
+    const rows = await withWhere.orderBy(desc(documente.uploadedAt));
+    return rows.map((r) => ({
+      id: r.id,
+      categorie: r.categorie,
+      nume: r.nume,
+      objectPath: r.objectPath,
+      fileName: r.fileName,
+      uploadedById: r.uploadedById,
+      uploadedAt: r.uploadedAt,
+      uploadedByFirstName: r.uploadedByFirstName ?? undefined,
+      uploadedByLastName: r.uploadedByLastName ?? undefined,
+    }));
+  }
+
+  async deleteDocument(id: string): Promise<boolean> {
+    const result = await db.delete(documente).where(eq(documente.id, id)).returning();
     return result.length > 0;
   }
 

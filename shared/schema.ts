@@ -606,6 +606,41 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type CreateTask = z.infer<typeof createTaskSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 
+// ============ DOCUMENTAȚIE (categorii: Furnizori, Parteneri, Metallic Group, Fișă tehnică) ============
+
+export const documenteCategorieEnum = pgEnum("documente_categorie", [
+  "FURNIZORI",
+  "PARTENERI",
+  "METALLIC_GROUP",
+  "FISA_TEHNICA",
+]);
+
+export const documente = pgTable("documente", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  categorie: documenteCategorieEnum("categorie").notNull(),
+  nume: varchar("nume", { length: 255 }).notNull(),
+  objectPath: varchar("object_path", { length: 500 }).notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  uploadedById: varchar("uploaded_by_id", { length: 36 }).references(() => users.id),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
+export const insertDocumentSchema = createInsertSchema(documente).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const createDocumentSchema = z.object({
+  categorie: z.enum(["FURNIZORI", "PARTENERI", "METALLIC_GROUP", "FISA_TEHNICA"]),
+  nume: z.string().min(1, "Numele documentului este obligatoriu"),
+  objectPath: z.string().min(1),
+  fileName: z.string().optional(),
+  uploadedById: z.string().optional(),
+});
+
+export type Document = typeof documente.$inferSelect;
+export type CreateDocument = z.infer<typeof createDocumentSchema>;
+
 // ============ PARTNERS (Parteneri) ============
 
 export const partnerTypeEnum = pgEnum("partner_type", [

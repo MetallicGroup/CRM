@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, clients, partners, expenseCategories, cheltuieliAgent, cheltuieliSediu, sedii, salariiNeproductivi, employees, productCategoryEnum, clientSourceEnum, offerStatusEnum, orderStatusEnum, commissionPercentEnum, agentManualAchizitii, agentFixedCosts, loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createTaskSchema, updateTaskSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
+import { users, clients, partners, expenseCategories, cheltuieliAgent, cheltuieliSediu, sedii, salariiNeproductivi, employees, productCategoryEnum, clientSourceEnum, offerStatusEnum, orderStatusEnum, commissionPercentEnum, agentManualAchizitii, agentFixedCosts, loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createTaskSchema, updateTaskSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema, createDocumentSchema } from "@shared/schema";
 import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -1064,6 +1064,46 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete task error:", error);
       res.status(500).json({ message: "Eroare la ștergerea task-ului" });
+    }
+  });
+
+  // ============ DOCUMENTAȚIE ROUTES ============
+
+  app.get("/api/documente", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const categorie = req.query.categorie as string | undefined;
+      const list = await storage.getDocumente(categorie ? { categorie } : undefined);
+      res.json(list);
+    } catch (error) {
+      console.error("Get documente error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea documentelor" });
+    }
+  });
+
+  app.post("/api/documente", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const data = createDocumentSchema.parse(req.body);
+      const doc = await storage.createDocument({
+        ...data,
+        uploadedById: req.userId ?? undefined,
+      });
+      res.status(201).json(doc);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create document error:", error);
+      res.status(500).json({ message: "Eroare la salvarea documentului" });
+    }
+  });
+
+  app.delete("/api/documente/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const deleted = await storage.deleteDocument(req.params.id);
+      res.json({ deleted: !!deleted });
+    } catch (error) {
+      console.error("Delete document error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea documentului" });
     }
   });
 
