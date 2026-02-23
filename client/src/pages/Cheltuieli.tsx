@@ -237,6 +237,18 @@ export default function Cheltuieli() {
     },
   });
 
+  // Pentru formular: la tab-ul „Sediu” permitem doar categoria principală „Cheltuieli generale”
+  const mainCategoriesForForm =
+    activeTab === "sediu"
+      ? mainCategories.filter((cat) => cat.id === "cat-generale")
+      : mainCategories;
+
+  // Pentru formularul de cheltuieli: la tab-ul Sediu folosim doar categoria „Cheltuieli generale”
+  const mainCategoriesForForm =
+    activeTab === "sediu"
+      ? mainCategories.filter((cat) => cat.id === "cat-generale")
+      : mainCategories;
+
   const { data: cheltuieliSediu = [], isLoading: loadingSediu } = useQuery<CheltuialaSediu[]>({
     queryKey: ["cheltuieli-sediu", lunaFilter, anFilter, sediuFilter, categoryFilter, firmaFilter],
     queryFn: async () => {
@@ -1008,7 +1020,7 @@ export default function Cheltuieli() {
                     <SelectValue placeholder="Selectează categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mainCategories.map((cat) => (
+                    {mainCategoriesForForm.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
                   </SelectContent>
