@@ -307,7 +307,7 @@ export default function Chat() {
                       </>
                     ) : (
                       (agents.find((a) => a.id === selectedUserId) && displayName(agents.find((a) => a.id === selectedUserId)!))
-                    }
+                    )}
                   </CardTitle>
                   <Button
                     variant="outline"
