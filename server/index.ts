@@ -105,7 +105,17 @@ app.use((req, res, next) => {
   next();
 });
 
+async function ensureDatabaseEnums() {
+  try {
+    // Asigură-te că enum-ul client_source are valoarea FURNIZORI (pentru sursa „Furnizori”)
+    await pool.query("ALTER TYPE client_source ADD VALUE IF NOT EXISTS 'FURNIZORI'");
+  } catch (err) {
+    console.error("Failed to ensure client_source enum has FURNIZORI:", err);
+  }
+}
+
 (async () => {
+  await ensureDatabaseEnums();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

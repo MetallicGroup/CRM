@@ -66,6 +66,7 @@ import {
 import { db } from "./db";
 import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, ne, isNotNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export interface IStorage {
   // User methods
