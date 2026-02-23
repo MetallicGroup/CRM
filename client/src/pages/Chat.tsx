@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,31 @@ export default function Chat() {
   const [adminPair, setAdminPair] = useState<{ user1: string; user2: string } | null>(null);
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [webCallActive, setWebCallActive] = useState(false);
+  const webCallStreamRef = useRef<MediaStream | null>(null);
+
+  const startWebCall = useCallback(async () => {
+    const name = selectedUserId
+      ? displayName(agents.find((a) => a.id === selectedUserId) || { firstName: "", lastName: "" })
+      : adminPair
+        ? `${displayName(agents.find((a) => a.id === adminPair.user1) || { firstName: "", lastName: "" })} / ${displayName(agents.find((a) => a.id === adminPair.user2) || { firstName: "", lastName: "" })}`
+        : "";
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      webCallStreamRef.current = stream;
+      setWebCallActive(true);
+      toast.success(`Apel web pornit către ${name || "contact"}. Microfonul este activ.`);
+    } catch (err) {
+      toast.error("Nu s-a putut accesa microfonul. Verifică permisiunile browserului.");
+    }
+  }, [selectedUserId, adminPair, agents]);
+
+  const endWebCall = useCallback(() => {
+    webCallStreamRef.current?.getTracks().forEach((t) => t.stop());
+    webCallStreamRef.current = null;
+    setWebCallActive(false);
+    toast.info("Apel web închis.");
+  }, []);
 
   const { data: agents = [] } = useQuery<Agent[]>({
     queryKey: ["chat-users"],
@@ -125,6 +150,12 @@ export default function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      webCallStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
 
   const handleSend = () => {
     const body = messageText.trim();
@@ -312,17 +343,24 @@ export default function Chat() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-[#4b5563] text-slate-300 hover:bg-[#1f2937]"
-                    onClick={() => {
-                      const tel = (agents.find((a) => a.id === (selectedUserId || adminPair?.user2)) as { phone?: string })?.phone;
-                      if (tel) window.location.href = `tel:${tel}`;
-                      else toast.info("Apel: adaugă număr de telefon în profilul utilizatorului pentru apel direct.");
-                    }}
+                    className={cn(
+                      "border-[#4b5563] text-slate-300 hover:bg-[#1f2937]",
+                      webCallActive && "border-green-500 text-green-400 bg-green-500/10"
+                    )}
+                    onClick={webCallActive ? endWebCall : startWebCall}
                   >
                     <Phone className="h-4 w-4 mr-1" />
-                    Sună
+                    {webCallActive ? "Închide apel" : "Sună (apel web)"}
                   </Button>
                 </CardHeader>
+                {webCallActive && (
+                  <div className="px-4 py-2 bg-green-500/10 border-b border-green-500/30 flex items-center justify-between text-sm text-green-300">
+                    <span>Apel web în curs – microfon activ</span>
+                    <Button variant="ghost" size="sm" className="text-green-300 hover:bg-green-500/20" onClick={endWebCall}>
+                      Închide apel
+                    </Button>
+                  </div>
+                )}
                 <CardContent className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
                   <div className="flex-1 space-y-3">
                     {messages.map((m) => {

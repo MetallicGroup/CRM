@@ -213,10 +213,10 @@ export default function Cheltuieli() {
   });
 
   const { data: agents = [] } = useQuery<Agent[]>({
-    queryKey: ["agents"],
+    queryKey: ["cheltuieli-angajati"],
     queryFn: async () => {
-      const res = await fetch("/api/dashboard/agents");
-      if (!res.ok) throw new Error("Eroare la încărcarea agenților");
+      const res = await fetch("/api/cheltuieli/angajati");
+      if (!res.ok) throw new Error("Eroare la încărcarea angajaților");
       return res.json();
     },
   });

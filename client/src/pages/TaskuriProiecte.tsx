@@ -56,6 +56,7 @@ interface Task {
   createdById: string;
   assignedAgentId: string | null;
   observatii: string | null;
+  completed: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -112,6 +113,20 @@ export default function TaskuriProiecte() {
       if (!res.ok) return [];
       return res.json();
     },
+  });
+
+  const toggleCompletedMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed }),
+      });
+      if (!res.ok) throw new Error("Eroare la actualizare");
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: () => toast.error("Nu s-a putut salva starea task-ului"),
   });
 
   const createMutation = useMutation({
@@ -325,19 +340,42 @@ export default function TaskuriProiecte() {
                 </TableHeader>
                 <TableBody>
                   {filteredTasks.map((task) => (
-                    <TableRow key={task.id} className="border-[#1f2937] hover:bg-[#1f2937]/50">
+                    <TableRow
+                      key={task.id}
+                      className={cn(
+                        "border-[#1f2937] hover:bg-[#1f2937]/50",
+                        task.completed && "opacity-80"
+                      )}
+                    >
                       <TableCell className="w-[40px]">
-                        <input type="checkbox" className="rounded border-slate-500 bg-[#111827]" />
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-500 bg-[#111827]"
+                          checked={task.completed ?? false}
+                          onChange={(e) =>
+                            toggleCompletedMutation.mutate({
+                              id: task.id,
+                              completed: e.target.checked,
+                            })
+                          }
+                          disabled={toggleCompletedMutation.isPending}
+                        />
                       </TableCell>
-                      <TableCell className="font-medium text-slate-200">{task.numeProiect}</TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className={cn("font-medium text-slate-200", task.completed && "line-through text-slate-500")}>
+                        {task.numeProiect}
+                      </TableCell>
+                      <TableCell className={cn("text-slate-300", task.completed && "line-through text-slate-500")}>
                         {task.dataLimita
                           ? format(parseISO(task.dataLimita), "dd MMM yyyy", { locale: ro })
                           : "—"}
                       </TableCell>
-                      <TableCell className="text-slate-300">{getAgentName(task.createdById)}</TableCell>
-                      <TableCell className="text-slate-300">{getAgentName(task.assignedAgentId)}</TableCell>
-                      <TableCell className="text-slate-300 max-w-[280px] truncate">
+                      <TableCell className={cn("text-slate-300", task.completed && "line-through text-slate-500")}>
+                        {getAgentName(task.createdById)}
+                      </TableCell>
+                      <TableCell className={cn("text-slate-300", task.completed && "line-through text-slate-500")}>
+                        {getAgentName(task.assignedAgentId)}
+                      </TableCell>
+                      <TableCell className={cn("text-slate-300 max-w-[280px] truncate", task.completed && "line-through text-slate-500")}>
                         {task.observatii || "—"}
                       </TableCell>
                       <TableCell>

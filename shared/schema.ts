@@ -306,6 +306,7 @@ export const clients = pgTable("clients", {
   contactat: boolean("contactat").default(false),
   underObservation: boolean("under_observation").default(false), // Pentru pagina "Urmăriri clienți"
   urgenta: boolean("urgenta").default(false),
+  prioritate: varchar("prioritate", { length: 20 }), // URGENT | CALDUT | RECE – bulina: roșu, galben, albastru deschis
 
   // Relații
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
@@ -441,6 +442,7 @@ export const createClientSchema = z.object({
   contactat: z.boolean().optional().default(false),
   underObservation: z.boolean().optional().default(false),
   urgenta: z.boolean().optional().default(false),
+  prioritate: z.enum(["URGENT", "CALDUT", "RECE"]).optional().nullable(),
 
   // Relații
   agentId: z.string().optional(),
@@ -574,6 +576,7 @@ export const tasks = pgTable("tasks", {
   createdById: varchar("created_by_id", { length: 36 }).references(() => users.id).notNull(),
   assignedAgentId: varchar("assigned_agent_id", { length: 36 }).references(() => users.id),
   observatii: text("observatii"),
+  completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -590,10 +593,12 @@ export const createTaskSchema = z.object({
   createdById: z.string().min(1, "Creatorul este obligatoriu"),
   assignedAgentId: z.string().optional().nullable(),
   observatii: z.string().optional().nullable(),
+  completed: z.boolean().optional().default(false),
 });
 
 export const updateTaskSchema = createTaskSchema.partial().extend({
   createdById: z.string().optional(),
+  completed: z.boolean().optional(),
 });
 
 export type Task = typeof tasks.$inferSelect;

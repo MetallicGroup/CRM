@@ -578,7 +578,8 @@ export class DatabaseStorage implements IStorage {
       comentariiDupaContact: data.comentariiDupaContact || null,
       contactat: data.contactat || false,
       underObservation: data.underObservation || false,
-      urgenta: data.urgenta || false,
+      urgenta: data.urgenta ?? (data.prioritate === "URGENT"),
+      prioritate: data.prioritate || null,
       agentId: data.agentId || null,
       numCriteriu: numCriteriu,
     };
@@ -661,6 +662,7 @@ export class DatabaseStorage implements IStorage {
     if (data.contactat !== undefined) updateData.contactat = data.contactat;
     if (data.underObservation !== undefined) updateData.underObservation = data.underObservation;
     if (data.urgenta !== undefined) updateData.urgenta = data.urgenta;
+    if (data.prioritate !== undefined) updateData.prioritate = data.prioritate || null;
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
 
     const [client] = await db
@@ -1689,6 +1691,7 @@ export class DatabaseStorage implements IStorage {
     if (data.createdById !== undefined) updateData.createdById = data.createdById;
     if (data.assignedAgentId !== undefined) updateData.assignedAgentId = data.assignedAgentId || null;
     if (data.observatii !== undefined) updateData.observatii = data.observatii || null;
+    if (data.completed !== undefined) updateData.completed = data.completed;
     const [task] = await db.update(tasks).set(updateData).where(eq(tasks.id, id)).returning();
     return task || undefined;
   }

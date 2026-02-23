@@ -1401,6 +1401,23 @@ export async function registerRoutes(
     }
   });
 
+  // ============ CHELTUIELI ROUTES ============
+
+  // Lista tuturor angajaților pentru Cheltuieli (nu doar agenți) – admin
+  app.get("/api/cheltuieli/angajati", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const all = await storage.getAllUsers();
+      const active = all.filter((u: { active?: boolean }) => u.active !== false);
+      active.sort((a: { firstName: string; lastName: string }, b: { firstName: string; lastName: string }) =>
+        `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
+      );
+      res.json(active);
+    } catch (error) {
+      console.error("Get angajati for cheltuieli error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea angajaților" });
+    }
+  });
+
   // ============ CHELTUIELI AGENT ROUTES ============
 
   // Get all cheltuieli agent

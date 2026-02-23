@@ -99,6 +99,13 @@ const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }
   { value: "RAZVAN", label: "Razvan", color: "bg-pink-500/25 text-pink-200 border border-pink-500/40" },
 ];
 
+const PRIORITATE_OPTIONS: { value: "" | "URGENT" | "CALDUT" | "RECE"; label: string; color: string; title: string }[] = [
+  { value: "", label: "Niciuna", color: "bg-slate-600/50", title: "Fără prioritate" },
+  { value: "URGENT", label: "Urgent", color: "bg-red-500 ring-2 ring-red-500/40", title: "Urgent" },
+  { value: "CALDUT", label: "Călduț", color: "bg-yellow-400 ring-2 ring-yellow-400/40", title: "Călduț" },
+  { value: "RECE", label: "Rece", color: "bg-sky-300 ring-2 ring-sky-300/40", title: "Rece" },
+];
+
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "CUSTODIE", label: "Custodie" },
   { value: "COMANDAT", label: "Comandat" },
@@ -390,8 +397,16 @@ const defaultFormData: Partial<CreateClient> = {
   comentariiDupaContact: "",
   contactat: false,
   urgenta: false,
+  prioritate: "" as "" | "URGENT" | "CALDUT" | "RECE",
   agentId: "",
 };
+
+function getClientPrioritate(client: { prioritate?: string | null; urgenta?: boolean }): "" | "URGENT" | "CALDUT" | "RECE" {
+  const p = client.prioritate as "" | "URGENT" | "CALDUT" | "RECE" | undefined;
+  if (p === "URGENT" || p === "CALDUT" || p === "RECE") return p;
+  if (client.urgenta) return "URGENT";
+  return "";
+}
 
 export default function Clienti() {
   const { isAdmin, user } = useAuth();
@@ -674,6 +689,7 @@ export default function Clienti() {
       comentariiDupaContact: client.comentariiDupaContact || "",
       contactat: client.contactat || false,
       urgenta: (client as any).urgenta ?? false,
+      prioritate: getClientPrioritate(client as any),
       agentId: client.agentId || "",
       numCriteriu: client.numCriteriu ?? undefined,
     });
@@ -694,10 +710,11 @@ export default function Clienti() {
       return;
     }
 
+    const payload = { ...formData, prioritate: formData.prioritate || null };
     if (editingClient) {
-      updateMutation.mutate({ id: editingClient.id, data: formData as CreateClient });
+      updateMutation.mutate({ id: editingClient.id, data: payload as CreateClient });
     } else {
-      createMutation.mutate(formData as CreateClient);
+      createMutation.mutate(payload as CreateClient);
     }
   };
 
@@ -934,11 +951,16 @@ export default function Clienti() {
                     </TableCell>
                     <TableCell className="py-2">{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
                     <TableCell className="py-2">
-                      {(client as any).urgenta ? (
-                        <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-2 ring-amber-500/40" title="Urgență" />
-                      ) : (
-                        <span className="inline-flex h-3 w-3 rounded-full bg-slate-600/50" title="Fără urgență" />
-                      )}
+                      {(() => {
+                        const pr = getClientPrioritate(client as any);
+                        const opt = PRIORITATE_OPTIONS.find((o) => o.value === pr) || PRIORITATE_OPTIONS[0];
+                        return (
+                          <span
+                            className={cn("inline-flex h-3 w-3 rounded-full", opt.color)}
+                            title={opt.title}
+                          />
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="py-2">
                       <Badge variant="outline" className="text-xs border-slate-600 bg-slate-800/50 text-slate-200">
@@ -1861,15 +1883,27 @@ export default function Clienti() {
                     />
                     <Label htmlFor="contactat">Contactat</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="urgenta"
-                      checked={formData.urgenta ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, urgenta: !!checked })}
-                      data-testid="checkbox-urgenta"
-                    />
-                    <Label htmlFor="urgenta">Urgență</Label>
-                    <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-1 ring-amber-500/40" title="Bulină urgență" />
+                  <div className="space-y-2">
+                    <Label>Prioritate (bulină)</Label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {PRIORITATE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value || "none"}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, prioritate: opt.value })}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+                            formData.prioritate === opt.value
+                              ? "border-[#fbbf24] bg-[#fbbf24]/10 text-[#fbbf24]"
+                              : "border-slate-600 bg-slate-800/50 text-slate-300 hover:border-slate-500"
+                          )}
+                          data-testid={opt.value ? `prioritate-${opt.value}` : "prioritate-niciuna"}
+                        >
+                          <span className={cn("inline-flex h-3 w-3 rounded-full flex-shrink-0", opt.color)} />
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -2015,14 +2049,18 @@ export default function Clienti() {
                     {getOfferStatusBadge(viewClient.stadiuOferta)}
                   </div>
                   <div>
-                    <p className="text-sm text-slate-400">Urgență</p>
+                    <p className="text-sm text-slate-400">Prioritate</p>
                     <p className="font-medium flex items-center gap-2">
-                      {(viewClient as any).urgenta ? (
-                        <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-2 ring-amber-500/40" title="Urgență" />
-                      ) : (
-                        <span className="inline-flex h-3 w-3 rounded-full bg-slate-600/50" />
-                      )}
-                      {(viewClient as any).urgenta ? "Da" : "Nu"}
+                      {(() => {
+                        const pr = getClientPrioritate(viewClient as any);
+                        const opt = PRIORITATE_OPTIONS.find((o) => o.value === pr) || PRIORITATE_OPTIONS[0];
+                        return (
+                          <>
+                            <span className={cn("inline-flex h-3 w-3 rounded-full", opt.color)} title={opt.title} />
+                            {opt.label}
+                          </>
+                        );
+                      })()}
                     </p>
                   </div>
                   <div>
