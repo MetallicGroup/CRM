@@ -237,13 +237,6 @@ export default function Cheltuieli() {
     },
   });
 
-  // Pentru formular: la tab-ul „Sediu” permitem doar categoria principală „Cheltuieli generale”
-  const mainCategoriesForForm =
-    activeTab === "sediu"
-      ? mainCategories.filter((cat) => cat.id === "cat-generale")
-      : mainCategories;
-
-  // Pentru formularul de cheltuieli: la tab-ul Sediu folosim doar categoria „Cheltuieli generale”
   const mainCategoriesForForm =
     activeTab === "sediu"
       ? mainCategories.filter((cat) => cat.id === "cat-generale")
