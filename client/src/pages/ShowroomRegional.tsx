@@ -104,11 +104,23 @@ export default function ShowroomRegional() {
     },
   });
 
+  // Doar showroom-urile dorite în pagină
+  const ALLOWED_SHOWROOM_NAMES = [
+    "Sediu central București",
+    "Hală producție",
+    "Showroom Bragadiru",
+    "Showroom Constanța",
+    "Showroom TR",
+    "Showroom Giurgiu",
+  ];
+
+  const filteredSedii = sedii.filter((s) => ALLOWED_SHOWROOM_NAMES.includes(s.nume));
+
   useEffect(() => {
-    if (sedii.length > 0 && !selectedShowroomId) {
-      setSelectedShowroomId(sedii[0].id);
+    if (filteredSedii.length > 0 && !selectedShowroomId) {
+      setSelectedShowroomId(filteredSedii[0].id);
     }
-  }, [sedii, selectedShowroomId]);
+  }, [filteredSedii, selectedShowroomId]);
 
   const { data: report, isLoading: loadingReport } = useFinancialReport(
     lunaNumar,
@@ -290,7 +302,7 @@ export default function ShowroomRegional() {
     }));
   }, [showroomCosts]);
 
-  const allShowrooms = sedii.map(s => {
+  const allShowrooms = filteredSedii.map(s => {
     const existing = showrooms.find(sh => sh.id === s.id);
     return existing || {
       id: s.id,

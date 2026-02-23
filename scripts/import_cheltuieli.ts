@@ -15,14 +15,13 @@ const agentMap: Record<string, string> = {
   'Marian Costache': 'ag_marian_c',
 };
 
-// Sediu name to ID mapping
+// Sediu name to ID mapping (doar locațiile folosite în aplicație)
 const sediuMap: Record<string, string> = {
   'Bucuresti': '68d78bfe-29b2-474b-b47a-970c5f891a5b',
   'Constanta': '0e9a8e1b-dd63-430d-ae72-89bb7f018f6c',
   'Teleorman': '3181bfd6-ee2a-42df-a375-2e67cd3d054c',
   'Giurgiu': 'bee67661-1f28-4039-a6b4-0e4b79faa8b8',
   'Bragadiru': '279e6569-c886-4927-8f9b-7ae9420a1c5e',
-  'Barlad': 'dc440545-9a8f-4caf-89ed-cd32b68c0fd9',
 };
 
 // Category mapping for profitability
@@ -109,7 +108,6 @@ try {
     if (j.includes('teleorman')) return sediuMap['Teleorman'];
     if (j.includes('giurgiu')) return sediuMap['Giurgiu'];
     if (j.includes('bragadiru')) return sediuMap['Bragadiru'];
-    if (j.includes('barlad')) return sediuMap['Barlad'];
     return null;
   }
   

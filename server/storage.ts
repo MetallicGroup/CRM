@@ -418,7 +418,7 @@ export class DatabaseStorage implements IStorage {
     return client || undefined;
   }
 
-  async getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string }): Promise<Client[]> {
+  async getAllClients(filters?: { agentId?: string; stadiuOferta?: string; search?: string; underObservation?: boolean; dateFrom?: string; dateTo?: string }): Promise<Client[]> {
     let query = db.select().from(clients);
 
     const conditions = [];
@@ -439,11 +439,21 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters?.search) {
-      const searchTerm = `%${filters.search}%`;
+      const rawSearch = filters.search.trim();
+      const searchTerm = `%${rawSearch}%`;
+      const digitsOnly = rawSearch.replace(/\D+/g, "");
+
+      const phoneConditions: any[] = [ilike(clients.telefon, searchTerm)];
+      if (digitsOnly.length >= 4) {
+        phoneConditions.push(
+          sql`regexp_replace(${clients.telefon}, '\\D+', '', 'g') ILIKE ${"%" + digitsOnly + "%"}`
+        );
+      }
+
       conditions.push(
         or(
           ilike(clients.nume, searchTerm),
-          ilike(clients.telefon, searchTerm),
+          or(...phoneConditions),
           ilike(clients.email, searchTerm),
           ilike(clients.localitate, searchTerm)
         )
@@ -1954,12 +1964,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getExpenseCategoriesByParent(parentId: string): Promise<ExpenseCategory[]> {
-    return await db.select().from(expenseCategories)
-      .where(and(
-        eq(expenseCategories.parentId, parentId),
-        eq(expenseCategories.active, true)
-      ))
-      .orderBy(expenseCategories.displayOrder);
+    // În mod normal, categoriile sunt seed-uite prin scripts/seed-expenses-data.ts.
+    // Ca să nu depindem de rularea scriptului pe fiecare mediu, dacă nu găsim nimic
+    // pentru anumite categorii principale, inserăm aici valorile implicite.
+    const load = async () =>
+      await db
+        .select()
+        .from(expenseCategories)
+        .where(
+          and(
+            eq(expenseCategories.parentId, parentId),
+            eq(expenseCategories.active, true),
+          )
+        )
+        .orderBy(expenseCategories.displayOrder);
+
+    let rows = await load();
+    if (rows.length > 0) return rows;
+
+    // Auto-seed subcategorii implicite dacă lipsesc
+    const subs: { id: string; name: string; displayOrder: number }[] = [];
+    if (parentId === "cat-bugete") {
+      subs.push(
+        { id: "sub-tva", parentId: "cat-bugete", name: "TVA", displayOrder: 1 },
+        { id: "sub-impozit", parentId: "cat-bugete", name: "Impozit", displayOrder: 2 },
+        { id: "sub-penalitati", parentId: "cat-bugete", name: "Penalități", displayOrder: 3 },
+        { id: "sub-esalonari", parentId: "cat-bugete", name: "Eșalonări", displayOrder: 4 },
+      );
+    } else if (parentId === "cat-auto") {
+      subs.push(
+        { id: "sub-combustibil", parentId: "cat-auto", name: "Combustibil", displayOrder: 1 },
+        { id: "sub-service", parentId: "cat-auto", name: "Service", displayOrder: 2 },
+        { id: "sub-altele-auto", parentId: "cat-auto", name: "Altele", displayOrder: 3 },
+        { id: "sub-asigurari", parentId: "cat-auto", name: "Asigurări", displayOrder: 4 },
+        { id: "sub-leasing", parentId: "cat-auto", name: "Leasing", displayOrder: 5 },
+        { id: "sub-rovinieta", parentId: "cat-auto", name: "Rovinieta", displayOrder: 6 },
+      );
+    } else if (parentId === "cat-generale") {
+      subs.push(
+        { id: "sub-chirie", parentId: "cat-generale", name: "Chirie", displayOrder: 1 },
+        { id: "sub-utilitati", parentId: "cat-generale", name: "Utilități", displayOrder: 2 },
+        { id: "sub-consumabile", parentId: "cat-generale", name: "Consumabile", displayOrder: 3 },
+        { id: "sub-securitate", parentId: "cat-generale", name: "Securitate", displayOrder: 4 },
+        { id: "sub-abonamente", parentId: "cat-generale", name: "Abonamente", displayOrder: 5 },
+        { id: "sub-salubritate", parentId: "cat-generale", name: "Salubritate", displayOrder: 6 },
+        { id: "sub-altele-generale", parentId: "cat-generale", name: "Altele", displayOrder: 7 },
+      );
+    } else if (parentId === "cat-salarii") {
+      subs.push(
+        { id: "sub-salariu-brut", parentId: "cat-salarii", name: "Salariu brut", displayOrder: 1 },
+        { id: "sub-comision", parentId: "cat-salarii", name: "Comision", displayOrder: 2 },
+        { id: "sub-bonuri", parentId: "cat-salarii", name: "Bonuri de masa", displayOrder: 3 },
+      );
+    }
+
+    if (subs.length > 0) {
+      for (const sub of subs) {
+        await db
+          .insert(expenseCategories)
+          .values({
+            id: sub.id,
+            parentId,
+            name: sub.name,
+            level: "sub",
+            displayOrder: sub.displayOrder,
+            active: true,
+          } as any)
+          .onConflictDoNothing();
+      }
+      rows = await load();
+    }
+
+    return rows;
   }
 
   async createExpenseCategory(data: CreateExpenseCategory): Promise<ExpenseCategory> {
