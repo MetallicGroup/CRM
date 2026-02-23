@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Download, Plus, Trash2, RefreshCw, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useFinancialReport } from "@/hooks/use-financials";
 import { useStore, monthToNumber } from "@/lib/store";
 import { Employee, EmployeeType, MONTHS, Month } from "@/lib/types";
