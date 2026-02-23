@@ -2475,7 +2475,11 @@ export async function registerRoutes(
   app.get("/api/employees", requireAuth, async (req: AuthRequest, res) => {
     try {
       const type = req.query.type as string;
-      const active = req.query.active === "false" ? false : true;
+      const activeParam = req.query.active as string | undefined;
+      let active: boolean | undefined = undefined;
+      if (activeParam === "true") active = true;
+      else if (activeParam === "false") active = false;
+
       const employees = await storage.getAllEmployees({ type, active });
       res.json(employees);
     } catch (error) {
