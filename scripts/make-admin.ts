@@ -30,9 +30,9 @@ async function makeAdmin() {
     process.exit(1);
   }
 
-  const searchName = "Dragos";
+  const searchName = "oana";
   
-  console.log(`Căutând utilizatorul cu nume "${searchName}"...`);
+  console.log(`Căutând utilizatorul cu nume/email "${searchName}"...`);
   
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, webSocketConstructor: ws });
   const client = await pool.connect();

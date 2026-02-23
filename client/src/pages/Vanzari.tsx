@@ -102,6 +102,7 @@ const SOURCE_OPTIONS: { value: string; label: string }[] = [
   { value: "COMPLETARE", label: "Completare" },
   { value: "TIKTOK", label: "Tik Tok" },
   { value: "PARTENERI", label: "Parteneri" },
+  { value: "FURNIZORI", label: "Furnizori" },
 ];
 
 export default function Vanzari() {

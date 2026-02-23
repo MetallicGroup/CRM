@@ -132,6 +132,7 @@ const SOURCE_OPTIONS: { value: ClientSource; label: string }[] = [
   { value: "COMPLETARE", label: "Completare" },
   { value: "TIKTOK", label: "Tik Tok" },
   { value: "PARTENERI", label: "Parteneri" },
+  { value: "FURNIZORI", label: "Furnizori" },
 ];
 
 const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [

@@ -151,6 +151,7 @@ export interface IStorage {
   // Partner methods
   getPartner(id: string): Promise<Partner | undefined>;
   getAllPartners(filters?: { tipPartener?: string; activ?: boolean; search?: string }): Promise<Partner[]>;
+  getOrCreatePartnerId(idOrNume: string): Promise<string | null>;
   createPartner(data: CreatePartner): Promise<Partner>;
   updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined>;
   deletePartner(id: string): Promise<boolean>;
@@ -162,7 +163,7 @@ export interface IStorage {
   getConversationsForUser(userId: string): Promise<{ userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[]>;
   getAllConversationsAdmin(): Promise<{ user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }[]>;
   markCrmMessagesAsRead(recipientId: string, senderId: string): Promise<void>;
-  getRecentLeadsForNotifications(limit?: number): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]>;
+  getRecentLeadsForNotifications(limit?: number, todayOnly?: boolean): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]>;
 
   // Activity logs
   createActivityLog(data: {
@@ -853,8 +854,26 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(crmMessages.recipientId, recipientId), eq(crmMessages.senderId, senderId), sql`${crmMessages.readAt} IS NULL`));
   }
 
-  async getRecentLeadsForNotifications(limit = 15): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]> {
+  async getRecentLeadsForNotifications(limit = 15, todayOnly = false): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]> {
     const leadSources = ["RECLAME", "RECLAME_CAMPANII", "SITE", "FACEBOOK", "GOOGLE", "OLX", "CEL_RO", "OKAZII", "PUBLI24", "TELEFON", "TIKTOK", "BIROU", "BIROU_SHOWROOM"] as const;
+    const conditions = [
+      or(
+        inArray(clients.sursa, leadSources),
+        isNotNull(clients.dataOfertarii)
+      ),
+    ];
+    if (todayOnly) {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date(startOfToday);
+      endOfToday.setDate(endOfToday.getDate() + 1);
+      conditions.push(
+        or(
+          and(gte(clients.dataAdaugare, startOfToday), lte(clients.dataAdaugare, endOfToday)),
+          and(isNotNull(clients.dataOfertarii), gte(clients.dataOfertarii, startOfToday), lte(clients.dataOfertarii, endOfToday))
+        ) as any
+      );
+    }
     const rows = await db
       .select({
         id: clients.id,
@@ -864,12 +883,7 @@ export class DatabaseStorage implements IStorage {
         dataOfertarii: clients.dataOfertarii,
       })
       .from(clients)
-      .where(
-        or(
-          inArray(clients.sursa, leadSources),
-          isNotNull(clients.dataOfertarii)
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(clients.dataAdaugare))
       .limit(limit);
     return rows.map((r) => ({
@@ -1765,6 +1779,21 @@ export class DatabaseStorage implements IStorage {
   async getPartner(id: string): Promise<Partner | undefined> {
     const [partner] = await db.select().from(partners).where(eq(partners.id, id));
     return partner || undefined;
+  }
+
+  /** Resolve partner_id for client: by id (UUID), by nume, or create new partner with that nume. */
+  async getOrCreatePartnerId(idOrNume: string): Promise<string | null> {
+    const trimmed = (idOrNume || "").trim();
+    if (!trimmed) return null;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+    if (isUuid) {
+      const partner = await this.getPartner(trimmed);
+      if (partner) return partner.id;
+    }
+    const byNume = await db.select().from(partners).where(ilike(partners.nume, trimmed)).limit(1);
+    if (byNume.length > 0) return byNume[0].id;
+    const created = await this.createPartner({ nume: trimmed });
+    return created.id;
   }
 
   async getAllPartners(filters?: { tipPartener?: string; activ?: boolean; search?: string }): Promise<Partner[]> {

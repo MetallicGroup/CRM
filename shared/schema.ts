@@ -26,6 +26,7 @@ export const clientSourceEnum = pgEnum("client_source", [
   "COMPLETARE",
   "TIKTOK",
   "PARTENERI",
+  "FURNIZORI",
   "ALTELE"
 ]);
 
@@ -350,6 +351,7 @@ export const createClientSchema = z.object({
     "COMPLETARE",
     "TIKTOK",
     "PARTENERI",
+    "FURNIZORI",
     "ALTELE"
   ]).default("ALTELE"),
   nume: z.string().min(1, "Numele este obligatoriu"),

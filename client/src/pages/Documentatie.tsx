@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
-import { FileStack, FileText, Upload, FolderOpen, Trash2, Download, Info } from "lucide-react";
+import { FileStack, FileText, Upload, FolderOpen, Trash2, Download, Info, Search } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import { toast } from "sonner";
@@ -70,6 +70,7 @@ export default function Documentatie() {
   const [numeDocument, setNumeDocument] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [searchFisaTehnica, setSearchFisaTehnica] = useState("");
 
   const { data: documente = [], isLoading } = useQuery<DocumentEntry[]>({
     queryKey: ["documente", categoryFilter],
@@ -81,6 +82,17 @@ export default function Documentatie() {
       return res.json();
     },
   });
+
+  // Căutare text doar pentru documentele din Fișă tehnică (client-side)
+  const isFisaTehnicaView = categoryFilter === "FISA_TEHNICA";
+  const documenteAfisate =
+    isFisaTehnicaView && searchFisaTehnica.trim()
+      ? documente.filter(
+          (d) =>
+            d.nume.toLowerCase().includes(searchFisaTehnica.trim().toLowerCase()) ||
+            (d.fileName?.toLowerCase().includes(searchFisaTehnica.trim().toLowerCase()) ?? false)
+        )
+      : documente;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -194,7 +206,7 @@ export default function Documentatie() {
 
       {/* Filtru + view mode */}
       <div className="flex flex-wrap items-center gap-4">
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setSearchFisaTehnica(""); }}>
           <SelectTrigger className="w-[200px] bg-[#111827] border-[#1f2937]">
             <SelectValue placeholder="Categorie" />
           </SelectTrigger>
@@ -205,6 +217,18 @@ export default function Documentatie() {
             ))}
           </SelectContent>
         </Select>
+        {isFisaTehnicaView && (
+          <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Caută în Fișă tehnică (nume, fișier)..."
+              value={searchFisaTehnica}
+              onChange={(e) => setSearchFisaTehnica(e.target.value)}
+              className="pl-9 bg-[#111827] border-[#1f2937] text-slate-200 placeholder:text-slate-500"
+            />
+          </div>
+        )}
         <div className="flex rounded-lg border border-[#1f2937] overflow-hidden">
           {(["list", "grid", "tile"] as const).map((mode) => (
             <button
@@ -229,15 +253,21 @@ export default function Documentatie() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-16 text-slate-400">Se încarcă...</div>
-          ) : documente.length === 0 ? (
+          ) : documenteAfisate.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
               <div className="rounded-full bg-sky-500/20 p-4 mb-4">
                 <Info className="h-12 w-12 text-sky-400" />
               </div>
               <p className="text-lg font-medium text-slate-200 mb-1">
-                Creați documente pe categorii pentru a colabora cu echipa
+                {documente.length === 0
+                  ? "Creați documente pe categorii pentru a colabora cu echipa"
+                  : "Niciun document nu corespunde căutării"}
               </p>
-              <p className="text-sm text-slate-500">Facturi, contracte, fișe tehnice. Editați. Discutați. Partajați.</p>
+              <p className="text-sm text-slate-500">
+                {documente.length === 0
+                  ? "Facturi, contracte, fișe tehnice. Editați. Discutați. Partajați."
+                  : "Încercați alt termen în câmpul de căutare Fișă tehnică."}
+              </p>
             </div>
           ) : viewMode === "list" ? (
             <Table>
@@ -252,7 +282,7 @@ export default function Documentatie() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documente.map((doc) => (
+                {documenteAfisate.map((doc) => (
                   <TableRow key={doc.id} className="border-[#1f2937] hover:bg-[#1f2937]/50">
                     <TableCell className="w-[40px]">
                       <FileText className="h-5 w-5 text-slate-500" />
@@ -309,7 +339,7 @@ export default function Documentatie() {
             </Table>
           ) : (
             <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {documente.map((doc) => (
+              {documenteAfisate.map((doc) => (
                 <div
                   key={doc.id}
                   className={cn(

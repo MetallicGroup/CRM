@@ -82,9 +82,9 @@ export default function CRMDashboard() {
   const { data: notifications } = useQuery<{
     recentLeads: { id: string; nume: string; sursa: string; dataAdaugare: string | null; dataOfertarii: string | null }[];
   }>({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", "dashboard-leads-today"],
     queryFn: async () => {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notifications?recentLeadsTodayOnly=1");
       if (!res.ok) return { recentLeads: [] };
       return res.json();
     },

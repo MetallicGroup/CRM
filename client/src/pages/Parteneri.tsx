@@ -681,50 +681,6 @@ export default function Parteneri() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Calificare</Label>
-                <Select value={formData.calificare || "none"} onValueChange={(v) => setFormData({ ...formData, calificare: v === "none" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Interesat / Nu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {CALIFICARE_OPTIONS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Clasificare</Label>
-                <Select value={formData.clasificare || "none"} onValueChange={(v) => setFormData({ ...formData, clasificare: v === "none" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Atelier / Firmă mică / Neclar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {CLASIFICARE_OPTIONS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Status contact</Label>
-                <Select value={formData.statusContact || "none"} onValueChange={(v) => setFormData({ ...formData, statusContact: v === "none" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Contactat / Interesat / ..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {STATUS_CONTACT_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <div className="space-y-2">
               <Label>TVA</Label>

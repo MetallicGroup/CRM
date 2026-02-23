@@ -456,7 +456,8 @@ export async function registerRoutes(
           lastMessage: c.lastMessage,
           lastAt: c.lastAt,
         }));
-      const recentLeads = await storage.getRecentLeadsForNotifications(15);
+      const recentLeadsTodayOnly = req.query.recentLeadsTodayOnly === "1" || req.query.recentLeadsTodayOnly === "true";
+      const recentLeads = await storage.getRecentLeadsForNotifications(15, recentLeadsTodayOnly);
       res.json({
         unreadMessages: unreadCount,
         recentMessages,
@@ -693,6 +694,12 @@ export async function registerRoutes(
         data.agentId = undefined;
       }
 
+      // Rezolvă partnerId: poate fi UUID existent, sau nume partener (caută / creează)
+      if (data.isPartnerOrder && data.partnerId) {
+        const resolvedId = await storage.getOrCreatePartnerId(data.partnerId);
+        data.partnerId = resolvedId ?? undefined;
+      }
+
       const client = await storage.createClient(data);
 
       // Log manual lead creation
@@ -811,6 +818,12 @@ export async function registerRoutes(
       // RBAC: Non-admins cannot change the agent assignment
       if (req.userRole !== "ADMIN") {
         delete data.agentId;
+      }
+
+      // Rezolvă partnerId la edit (id sau nume → id)
+      if (data.partnerId !== undefined && data.partnerId !== null && data.partnerId !== "") {
+        const resolvedId = await storage.getOrCreatePartnerId(data.partnerId);
+        data.partnerId = resolvedId ?? undefined;
       }
 
       // Track status changes and follow-up clicks
