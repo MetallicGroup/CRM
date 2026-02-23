@@ -382,9 +382,9 @@ export default function Angajati() {
           <CardTitle>Date Financiare ({filteredEmployees.length} angajați)</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+          <ScrollArea className="w-full whitespace-nowrap rounded-md border border-slate-800 bg-slate-950/60">
             <div className="flex w-max space-x-4 p-4">
-              <Table>
+              <Table className="border border-slate-800 text-slate-100">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[140px] sticky left-0 bg-background z-10">Angajat</TableHead>
@@ -435,8 +435,15 @@ export default function Angajati() {
                     const isAgent = emp.type === 'AGENT';
 
                     return (
-                      <TableRow key={emp.id} className={!isAgent ? 'bg-muted/30' : ''} data-testid={`row-employee-${emp.id}`}>
-                        <TableCell className="sticky left-0 bg-background z-10 font-medium border-r">
+                      <TableRow
+                        key={emp.id}
+                        className={cn(
+                          "border-b border-slate-800",
+                          !isAgent ? "bg-slate-900/60" : "odd:bg-slate-900/40 even:bg-slate-950/40"
+                        )}
+                        data-testid={`row-employee-${emp.id}`}
+                      >
+                        <TableCell className="sticky left-0 bg-slate-950 z-10 font-medium border-r border-slate-800">
                           <span data-testid={`text-name-${emp.id}`}>{emp.name}</span>
                         </TableCell>
 
@@ -451,20 +458,20 @@ export default function Angajati() {
                         </TableCell>
 
                         {/* GARDURI */}
-                        <TableCell className="font-semibold text-blue-600">{isAgent ? m.venitGard.toFixed(0) : '-'}</TableCell>
-                        <TableCell>{isAgent ? m.achizitieGard.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold">{isAgent ? m.adaosTVAGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-semibold text-blue-400 text-right">{isAgent ? m.venitGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="text-right">{isAgent ? m.achizitieGard.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-right">{isAgent ? m.adaosTVAGard.toFixed(0) : '-'}</TableCell>
 
                         {/* ACOPERISURI */}
-                        <TableCell className="font-semibold text-amber-600">{isAgent ? m.venitAcoperis.toFixed(0) : '-'}</TableCell>
-                        <TableCell>{isAgent ? m.achizitieAcoperis.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold">{isAgent ? m.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-semibold text-amber-400 text-right">{isAgent ? m.venitAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="text-right">{isAgent ? m.achizitieAcoperis.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-right">{isAgent ? m.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
 
                         {/* ADAOS CU TVA și FĂRĂ TVA */}
-                        <TableCell className="font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950">{isAgent ? m.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900">{isAgent ? m.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-indigo-300 bg-indigo-950 text-right">{isAgent ? m.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="font-bold text-purple-300 bg-purple-900 text-right">{isAgent ? m.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
 
-                        <TableCell className="bg-blue-50 dark:bg-blue-950">
+                        <TableCell className="bg-blue-950 text-right">
                           {isAgent ? (
                             <span className="font-semibold text-blue-600" data-testid={`text-venit-tva-${emp.id}`}>
                               {m.venitTVA.toFixed(0)}
@@ -473,7 +480,7 @@ export default function Angajati() {
                         </TableCell>
 
                         {/* Comision */}
-                        <TableCell className="bg-green-50 dark:bg-green-950">
+                        <TableCell className="bg-green-950 text-right">
                           {isAgent ? (
                             <span className="font-semibold text-green-600" data-testid={`text-comision-${emp.id}`}>
                               {m.comisionPercent.toFixed(2)}%
@@ -483,28 +490,28 @@ export default function Angajati() {
                         <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
 
                         {/* Cheltuieli Proprii - read-only pentru AGENT (vin din Cheltuieli), editabile pentru PRODUCTIE/INDIRECT */}
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.salariu.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.amortizareAuto.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.combustibil.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.revizii.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.alteCheltuieliAuto.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.abonamente.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           <span>{m.diurne.toFixed(0)}</span>
                         </TableCell>
-                        <TableCell className="font-bold text-red-600">{m.costuriProprii.toFixed(0)}</TableCell>
+                        <TableCell className="font-bold text-red-400 text-right">{m.costuriProprii.toFixed(0)}</TableCell>
 
                         {/* Distributed Costs (Read Only) - doar pentru AGENT */}
                         <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costShowroom.toFixed(0) : '-'}</TableCell>

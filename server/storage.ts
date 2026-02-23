@@ -3115,6 +3115,54 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllEmployees(filters?: { type?: string; active?: boolean }): Promise<Employee[]> {
+    // 1) Ensure employees table conține înregistrări pentru utilizatorii activi
+    const existingEmployees = await db.select().from(employees);
+
+    // Dacă lipsesc angajați, sincronizăm automat utilizatorii activi în employees,
+    // fără să duplicăm (cheie = prenume+nume, case-insensitive)
+    const existingKeys = new Set(
+      existingEmployees.map(e => `${(e.firstName || "").toLowerCase()}|${(e.lastName || "").toLowerCase()}`)
+    );
+
+    const activeUsers = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        active: users.active,
+      })
+      .from(users);
+
+    const toInsert: InsertEmployee[] = [];
+    for (const user of activeUsers) {
+      if (user.active === false) continue;
+      const key = `${(user.firstName || "").toLowerCase()}|${(user.lastName || "").toLowerCase()}`;
+      if (existingKeys.has(key)) continue;
+
+      // Mapăm roles -> tip angajat pentru raportare
+      const type: "AGENT" | "PRODUCTIE" | "INDIRECT" =
+        user.role === "AGENT" || user.role === "ADMIN" ? "AGENT" : "INDIRECT";
+
+      toInsert.push({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        type,
+        showroomId: null,
+        userId: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        id: crypto.randomUUID(),
+      } as any);
+      existingKeys.add(key);
+    }
+
+    if (toInsert.length > 0) {
+      await db.insert(employees).values(toInsert as any);
+    }
+
+    // 2) Aplicăm filtrele cerute de API
     let query = db.select().from(employees);
     const conditions = [];
     if (filters?.type) conditions.push(eq(employees.type, filters.type as any));
