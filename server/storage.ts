@@ -1234,7 +1234,10 @@ export class DatabaseStorage implements IStorage {
         oferteTrimise++;
         if (c.valoareOferta) valoareOferte += parseFloat(c.valoareOferta);
       }
-      if (c.stadiuOferta === "VANDUT" && inDay(dataVanzarii)) {
+      // Pentru vânzări numărăm în principal după data vânzării;
+      // dacă nu este setată, cădem pe updatedAt (când a fost marcat ca VÂNDUT).
+      const saleDate = dataVanzarii || updatedAt;
+      if (c.stadiuOferta === "VANDUT" && inDay(saleDate)) {
         vanzariNr++;
         if (c.valoareOferta) vanzariValoare += parseFloat(c.valoareOferta);
       }
