@@ -65,9 +65,14 @@ interface Partner {
   telefon: string | null;
   email: string | null;
   adresa: string | null;
+  judet?: string | null;
   persoanaContact: string | null;
   note: string | null;
   platitorTva: boolean;
+  statusPerformanta?: string | null;
+  calificare?: string | null;
+  clasificare?: string | null;
+  statusContact?: string | null;
   file1: string | null;
   file2: string | null;
   activ: boolean;
@@ -77,6 +82,32 @@ const PARTNER_TYPES: { value: string; label: string; color: string }[] = [
   { value: "DISTRIBUITOR", label: "Distribuitor", color: "bg-blue-100 text-blue-800" },
   { value: "COLABORATORI_PF", label: "Colaboratori PF", color: "bg-green-100 text-green-800" },
   { value: "PARTENER_COMISIONAR", label: "Partener comisionar", color: "bg-orange-100 text-orange-800" },
+];
+
+const STATUS_PERFORMANTA = [
+  { value: "PERFORMANT", label: "Performant" },
+  { value: "MEDIU", label: "Mediu" },
+  { value: "OCAZIONAL", label: "Ocazional" },
+];
+
+const CALIFICARE_OPTIONS = [
+  { value: "INTERESAT", label: "Interesat" },
+  { value: "NU", label: "Nu" },
+];
+
+const CLASIFICARE_OPTIONS = [
+  { value: "ATELIER", label: "Atelier" },
+  { value: "FIRMA_MICA", label: "Firmă mică" },
+  { value: "NECLAR", label: "Neclar" },
+];
+
+const STATUS_CONTACT_OPTIONS = [
+  { value: "CONTACTAT", label: "Contactat" },
+  { value: "INTERESAT", label: "Interesat" },
+  { value: "DISCUTII_DIRECTOR", label: "Discuții director" },
+  { value: "PARTENER_ACTIV", label: "Partener activ" },
+  { value: "PARTENER_RECURRENT", label: "Partener recurent" },
+  { value: "REFUZAT", label: "Refuzat" },
 ];
 
 export default function Parteneri() {
@@ -96,9 +127,14 @@ export default function Parteneri() {
     telefon: "",
     email: "",
     adresa: "",
+    judet: "",
     persoanaContact: "",
     note: "",
     platitorTva: false,
+    statusPerformanta: "" as string,
+    calificare: "" as string,
+    clasificare: "" as string,
+    statusContact: "" as string,
     file1: "",
     file2: "",
     activ: true,
@@ -118,7 +154,14 @@ export default function Parteneri() {
       const res = await fetch("/api/partners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          judet: data.judet || undefined,
+          statusPerformanta: data.statusPerformanta || undefined,
+          calificare: data.calificare || undefined,
+          clasificare: data.clasificare || undefined,
+          statusContact: data.statusContact || undefined,
+        }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -142,7 +185,14 @@ export default function Parteneri() {
       const res = await fetch(`/api/partners/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          judet: data.judet || undefined,
+          statusPerformanta: data.statusPerformanta || undefined,
+          calificare: data.calificare || undefined,
+          clasificare: data.clasificare || undefined,
+          statusContact: data.statusContact || undefined,
+        }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -203,12 +253,16 @@ export default function Parteneri() {
       telefon: "",
       email: "",
       adresa: "",
+      judet: "",
       persoanaContact: "",
       note: "",
       platitorTva: false,
+      statusPerformanta: "",
+      calificare: "",
+      clasificare: "",
+      statusContact: "",
       file1: "",
       file2: "",
-      // Agenții creează parteneri neaprobați (inactivi)
       activ: isAdmin,
     });
   };
@@ -227,9 +281,14 @@ export default function Parteneri() {
       telefon: partner.telefon || "",
       email: partner.email || "",
       adresa: partner.adresa || "",
+      judet: partner.judet || "",
       persoanaContact: partner.persoanaContact || "",
       note: partner.note || "",
       platitorTva: partner.platitorTva,
+      statusPerformanta: partner.statusPerformanta || "",
+      calificare: partner.calificare || "",
+      clasificare: partner.clasificare || "",
+      statusContact: partner.statusContact || "",
       file1: partner.file1 || "",
       file2: partner.file2 || "",
       activ: partner.activ,
@@ -391,13 +450,17 @@ export default function Parteneri() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nume</TableHead>
+                  <TableHead>Nume firmă</TableHead>
+                  <TableHead>Telefon</TableHead>
+                  <TableHead>Județ</TableHead>
+                  <TableHead>Calificare</TableHead>
+                  <TableHead>Clasificare</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Tip</TableHead>
-                  <TableHead>Contact</TableHead>
                   <TableHead>CUI</TableHead>
                   <TableHead>TVA</TableHead>
                   <TableHead>Fișiere</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Activ</TableHead>
                   {isAdmin && <TableHead className="w-[100px]">Acțiuni</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -414,27 +477,26 @@ export default function Parteneri() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{getTypeBadge(partner.tipPartener)}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1 text-sm">
-                        {partner.telefon && (
-                          <a
-                            href={`tel:${partner.telefon.replace(/\s+/g, "")}`}
-                            className="flex items-center gap-1 text-blue-600 hover:underline"
-                          >
-                            <Phone className="h-3 w-3" /> {partner.telefon}
-                          </a>
-                        )}
-                        {partner.email && (
-                          <a
-                            href={`mailto:${partner.email}`}
-                            className="flex items-center gap-1 text-slate-400 hover:underline"
-                          >
-                            <Mail className="h-3 w-3" /> {partner.email}
-                          </a>
-                        )}
-                      </div>
+                      {partner.telefon ? (
+                        <a href={`tel:${partner.telefon.replace(/\s+/g, "")}`} className="flex items-center gap-1 text-blue-600 hover:underline text-sm">
+                          <Phone className="h-3 w-3" /> {partner.telefon}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </TableCell>
+                    <TableCell>{partner.judet || "—"}</TableCell>
+                    <TableCell>
+                      {partner.calificare ? CALIFICARE_OPTIONS.find(c => c.value === partner.calificare)?.label ?? partner.calificare : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {partner.clasificare ? CLASIFICARE_OPTIONS.find(c => c.value === partner.clasificare)?.label ?? partner.clasificare : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {partner.statusContact ? STATUS_CONTACT_OPTIONS.find(s => s.value === partner.statusContact)?.label ?? partner.statusContact : "—"}
+                    </TableCell>
+                    <TableCell>{getTypeBadge(partner.tipPartener)}</TableCell>
                     <TableCell>
                       {partner.cui && (
                         <span className="flex items-center gap-1">
@@ -443,7 +505,7 @@ export default function Parteneri() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={partner.platitorTva ? "default" : "outline"}>
+                      <Badge variant={partner.platitorTva ? "default" : "outline"} className="text-xs">
                         {partner.platitorTva ? "TVA" : "Fără TVA"}
                       </Badge>
                     </TableCell>
@@ -585,14 +647,84 @@ export default function Parteneri() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Adresa</Label>
-              <Input
-                value={formData.adresa}
-                onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
-                placeholder="Adresa completă"
-                data-testid="input-adresa"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Adresa</Label>
+                <Input
+                  value={formData.adresa}
+                  onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
+                  placeholder="Adresa completă"
+                  data-testid="input-adresa"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Județ</Label>
+                <Input
+                  value={formData.judet}
+                  onChange={(e) => setFormData({ ...formData, judet: e.target.value })}
+                  placeholder="ex: București, Ilfov"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Status performanță</Label>
+                <Select value={formData.statusPerformanta || "none"} onValueChange={(v) => setFormData({ ...formData, statusPerformanta: v === "none" ? "" : v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selectează" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {STATUS_PERFORMANTA.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Calificare</Label>
+                <Select value={formData.calificare || "none"} onValueChange={(v) => setFormData({ ...formData, calificare: v === "none" ? "" : v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Interesat / Nu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {CALIFICARE_OPTIONS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Clasificare</Label>
+                <Select value={formData.clasificare || "none"} onValueChange={(v) => setFormData({ ...formData, clasificare: v === "none" ? "" : v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Atelier / Firmă mică / Neclar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {CLASIFICARE_OPTIONS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status contact</Label>
+                <Select value={formData.statusContact || "none"} onValueChange={(v) => setFormData({ ...formData, statusContact: v === "none" ? "" : v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Contactat / Interesat / ..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {STATUS_CONTACT_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>TVA</Label>

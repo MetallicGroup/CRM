@@ -10,7 +10,6 @@ import {
   Calculator,
   ChevronDown,
   UserPlus,
-  FileText,
   FileEdit,
   Target,
   TrendingUp,
@@ -20,6 +19,10 @@ import {
   Eye,
   Receipt,
   Clock,
+  ListTodo,
+  FileStack,
+  Megaphone,
+  MessageCircle,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -53,16 +56,18 @@ const menuSections: MenuSection[] = [
     icon: LayoutDashboard,
     defaultOpen: true,
     items: [
+      { icon: MessageCircle, label: 'Chat', href: '/chat' },
+      { icon: ListTodo, label: 'Task-uri / proiecte', href: '/taskuri' },
       { icon: Home, label: 'Dashboard', href: '/' },
       { icon: UserPlus, label: 'Clienți', href: '/clienti' },
-      { icon: FileText, label: 'Oferte', href: '/oferte' },
       { icon: FileEdit, label: 'Ofertare', href: '/ofertare' },
-      { icon: FileText, label: 'Ofertare Accesorii', href: '/ofertare-accesorii' },
       { icon: Clock, label: 'Follow-up', href: '/followup' },
+      { icon: FileStack, label: 'Documentație', href: '/documentatie' },
       { icon: TrendingUp, label: 'Vânzări', href: '/vanzari' },
       { icon: Target, label: 'Target-uri', href: '/targeturi' },
       { icon: Handshake, label: 'Parteneri', href: '/parteneri' },
       { icon: Eye, label: 'Urmăriri Clienți', href: '/admin/urmariri', adminOnly: true },
+      { icon: Megaphone, label: 'Marketing', href: '/marketing' },
     ],
   },
   {
@@ -72,10 +77,10 @@ const menuSections: MenuSection[] = [
     defaultOpen: false,
     items: [
       { icon: LayoutDashboard, label: 'Raport Financiar', href: '/profitabilitate/raport' },
-      { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli' },
       { icon: Users, label: 'Angajați', href: '/profitabilitate/angajati' },
-      { icon: Building2, label: 'Showroom-uri', href: '/profitabilitate/showroom-uri' },
       { icon: Truck, label: 'Distribuitori', href: '/profitabilitate/distribuitori' },
+      { icon: Building2, label: 'Showroom-uri', href: '/profitabilitate/showroom-uri' },
+      { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli' },
       { icon: Settings, label: 'Setări Financiar', href: '/profitabilitate/setari' },
     ],
   },

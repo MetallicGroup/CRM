@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, clients, partners, expenseCategories, cheltuieliAgent, cheltuieliSediu, sedii, salariiNeproductivi, employees, productCategoryEnum, clientSourceEnum, offerStatusEnum, orderStatusEnum, commissionPercentEnum, agentManualAchizitii, agentFixedCosts, loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
+import { users, clients, partners, expenseCategories, cheltuieliAgent, cheltuieliSediu, sedii, salariiNeproductivi, employees, productCategoryEnum, clientSourceEnum, offerStatusEnum, orderStatusEnum, commissionPercentEnum, agentManualAchizitii, agentFixedCosts, loginSchema, createUserSchema, updateUserSchema, createClientSchema, updateClientSchema, createTargetSchema, updateTargetSchema, createTaskSchema, updateTaskSchema, createPartnerSchema, updatePartnerSchema, createSediuSchema, updateSediuSchema, createExpenseCategorySchema, updateExpenseCategorySchema, createCheltuialaAgentSchema, updateCheltuialaAgentSchema, createCheltuialaSediuSchema, updateCheltuialaSediuSchema, createEmployeeSchema, updateEmployeeSchema, createPartnerMonthlyDataSchema } from "@shared/schema";
 import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -355,6 +355,21 @@ export async function registerRoutes(
     }
   });
 
+  // Dashboard stats for today only (ziua curentă, actualizare în timp real)
+  app.get("/api/dashboard/today", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const now = new Date();
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      const stats = await storage.getDashboardTodayStats(agentId, dayStart, dayEnd);
+      res.json(stats);
+    } catch (error) {
+      console.error("Dashboard today error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea statisticilor pentru azi" });
+    }
+  });
+
   // Get agents list (for filters)
   app.get("/api/dashboard/agents", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
@@ -373,6 +388,89 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get agents error:", error);
       res.status(500).json({ message: "Eroare la încărcarea agenților" });
+    }
+  });
+
+  // ---------- CRM Chat ----------
+  app.get("/api/chat/conversations", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      if (req.userRole === "ADMIN" && req.query.all === "1") {
+        const list = await storage.getAllConversationsAdmin();
+        return res.json(list);
+      }
+      const list = await storage.getConversationsForUser(userId);
+      res.json(list);
+    } catch (error) {
+      console.error("Get conversations error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea conversațiilor" });
+    }
+  });
+
+  app.get("/api/chat/messages", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const withUserId = req.query.withUserId as string;
+      const user1 = req.query.user1 as string;
+      const user2 = req.query.user2 as string;
+      if (req.userRole === "ADMIN" && user1 && user2) {
+        const messages = await storage.getCrmMessagesBetween(user1, user2);
+        return res.json(messages);
+      }
+      if (!withUserId) return res.status(400).json({ message: "withUserId este obligatoriu" });
+      const messages = await storage.getCrmMessagesBetween(userId, withUserId);
+      await storage.markCrmMessagesAsRead(userId, withUserId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea mesajelor" });
+    }
+  });
+
+  app.post("/api/chat/messages", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { recipientId, body } = req.body as { recipientId?: string; body?: string };
+      if (!recipientId || body == null || String(body).trim() === "")
+        return res.status(400).json({ message: "recipientId și body sunt obligatorii" });
+      const msg = await storage.createCrmMessage(userId, recipientId, String(body).trim());
+      res.status(201).json(msg);
+    } catch (error) {
+      console.error("Post message error:", error);
+      res.status(500).json({ message: "Eroare la trimiterea mesajului" });
+    }
+  });
+
+  app.get("/api/notifications", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const unreadCount = await storage.getUnreadMessageCount(userId);
+      const conversations = await storage.getConversationsForUser(userId);
+      const recentMessages = conversations
+        .filter((c) => c.lastMessage != null)
+        .slice(0, 10)
+        .map((c) => ({
+          type: "message" as const,
+          from: `${c.firstName} ${c.lastName}`,
+          fromUserId: c.userId,
+          lastMessage: c.lastMessage,
+          lastAt: c.lastAt,
+        }));
+      const recentLeads = await storage.getRecentLeadsForNotifications(15);
+      res.json({
+        unreadMessages: unreadCount,
+        recentMessages,
+        recentLeads: recentLeads.map((l) => ({
+          id: l.id,
+          nume: l.nume,
+          sursa: l.sursa,
+          dataAdaugare: l.dataAdaugare,
+          dataOfertarii: l.dataOfertarii,
+        })),
+      });
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea notificărilor" });
     }
   });
 
@@ -471,14 +569,20 @@ export async function registerRoutes(
       const requestedAgentId = agentId as string | undefined;
 
       // Non-admins pot vedea doar propriii clienți,
-      // cu excepția lui Razvan care poate filtra și clienții lui Alexandru.
+      // cu excepția lui Razvan (poate filtra Alexandru) și Oana (poate filtra orice agent).
       let filterAgentId = requestedAgentId;
       if (req.userRole !== "ADMIN") {
         const isRazvan =
           !!req.userEmail?.toLowerCase().includes("razvan") ||
           !!req.userFirstName?.toLowerCase().includes("razvan");
+        const isOana =
+          !!req.userEmail?.toLowerCase().includes("oana") ||
+          !!req.userFirstName?.toLowerCase().includes("oana");
 
-        if (isRazvan) {
+        if (isOana) {
+          // Oana: poate selecta orice agent și vede doar clienții acelui agent; "all" = toți clienții
+          filterAgentId = requestedAgentId === "all" || !requestedAgentId ? undefined : requestedAgentId;
+        } else if (isRazvan) {
           // Dacă Razvan nu a ales un agent explicit, vede propriii clienți
           filterAgentId = requestedAgentId || req.userId;
         } else {
@@ -692,10 +796,13 @@ export async function registerRoutes(
       const isRazvan =
         !!req.userEmail?.toLowerCase().includes("razvan") ||
         !!req.userFirstName?.toLowerCase().includes("razvan");
+      const isOana =
+        !!req.userEmail?.toLowerCase().includes("oana") ||
+        !!req.userFirstName?.toLowerCase().includes("oana");
 
       // Non-admins pot modifica doar propriii clienți,
-      // cu excepția lui Razvan care poate edita orice client.
-      if (req.userRole !== "ADMIN" && !isRazvan && existingClient.agentId !== req.userId) {
+      // cu excepția lui Razvan și Oana care pot edita orice client.
+      if (req.userRole !== "ADMIN" && !isRazvan && !isOana && existingClient.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest client" });
       }
 
@@ -892,6 +999,71 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Change password error:", error);
       res.status(500).json({ message: "Eroare la schimbarea parolei" });
+    }
+  });
+
+  // ============ TASK / PROIECTE ROUTES ============
+
+  app.get("/api/tasks", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { assignedAgentId, createdById } = req.query;
+      const filters: { assignedAgentId?: string; createdById?: string } = {};
+      if (assignedAgentId && assignedAgentId !== "all") filters.assignedAgentId = assignedAgentId as string;
+      if (createdById && createdById !== "all") filters.createdById = createdById as string;
+      const taskList = await storage.getAllTasks(filters);
+      res.json(taskList);
+    } catch (error) {
+      console.error("Get tasks error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea task-urilor" });
+    }
+  });
+
+  app.post("/api/tasks", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const body = { ...req.body, createdById: req.body.createdById || req.userId };
+      const data = createTaskSchema.parse(body);
+      const task = await storage.createTask(data);
+      res.status(201).json(task);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Create task error:", error);
+      res.status(500).json({ message: "Eroare la crearea task-ului" });
+    }
+  });
+
+  app.patch("/api/tasks/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const existing = await storage.getTask(req.params.id);
+      if (!existing) return res.status(404).json({ message: "Task negăsit" });
+      if (req.userRole !== "ADMIN" && existing.createdById !== req.userId && existing.assignedAgentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest task" });
+      }
+      const data = updateTaskSchema.parse(req.body);
+      const task = await storage.updateTask(req.params.id, data);
+      res.json(task);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error("Update task error:", error);
+      res.status(500).json({ message: "Eroare la actualizarea task-ului" });
+    }
+  });
+
+  app.delete("/api/tasks/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const existing = await storage.getTask(req.params.id);
+      if (!existing) return res.status(404).json({ message: "Task negăsit" });
+      if (req.userRole !== "ADMIN" && existing.createdById !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți permisiunea să ștergeți acest task" });
+      }
+      const deleted = await storage.deleteTask(req.params.id);
+      res.json({ deleted: !!deleted });
+    } catch (error) {
+      console.error("Delete task error:", error);
+      res.status(500).json({ message: "Eroare la ștergerea task-ului" });
     }
   });
 

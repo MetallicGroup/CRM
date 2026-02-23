@@ -2,6 +2,7 @@ import {
   users,
   clients,
   targets,
+  tasks,
   partners,
   sedii,
   expenseCategories,
@@ -15,6 +16,7 @@ import {
   partnerMonthlyData,
   appSettings,
   activityLogs,
+  crmMessages,
   type User,
   type InsertUser,
   type SafeUser,
@@ -26,6 +28,9 @@ import {
   type Target,
   type CreateTarget,
   type UpdateTarget,
+  type Task,
+  type CreateTask,
+  type UpdateTask,
   type Partner,
   type CreatePartner,
   type UpdatePartner,
@@ -56,7 +61,7 @@ import {
   type AppSetting
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, isNotNull } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, ne, isNotNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -80,6 +85,16 @@ export interface IStorage {
   updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: string): Promise<boolean>;
   getClientStats(agentId?: string, dateFrom?: string, dateTo?: string): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
+  getDashboardTodayStats(agentId: string | undefined, dayStart: Date, dayEnd: Date): Promise<{
+    clientiNoi: number;
+    oferteTrimise: number;
+    valoareOferte: number;
+    followUpEfectuat: number;
+    vanzariNr: number;
+    vanzariValoare: number;
+    refuzuriNr: number;
+    refuzuriValoare: number;
+  }>;
   bulkImportClients(rows: Partial<CreateClient>[], agentId?: string, duplicateStrategy?: "skip" | "update" | "create"): Promise<{ success: number; errors: number; skipped: number; errorDetails: { row: number; error: string; data: Record<string, string> }[] }>;
   bulkImportAgentFixedCosts(rows: any[]): Promise<{ success: number; errors: number }>;
   getNextCriteriumNumber(agentId: string): Promise<number>;
@@ -117,12 +132,28 @@ export interface IStorage {
   deleteTarget(id: string): Promise<boolean>;
   getTargetProgress(agentId: string, luna: number, an: number): Promise<{ target: Target | null; realizedValue: number; realizedClients: number }>;
 
+  // Task / Proiecte methods
+  getTask(id: string): Promise<Task | undefined>;
+  getAllTasks(filters?: { assignedAgentId?: string; createdById?: string }): Promise<Task[]>;
+  createTask(data: CreateTask): Promise<Task>;
+  updateTask(id: string, data: UpdateTask): Promise<Task | undefined>;
+  deleteTask(id: string): Promise<boolean>;
+
   // Partner methods
   getPartner(id: string): Promise<Partner | undefined>;
   getAllPartners(filters?: { tipPartener?: string; activ?: boolean; search?: string }): Promise<Partner[]>;
   createPartner(data: CreatePartner): Promise<Partner>;
   updatePartner(id: string, data: UpdatePartner): Promise<Partner | undefined>;
   deletePartner(id: string): Promise<boolean>;
+
+  // CRM Chat
+  createCrmMessage(senderId: string, recipientId: string, body: string): Promise<{ id: string; senderId: string; recipientId: string; body: string; readAt: Date | null; createdAt: Date }>;
+  getCrmMessagesBetween(userId: string, otherUserId: string, limit?: number): Promise<{ id: string; senderId: string; recipientId: string; body: string; readAt: Date | null; createdAt: Date }[]>;
+  getUnreadMessageCount(userId: string): Promise<number>;
+  getConversationsForUser(userId: string): Promise<{ userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[]>;
+  getAllConversationsAdmin(): Promise<{ user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }[]>;
+  markCrmMessagesAsRead(recipientId: string, senderId: string): Promise<void>;
+  getRecentLeadsForNotifications(limit?: number): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]>;
 
   // Activity logs
   createActivityLog(data: {
@@ -447,6 +478,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(isNotNull(clients.agentId));
     }
 
+    // Exclude refuzate și anulate – nu apar în follow-up
+    conditions.push(ne(clients.stadiuOferta, "REFUZAT"));
+    conditions.push(ne(clients.stadiuOferta, "ANULATA"));
+
     // orice follow-up 1/2/3 care pică în ziua selectată
     conditions.push(
       or(
@@ -542,6 +577,7 @@ export class DatabaseStorage implements IStorage {
       comentariiDupaContact: data.comentariiDupaContact || null,
       contactat: data.contactat || false,
       underObservation: data.underObservation || false,
+      urgenta: data.urgenta || false,
       agentId: data.agentId || null,
       numCriteriu: numCriteriu,
     };
@@ -623,6 +659,7 @@ export class DatabaseStorage implements IStorage {
     if (data.comentariiDupaContact !== undefined) updateData.comentariiDupaContact = data.comentariiDupaContact || null;
     if (data.contactat !== undefined) updateData.contactat = data.contactat;
     if (data.underObservation !== undefined) updateData.underObservation = data.underObservation;
+    if (data.urgenta !== undefined) updateData.urgenta = data.urgenta;
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
 
     const [client] = await db
@@ -672,6 +709,165 @@ export class DatabaseStorage implements IStorage {
       type: data.type,
       meta: (data.meta || null) as any,
     });
+  }
+
+  async createCrmMessage(senderId: string, recipientId: string, body: string): Promise<{ id: string; senderId: string; recipientId: string; body: string; readAt: Date | null; createdAt: Date }> {
+    const [row] = await db.insert(crmMessages).values({
+      senderId,
+      recipientId,
+      body,
+    }).returning({
+      id: crmMessages.id,
+      senderId: crmMessages.senderId,
+      recipientId: crmMessages.recipientId,
+      body: crmMessages.body,
+      readAt: crmMessages.readAt,
+      createdAt: crmMessages.createdAt,
+    });
+    if (!row) throw new Error("Failed to create message");
+    return {
+      id: row.id,
+      senderId: row.senderId,
+      recipientId: row.recipientId,
+      body: row.body,
+      readAt: row.readAt ?? null,
+      createdAt: row.createdAt,
+    };
+  }
+
+  async getCrmMessagesBetween(userId: string, otherUserId: string, limit = 100): Promise<{ id: string; senderId: string; recipientId: string; body: string; readAt: Date | null; createdAt: Date }[]> {
+    const rows = await db
+      .select()
+      .from(crmMessages)
+      .where(
+        or(
+          and(eq(crmMessages.senderId, userId), eq(crmMessages.recipientId, otherUserId)),
+          and(eq(crmMessages.senderId, otherUserId), eq(crmMessages.recipientId, userId))
+        )
+      )
+      .orderBy(desc(crmMessages.createdAt))
+      .limit(limit);
+    return rows.reverse().map((r) => ({
+      id: r.id,
+      senderId: r.senderId,
+      recipientId: r.recipientId,
+      body: r.body,
+      readAt: r.readAt ?? null,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async getUnreadMessageCount(userId: string): Promise<number> {
+    const [r] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(crmMessages)
+      .where(and(eq(crmMessages.recipientId, userId), sql`${crmMessages.readAt} IS NULL`));
+    return r?.count ?? 0;
+  }
+
+  async getConversationsForUser(userId: string): Promise<{ userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[]> {
+    const agents = await this.getAgents();
+    const result: { userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[] = [];
+    for (const u of agents) {
+      if (u.id === userId) continue;
+      const last = await db
+        .select({
+          body: crmMessages.body,
+          createdAt: crmMessages.createdAt,
+          recipientId: crmMessages.recipientId,
+        })
+        .from(crmMessages)
+        .where(
+          or(
+            and(eq(crmMessages.senderId, userId), eq(crmMessages.recipientId, u.id)),
+            and(eq(crmMessages.senderId, u.id), eq(crmMessages.recipientId, userId))
+          )
+        )
+        .orderBy(desc(crmMessages.createdAt))
+        .limit(1);
+      const unreadRows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(crmMessages)
+        .where(and(eq(crmMessages.senderId, u.id), eq(crmMessages.recipientId, userId), sql`${crmMessages.readAt} IS NULL`));
+      const unread = unreadRows[0]?.count ?? 0;
+      result.push({
+        userId: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        lastMessage: last[0]?.body ?? null,
+        lastAt: last[0]?.createdAt ?? null,
+        unread,
+      });
+    }
+    result.sort((a, b) => (b.lastAt?.getTime() ?? 0) - (a.lastAt?.getTime() ?? 0));
+    return result;
+  }
+
+  async getAllConversationsAdmin(): Promise<{ user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }[]> {
+    const agents = await this.getAgents();
+    const pairs = new Map<string, { user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }>();
+    for (const u1 of agents) {
+      for (const u2 of agents) {
+        if (u1.id >= u2.id) continue;
+        const key = [u1.id, u2.id].sort().join("_");
+        if (pairs.has(key)) continue;
+        const last = await db
+          .select({ body: crmMessages.body, createdAt: crmMessages.createdAt })
+          .from(crmMessages)
+          .where(
+            or(
+              and(eq(crmMessages.senderId, u1.id), eq(crmMessages.recipientId, u2.id)),
+              and(eq(crmMessages.senderId, u2.id), eq(crmMessages.recipientId, u1.id))
+            )
+          )
+          .orderBy(desc(crmMessages.createdAt))
+          .limit(1);
+        if (last.length > 0) {
+          pairs.set(key, {
+            user1: u1,
+            user2: u2,
+            lastMessage: last[0].body,
+            lastAt: last[0].createdAt,
+          });
+        }
+      }
+    }
+    return Array.from(pairs.values()).sort((a, b) => (b.lastAt?.getTime() ?? 0) - (a.lastAt?.getTime() ?? 0));
+  }
+
+  async markCrmMessagesAsRead(recipientId: string, senderId: string): Promise<void> {
+    await db
+      .update(crmMessages)
+      .set({ readAt: new Date() })
+      .where(and(eq(crmMessages.recipientId, recipientId), eq(crmMessages.senderId, senderId), sql`${crmMessages.readAt} IS NULL`));
+  }
+
+  async getRecentLeadsForNotifications(limit = 15): Promise<{ id: string; nume: string; sursa: string; dataAdaugare: Date | null; dataOfertarii: Date | null }[]> {
+    const leadSources = ["RECLAME", "RECLAME_CAMPANII", "SITE", "FACEBOOK", "GOOGLE", "OLX", "CEL_RO", "OKAZII", "PUBLI24", "TELEFON", "TIKTOK", "BIROU", "BIROU_SHOWROOM"] as const;
+    const rows = await db
+      .select({
+        id: clients.id,
+        nume: clients.nume,
+        sursa: clients.sursa,
+        dataAdaugare: clients.dataAdaugare,
+        dataOfertarii: clients.dataOfertarii,
+      })
+      .from(clients)
+      .where(
+        or(
+          inArray(clients.sursa, leadSources),
+          isNotNull(clients.dataOfertarii)
+        )
+      )
+      .orderBy(desc(clients.dataAdaugare))
+      .limit(limit);
+    return rows.map((r) => ({
+      id: r.id,
+      nume: r.nume,
+      sursa: String(r.sursa ?? ""),
+      dataAdaugare: r.dataAdaugare ?? null,
+      dataOfertarii: r.dataOfertarii ?? null,
+    }));
   }
 
   async getAgentActivitySummary(params: {
@@ -953,6 +1149,74 @@ export class DatabaseStorage implements IStorage {
       totalValue,
       wonValue,
       pipelineValue
+    };
+  }
+
+  async getDashboardTodayStats(
+    agentId: string | undefined,
+    dayStart: Date,
+    dayEnd: Date
+  ): Promise<{
+    clientiNoi: number;
+    oferteTrimise: number;
+    valoareOferte: number;
+    followUpEfectuat: number;
+    vanzariNr: number;
+    vanzariValoare: number;
+    refuzuriNr: number;
+    refuzuriValoare: number;
+  }> {
+    const conditions = [];
+    if (agentId) {
+      conditions.push(eq(clients.agentId, agentId));
+      conditions.push(isNotNull(clients.agentId));
+    }
+    let list = await (conditions.length
+      ? db.select().from(clients).where(and(...conditions))
+      : db.select().from(clients));
+
+    const start = dayStart.getTime();
+    const end = dayEnd.getTime();
+    const inDay = (d: Date | null) => d && d.getTime() >= start && d.getTime() <= end;
+
+    let clientiNoi = 0;
+    let oferteTrimise = 0;
+    let valoareOferte = 0;
+    let vanzariNr = 0;
+    let vanzariValoare = 0;
+    let refuzuriNr = 0;
+    let refuzuriValoare = 0;
+
+    for (const c of list) {
+      const dataAdaugare = c.dataAdaugare ? new Date(c.dataAdaugare) : null;
+      const dataOfertarii = c.dataOfertarii ? new Date(c.dataOfertarii) : null;
+      const dataVanzarii = c.dataVanzarii ? new Date(c.dataVanzarii) : null;
+      const updatedAt = c.updatedAt ? new Date(c.updatedAt) : null;
+
+      if (inDay(dataAdaugare)) clientiNoi++;
+      if (inDay(dataOfertarii)) {
+        oferteTrimise++;
+        if (c.valoareOferta) valoareOferte += parseFloat(c.valoareOferta);
+      }
+      if (c.stadiuOferta === "VANDUT" && inDay(dataVanzarii)) {
+        vanzariNr++;
+        if (c.valoareOferta) vanzariValoare += parseFloat(c.valoareOferta);
+      }
+      if (c.stadiuOferta === "REFUZAT" && inDay(updatedAt)) {
+        refuzuriNr++;
+        if (c.valoareOferta) refuzuriValoare += parseFloat(c.valoareOferta);
+      }
+    }
+
+    return {
+      clientiNoi,
+      oferteTrimise,
+      valoareOferte,
+      followUpEfectuat: 0,
+      vanzariNr,
+      vanzariValoare,
+      refuzuriNr,
+      refuzuriValoare,
     };
   }
 
@@ -1298,30 +1562,37 @@ export class DatabaseStorage implements IStorage {
 
   async createTarget(data: CreateTarget): Promise<Target> {
     const [target] = await db.insert(targets).values({
-      agentId: data.agentId,
+      categoria: (data.categoria as any) || "AGENTI",
+      agentId: data.agentId ?? null,
       luna: data.luna,
       an: data.an,
       targetVanzari: data.targetVanzari,
-      targetClienti: data.targetClienti || 0,
+      targetClienti: data.targetClienti ?? 0,
+      targetOferteTransmise: data.targetOferteTransmise ?? 0,
+      targetFollowUp: data.targetFollowUp ?? 0,
+      targetConversie: data.targetConversie ?? null,
+      targetClientiNoi: data.targetClientiNoi ?? 0,
+      targetColaboratoriNoi: data.targetColaboratoriNoi ?? 0,
+      targetPartenerActiv: data.targetPartenerActiv ?? 0,
     }).returning();
     return target;
   }
 
   async updateTarget(id: string, data: UpdateTarget): Promise<Target | undefined> {
     const updateData: any = { updatedAt: new Date() };
-
-    if (data.agentId !== undefined) updateData.agentId = data.agentId;
+    if (data.categoria !== undefined) updateData.categoria = data.categoria;
+    if (data.agentId !== undefined) updateData.agentId = data.agentId ?? null;
     if (data.luna !== undefined) updateData.luna = data.luna;
     if (data.an !== undefined) updateData.an = data.an;
     if (data.targetVanzari !== undefined) updateData.targetVanzari = data.targetVanzari;
     if (data.targetClienti !== undefined) updateData.targetClienti = data.targetClienti;
-
-    const [target] = await db
-      .update(targets)
-      .set(updateData)
-      .where(eq(targets.id, id))
-      .returning();
-
+    if (data.targetOferteTransmise !== undefined) updateData.targetOferteTransmise = data.targetOferteTransmise;
+    if (data.targetFollowUp !== undefined) updateData.targetFollowUp = data.targetFollowUp;
+    if (data.targetConversie !== undefined) updateData.targetConversie = data.targetConversie ?? null;
+    if (data.targetClientiNoi !== undefined) updateData.targetClientiNoi = data.targetClientiNoi;
+    if (data.targetColaboratoriNoi !== undefined) updateData.targetColaboratoriNoi = data.targetColaboratoriNoi;
+    if (data.targetPartenerActiv !== undefined) updateData.targetPartenerActiv = data.targetPartenerActiv;
+    const [target] = await db.update(targets).set(updateData).where(eq(targets.id, id)).returning();
     return target || undefined;
   }
 
@@ -1367,6 +1638,50 @@ export class DatabaseStorage implements IStorage {
       realizedValue,
       realizedClients: wonClients.length
     };
+  }
+
+  // ============ TASK / PROIECTE METHODS ============
+
+  async getTask(id: string): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task || undefined;
+  }
+
+  async getAllTasks(filters?: { assignedAgentId?: string; createdById?: string }): Promise<Task[]> {
+    const conditions = [];
+    if (filters?.assignedAgentId) conditions.push(eq(tasks.assignedAgentId, filters.assignedAgentId));
+    if (filters?.createdById) conditions.push(eq(tasks.createdById, filters.createdById));
+    if (conditions.length) {
+      return db.select().from(tasks).where(and(...conditions)).orderBy(desc(tasks.createdAt));
+    }
+    return db.select().from(tasks).orderBy(desc(tasks.createdAt));
+  }
+
+  async createTask(data: CreateTask): Promise<Task> {
+    const [task] = await db.insert(tasks).values({
+      numeProiect: data.numeProiect,
+      dataLimita: data.dataLimita ? new Date(data.dataLimita) : null,
+      createdById: data.createdById,
+      assignedAgentId: data.assignedAgentId || null,
+      observatii: data.observatii || null,
+    }).returning();
+    return task;
+  }
+
+  async updateTask(id: string, data: UpdateTask): Promise<Task | undefined> {
+    const updateData: any = { updatedAt: new Date() };
+    if (data.numeProiect !== undefined) updateData.numeProiect = data.numeProiect;
+    if (data.dataLimita !== undefined) updateData.dataLimita = data.dataLimita ? new Date(data.dataLimita) : null;
+    if (data.createdById !== undefined) updateData.createdById = data.createdById;
+    if (data.assignedAgentId !== undefined) updateData.assignedAgentId = data.assignedAgentId || null;
+    if (data.observatii !== undefined) updateData.observatii = data.observatii || null;
+    const [task] = await db.update(tasks).set(updateData).where(eq(tasks.id, id)).returning();
+    return task || undefined;
+  }
+
+  async deleteTask(id: string): Promise<boolean> {
+    const result = await db.delete(tasks).where(eq(tasks.id, id)).returning();
+    return result.length > 0;
   }
 
   // ============ PARTNER METHODS ============
@@ -1415,9 +1730,14 @@ export class DatabaseStorage implements IStorage {
       telefon: data.telefon || null,
       email: data.email || null,
       adresa: data.adresa || null,
+      judet: data.judet || null,
       persoanaContact: data.persoanaContact || null,
       note: data.note || null,
       platitorTva: data.platitorTva ?? false,
+      statusPerformanta: data.statusPerformanta ?? null,
+      calificare: data.calificare ?? null,
+      clasificare: data.clasificare ?? null,
+      statusContact: data.statusContact ?? null,
       file1: data.file1 || null,
       file2: data.file2 || null,
       activ: data.activ !== undefined ? data.activ : true,
@@ -1434,9 +1754,14 @@ export class DatabaseStorage implements IStorage {
     if (data.telefon !== undefined) updateData.telefon = data.telefon || null;
     if (data.email !== undefined) updateData.email = data.email || null;
     if (data.adresa !== undefined) updateData.adresa = data.adresa || null;
+    if (data.judet !== undefined) updateData.judet = data.judet || null;
     if (data.persoanaContact !== undefined) updateData.persoanaContact = data.persoanaContact || null;
     if (data.note !== undefined) updateData.note = data.note || null;
     if (data.platitorTva !== undefined) updateData.platitorTva = data.platitorTva;
+    if (data.statusPerformanta !== undefined) updateData.statusPerformanta = data.statusPerformanta ?? null;
+    if (data.calificare !== undefined) updateData.calificare = data.calificare ?? null;
+    if (data.clasificare !== undefined) updateData.clasificare = data.clasificare ?? null;
+    if (data.statusContact !== undefined) updateData.statusContact = data.statusContact ?? null;
     if (data.file1 !== undefined) updateData.file1 = data.file1 || null;
     if (data.file2 !== undefined) updateData.file2 = data.file2 || null;
     if (data.activ !== undefined) updateData.activ = data.activ;

@@ -51,13 +51,27 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const TARGET_CATEGORII = [
+  { value: "AGENTI", label: "Agenți" },
+  { value: "COMISIONARI", label: "Comisionari" },
+  { value: "PARTENERI", label: "Parteneri" },
+  { value: "DIRECTOR", label: "Director" },
+] as const;
+
 interface TargetData {
   id: string;
-  agentId: string;
+  categoria?: string;
+  agentId: string | null;
   luna: number;
   an: number;
   targetVanzari: string;
   targetClienti: number;
+  targetOferteTransmise?: number;
+  targetFollowUp?: number;
+  targetConversie?: string | null;
+  targetClientiNoi?: number;
+  targetColaboratoriNoi?: number;
+  targetPartenerActiv?: number;
 }
 
 interface Agent {
@@ -87,11 +101,18 @@ export default function Targeturi() {
   const [deleteTarget, setDeleteTarget] = useState<TargetData | null>(null);
 
   const [formData, setFormData] = useState({
+    categoria: "AGENTI" as const,
     agentId: "",
     luna: new Date().getMonth() + 1,
     an: new Date().getFullYear(),
     targetVanzari: "",
     targetClienti: 0,
+    targetOferteTransmise: 0,
+    targetFollowUp: 0,
+    targetConversie: "",
+    targetClientiNoi: 0,
+    targetColaboratoriNoi: 0,
+    targetPartenerActiv: 0,
   });
 
   const { data: targets = [], isLoading } = useQuery<TargetData[]>({
@@ -118,7 +139,20 @@ export default function Targeturi() {
       const res = await fetch("/api/targets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          categoria: data.categoria,
+          agentId: data.agentId || null,
+          luna: data.luna,
+          an: data.an,
+          targetVanzari: data.targetVanzari,
+          targetClienti: data.targetClienti,
+          targetOferteTransmise: data.targetOferteTransmise,
+          targetFollowUp: data.targetFollowUp,
+          targetConversie: data.targetConversie || null,
+          targetClientiNoi: data.targetClientiNoi,
+          targetColaboratoriNoi: data.targetColaboratoriNoi,
+          targetPartenerActiv: data.targetPartenerActiv,
+        }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -142,7 +176,20 @@ export default function Targeturi() {
       const res = await fetch(`/api/targets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          categoria: data.categoria,
+          agentId: data.agentId || null,
+          luna: data.luna,
+          an: data.an,
+          targetVanzari: data.targetVanzari,
+          targetClienti: data.targetClienti,
+          targetOferteTransmise: data.targetOferteTransmise,
+          targetFollowUp: data.targetFollowUp,
+          targetConversie: data.targetConversie || null,
+          targetClientiNoi: data.targetClientiNoi,
+          targetColaboratoriNoi: data.targetColaboratoriNoi,
+          targetPartenerActiv: data.targetPartenerActiv,
+        }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -183,11 +230,18 @@ export default function Targeturi() {
 
   const resetForm = () => {
     setFormData({
+      categoria: "AGENTI",
       agentId: "",
       luna: selectedMonth,
       an: selectedYear,
       targetVanzari: "",
       targetClienti: 0,
+      targetOferteTransmise: 0,
+      targetFollowUp: 0,
+      targetConversie: "",
+      targetClientiNoi: 0,
+      targetColaboratoriNoi: 0,
+      targetPartenerActiv: 0,
     });
   };
 
@@ -199,19 +253,30 @@ export default function Targeturi() {
 
   const openEditDialog = (target: TargetData) => {
     setFormData({
-      agentId: target.agentId,
+      categoria: (target.categoria as "AGENTI" | "COMISIONARI" | "PARTENERI" | "DIRECTOR") || "AGENTI",
+      agentId: target.agentId || "",
       luna: target.luna,
       an: target.an,
       targetVanzari: target.targetVanzari,
       targetClienti: target.targetClienti,
+      targetOferteTransmise: target.targetOferteTransmise ?? 0,
+      targetFollowUp: target.targetFollowUp ?? 0,
+      targetConversie: target.targetConversie ?? "",
+      targetClientiNoi: target.targetClientiNoi ?? 0,
+      targetColaboratoriNoi: target.targetColaboratoriNoi ?? 0,
+      targetPartenerActiv: target.targetPartenerActiv ?? 0,
     });
     setEditingTarget(target);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = () => {
-    if (!formData.agentId || !formData.targetVanzari) {
-      toast.error("Completează toate câmpurile obligatorii");
+    if (!formData.targetVanzari) {
+      toast.error("Target-ul în RON este obligatoriu");
+      return;
+    }
+    if (formData.categoria !== "DIRECTOR" && !formData.agentId) {
+      toast.error("Selectează agentul");
       return;
     }
 
@@ -222,10 +287,12 @@ export default function Targeturi() {
     }
   };
 
-  const getAgentName = (agentId: string) => {
+  const getAgentName = (agentId: string | null) => {
+    if (!agentId) return "—";
     const agent = agents.find(a => a.id === agentId);
     return agent ? `${agent.firstName} ${agent.lastName}` : "Necunoscut";
   };
+  const getCategoriaLabel = (c: string) => TARGET_CATEGORII.find(x => x.value === c)?.label ?? c;
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
@@ -318,8 +385,9 @@ export default function Targeturi() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Categorie</TableHead>
                   <TableHead>Agent</TableHead>
-                  <TableHead>Target Vânzări</TableHead>
+                  <TableHead>Target RON</TableHead>
                   <TableHead>Target Clienți</TableHead>
                   {isAdmin && <TableHead className="w-[100px]">Acțiuni</TableHead>}
                 </TableRow>
@@ -327,7 +395,8 @@ export default function Targeturi() {
               <TableBody>
                 {targets.map((target) => (
                   <TableRow key={target.id} data-testid={`row-target-${target.id}`}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium">{getCategoriaLabel(target.categoria ?? "AGENTI")}</TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-slate-400" />
                         {getAgentName(target.agentId)}
@@ -375,17 +444,31 @@ export default function Targeturi() {
               {editingTarget ? "Editează Target" : "Adaugă Target Nou"}
             </DialogTitle>
             <DialogDescription>
-              Setează target-ul lunar pentru un agent
+              Categorie: agenți, comisionari, parteneri sau director. Apoi agent, perioadă și target-uri.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
             <div className="space-y-2">
-              <Label>Agent *</Label>
+              <Label>Categorie *</Label>
+              <Select value={formData.categoria} onValueChange={(v: any) => setFormData({ ...formData, categoria: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TARGET_CATEGORII.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Agent {formData.categoria !== "DIRECTOR" ? "*" : ""}</Label>
               <Select value={formData.agentId} onValueChange={(v) => setFormData({ ...formData, agentId: v })}>
                 <SelectTrigger data-testid="select-agent">
                   <SelectValue placeholder="Selectează agent" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">— Niciunul (Director)</SelectItem>
                   {agents.filter(agent => agent.id).map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}
@@ -423,7 +506,7 @@ export default function Targeturi() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Target Vânzări (RON) *</Label>
+              <Label>Target RON *</Label>
               <Input
                 type="number"
                 value={formData.targetVanzari}
@@ -432,14 +515,74 @@ export default function Targeturi() {
                 data-testid="input-target-vanzari"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Target clienți contactați</Label>
+                <Input
+                  type="number"
+                  value={formData.targetClienti}
+                  onChange={(e) => setFormData({ ...formData, targetClienti: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                  data-testid="input-target-clienti"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target oferte transmise</Label>
+                <Input
+                  type="number"
+                  value={formData.targetOferteTransmise}
+                  onChange={(e) => setFormData({ ...formData, targetOferteTransmise: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Target follow-up</Label>
+                <Input
+                  type="number"
+                  value={formData.targetFollowUp}
+                  onChange={(e) => setFormData({ ...formData, targetFollowUp: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target conversie (%)</Label>
+                <Input
+                  type="text"
+                  value={formData.targetConversie}
+                  onChange={(e) => setFormData({ ...formData, targetConversie: e.target.value })}
+                  placeholder="ex: 15.5"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Target clienți noi</Label>
+                <Input
+                  type="number"
+                  value={formData.targetClientiNoi}
+                  onChange={(e) => setFormData({ ...formData, targetClientiNoi: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target colaboratori noi</Label>
+                <Input
+                  type="number"
+                  value={formData.targetColaboratoriNoi}
+                  onChange={(e) => setFormData({ ...formData, targetColaboratoriNoi: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label>Target Clienți</Label>
+              <Label>Target partener activ</Label>
               <Input
                 type="number"
-                value={formData.targetClienti}
-                onChange={(e) => setFormData({ ...formData, targetClienti: parseInt(e.target.value) || 0 })}
-                placeholder="ex: 10"
-                data-testid="input-target-clienti"
+                value={formData.targetPartenerActiv}
+                onChange={(e) => setFormData({ ...formData, targetPartenerActiv: parseInt(e.target.value) || 0 })}
+                placeholder="0"
               />
             </div>
           </div>
@@ -459,7 +602,7 @@ export default function Targeturi() {
           <AlertDialogHeader>
             <AlertDialogTitle>Ești sigur?</AlertDialogTitle>
             <AlertDialogDescription>
-              Această acțiune va șterge target-ul pentru {deleteTarget && getAgentName(deleteTarget.agentId)}.
+              Această acțiune va șterge target-ul {deleteTarget && `(${getCategoriaLabel(deleteTarget.categoria ?? "AGENTI")} – ${getAgentName(deleteTarget.agentId)})`}.
               Acțiunea nu poate fi anulată.
             </AlertDialogDescription>
           </AlertDialogHeader>

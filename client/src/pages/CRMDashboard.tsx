@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,40 +8,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useAuth } from "@/lib/auth";
-import { 
-  Users, 
-  FileText, 
-  TrendingUp, 
+import {
+  Users,
+  FileText,
+  TrendingUp,
   Calendar as CalendarIcon,
-  Crown,
   Clock,
-  RefreshCw,
   UserCheck,
   ShoppingCart,
-  CheckCircle,
   XCircle,
-  AlertCircle,
-  Download
+  PhoneCall,
+  Download,
+  UserPlus,
 } from "lucide-react";
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { Link } from "wouter";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { ro } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 
-interface DashboardStats {
-  clients: {
-    total: number;
-    byStatus: Record<string, number>;
-    totalValue: number;
-    wonValue: number;
-    pipelineValue: number;
-  };
-  activeAgents: number;
+interface TodayStats {
+  clientiNoi: number;
+  oferteTrimise: number;
+  valoareOferte: number;
+  followUpEfectuat: number;
+  vanzariNr: number;
+  vanzariValoare: number;
+  refuzuriNr: number;
+  refuzuriValoare: number;
 }
 
 interface Agent {
@@ -55,11 +46,7 @@ interface Agent {
 
 export default function CRMDashboard() {
   const { user, isAdmin } = useAuth();
-  const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
-  const [period, setPeriod] = useState<string>("luna");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
-  const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -70,26 +57,16 @@ export default function CRMDashboard() {
   const formattedDate = format(currentTime, "EEEE, d MMMM yyyy", { locale: ro });
   const formattedTime = format(currentTime, "HH:mm:ss");
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats", isAdmin ? selectedAgent : user?.id, dateFrom, dateTo],
+  const { data: stats, isLoading } = useQuery<TodayStats>({
+    queryKey: ["dashboard-today", isAdmin ? selectedAgent : user?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
-      // For admins, allow filtering by selected agent
-      // For non-admins, backend already filters by their userId, so we don't send agentId
-      if (isAdmin && selectedAgent && selectedAgent !== "all") {
-        params.set("agentId", selectedAgent);
-      }
-      if (dateFrom) {
-        params.set("dateFrom", dateFrom.toISOString());
-      }
-      if (dateTo) {
-        params.set("dateTo", dateTo.toISOString());
-      }
-      const res = await fetch(`/api/dashboard/stats?${params}`);
+      if (isAdmin && selectedAgent && selectedAgent !== "all") params.set("agentId", selectedAgent);
+      const res = await fetch(`/api/dashboard/today?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea statisticilor");
       return res.json();
     },
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 
   const { data: agents = [] } = useQuery<Agent[]>({
@@ -99,83 +76,51 @@ export default function CRMDashboard() {
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: isAdmin, // Only load agents list for admins
+    enabled: isAdmin,
   });
 
-  const clientStats = stats?.clients || { total: 0, byStatus: {}, totalValue: 0, wonValue: 0, pipelineValue: 0 };
-  const activeAgents = stats?.activeAgents || 0;
-
-  const newOffers = clientStats.byStatus["NOUA"] || 0;
-  const offersSent = clientStats.byStatus["TRIMISA"] || 0;
-  const waiting = clientStats.byStatus["IN_ASTEPTARE"] || 0;
-  const accepted = clientStats.byStatus["ACCEPTATA"] || 0;
-  const won = clientStats.byStatus["VANDUT"] || 0;
-  const lost = clientStats.byStatus["REFUZAT"] || 0;
-  const cancelled = clientStats.byStatus["ANULATA"] || 0;
-
-  const statsCards = [
-    {
-      title: "Total Clienți",
-      value: clientStats.total.toString(),
-      icon: Users,
-      color: "text-[#fbbf24]",
-      bgColor: "bg-[#111827]",
+  const { data: notifications } = useQuery<{
+    recentLeads: { id: string; nume: string; sursa: string; dataAdaugare: string | null; dataOfertarii: string | null }[];
+  }>({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications");
+      if (!res.ok) return { recentLeads: [] };
+      return res.json();
     },
-    {
-      title: "Oferte Trimise",
-      value: (offersSent + waiting + accepted).toString(),
-      icon: FileText,
-      color: "text-[#fbbf24]",
-      bgColor: "bg-[#111827]",
-    },
-    {
-      title: "Vânzări",
-      value: won.toString(),
-      icon: ShoppingCart,
-      color: "text-[#fbbf24]",
-      bgColor: "bg-[#111827]",
-    },
-    {
-      title: "Valoare Câștigată",
-      value: `${clientStats.wonValue.toLocaleString("ro-RO")} RON`,
-      icon: TrendingUp,
-      color: "text-[#fbbf24]",
-      bgColor: "bg-[#111827]",
-    },
-  ];
+  });
+  const recentLeads = notifications?.recentLeads ?? [];
 
-  const offerStatuses = [
-    { label: "Vândute", value: won, icon: CheckCircle, color: "text-green-600" },
-    { label: "În Așteptare", value: newOffers + offersSent + waiting + accepted, icon: Clock, color: "text-orange-600" },
-    { label: "Refuzate/Anulate", value: lost + cancelled, icon: XCircle, color: "text-red-600" },
-  ];
-
-  const resetFilters = () => {
-    setDate(undefined);
-    setSelectedAgent("all");
-    setPeriod("luna");
-    setDateFrom(startOfMonth(new Date()));
-    setDateTo(endOfMonth(new Date()));
+  const s = stats || {
+    clientiNoi: 0,
+    oferteTrimise: 0,
+    valoareOferte: 0,
+    followUpEfectuat: 0,
+    vanzariNr: 0,
+    vanzariValoare: 0,
+    refuzuriNr: 0,
+    refuzuriValoare: 0,
   };
+
+  const cards = [
+    { title: "Clienți noi (azi)", value: s.clientiNoi.toString(), icon: Users },
+    { title: "Oferte trimise (azi)", value: s.oferteTrimise.toString(), icon: FileText },
+    { title: "Valoare oferte (azi)", value: `${s.valoareOferte.toLocaleString("ro-RO")} RON`, icon: TrendingUp },
+    { title: "Follow-up efectuat", value: s.followUpEfectuat.toString(), icon: PhoneCall },
+    { title: "Vânzări (nr)", value: s.vanzariNr.toString(), icon: ShoppingCart },
+    { title: "Valoare vânzări", value: `${s.vanzariValoare.toLocaleString("ro-RO")} RON`, icon: TrendingUp },
+    { title: "Refuzuri (nr)", value: s.refuzuriNr.toString(), icon: XCircle },
+    { title: "Refuzuri (valoare)", value: `${s.refuzuriValoare.toLocaleString("ro-RO")} RON`, icon: XCircle },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-yellow-100 rounded-full">
-            <Crown className="h-8 w-8 text-yellow-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-welcome">
-              Bună ziua, {user?.firstName}!
-            </h1>
-            <p className="text-slate-400">
-              {isAdmin 
-                ? `Gestionezi întregul sistem CRM cu ${activeAgents} agenți activi`
-                : "Bine ai venit în sistemul CRM"}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-welcome">
+            Bună ziua, {user?.firstName}!
+          </h1>
+          <p className="text-slate-400">Dashboard – doar ziua curentă, actualizare în timp real</p>
         </div>
         <div className="flex items-center gap-4 text-sm text-slate-400">
           <div className="flex items-center gap-2">
@@ -189,321 +134,38 @@ export default function CRMDashboard() {
         </div>
       </div>
 
-      {/* Filters Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[#111827] border border-yellow-500/40">
-                <CalendarIcon className="h-5 w-5 text-[#fbbf24]" />
-              </div>
-              <div>
-                <CardTitle className="text-lg text-slate-50">Filtru Calendar Vânzări</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Selectează date și agent pentru a vizualiza vânzările
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              className="gap-2 bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
-              onClick={resetFilters}
-            >
-              <RefreshCw className="h-4 w-4" />
-              Resetează filtrul
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Date Picker */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <CalendarIcon className="h-4 w-4 text-blue-600" />
-                Selectează date sau luni
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    className={cn(
-                      "w-full justify-start text-left font-normal bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
-                      !date && "text-slate-400"
-                    )}
-                    data-testid="button-date-picker"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP", { locale: ro }) : "Click pentru a selecta date..."}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(d) => {
-                      setDate(d);
-                      if (d) {
-                        const from = startOfDay(d);
-                        const to = endOfDay(d);
-                        setDateFrom(from);
-                        setDateTo(to);
-                        setPeriod("azi");
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <p className="text-xs text-slate-400">
-                Poți selecta mai multe zile, luni întregi sau combinații
-              </p>
-            </div>
-
-            {/* Agent Selector - Only for admins */}
-            {isAdmin && (
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <UserCheck className="h-4 w-4 text-blue-600" />
-                  Selectează agent
-                </label>
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger data-testid="select-agent-filter">
-                    <SelectValue placeholder="Selectează agent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toți agenții</SelectItem>
-                    {agents.filter(a => a.id).map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.firstName} {agent.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-slate-400">
-                  Selectează un agent specific sau lasă "Toți"
-                </p>
-              </div>
-            )}
-
-            {/* Date Range Selector */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <CalendarIcon className="h-4 w-4 text-blue-600" />
-                Perioadă (de la / până la)
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      className={cn(
-                        "w-full justify-start text-left font-normal text-xs bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
-                        !dateFrom && "text-slate-400"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {dateFrom ? format(dateFrom, "dd MMM", { locale: ro }) : "De la"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={setDateFrom}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      className={cn(
-                        "w-full justify-start text-left font-normal text-xs bg-[#111827] border border-yellow-500/40 text-slate-100 hover:bg-[#fbbf24] hover:text-black",
-                        !dateTo && "text-slate-400"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {dateTo ? format(dateTo, "dd MMM", { locale: ro }) : "Până la"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dateTo}
-                      onSelect={setDateTo}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <p className="text-xs text-slate-400">
-                {dateFrom && dateTo 
-                  ? `${format(dateFrom, "d MMM", { locale: ro })} - ${format(dateTo, "d MMM yyyy", { locale: ro })}`
-                  : "Selectați perioada pentru statistici"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Export Buttons for Agents */}
-      {!isAdmin && user?.id && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Export Raport Activitate
-            </CardTitle>
-            <CardDescription>
-              Exportă raportul tău de activitate pentru perioada selectată
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
-                onClick={() => {
-                  const today = new Date();
-                  const from = startOfDay(today);
-                  const to = endOfDay(today);
-                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Zilnic
-              </Button>
-              <Button
-                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
-                onClick={() => {
-                  const now = new Date();
-                  const from = startOfWeek(now, { weekStartsOn: 1 });
-                  const to = endOfWeek(now, { weekStartsOn: 1 });
-                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Săptămânal
-              </Button>
-              <Button
-                className="bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black"
-                onClick={() => {
-                  const now = new Date();
-                  const from = startOfMonth(now);
-                  const to = endOfMonth(now);
-                  window.location.href = `/admin/exporturi?agentId=${user.id}&from=${from.toISOString()}&to=${to.toISOString()}`;
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Lunar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats Overview */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Vedere Generală Sistem</h2>
-              <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400">Perioada:</span>
-              <Select
-                value={period}
-                onValueChange={(value) => {
-                  setPeriod(value);
-                  const now = new Date();
-                  let from: Date;
-                  let to: Date;
-
-                  if (value === "azi") {
-                    from = startOfDay(now);
-                    to = endOfDay(now);
-                  } else if (value === "saptamana") {
-                    from = startOfWeek(now, { weekStartsOn: 1 });
-                    to = endOfWeek(now, { weekStartsOn: 1 });
-                  } else if (value === "luna") {
-                    from = startOfMonth(now);
-                    to = endOfMonth(now);
-                  } else {
-                    from = startOfYear(now);
-                    to = endOfYear(now);
-                  }
-
-                  setDate(undefined);
-                  setDateFrom(from);
-                  setDateTo(to);
-                }}
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="azi">Azi</SelectItem>
-                  <SelectItem value="saptamana">Săptămâna aceasta</SelectItem>
-                  <SelectItem value="luna">Luna aceasta</SelectItem>
-                  <SelectItem value="an">Anul acesta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {isAdmin && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Agent:</span>
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toți agenții</SelectItem>
-                    {agents.filter(a => a.id).map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.firstName} {agent.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statsCards.map((stat, index) => (
-            <Card
-              key={index}
-              className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10"
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400">{stat.title}</p>
-                    <p
-                      className="text-2xl font-bold text-slate-50"
-                      data-testid={`stat-${stat.title.toLowerCase().replace(/\s+/g, "-")}`}
-                    >
-                      {statsLoading ? "..." : stat.value}
-                    </p>
-                  </div>
-                  <div className={cn("p-3 rounded-full border border-yellow-500/40", stat.bgColor)}>
-                    <stat.icon className={cn("h-6 w-6", stat.color)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {/* Selectare agenți */}
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="text-sm text-slate-400">Agent:</span>
+        <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+          <SelectTrigger className="w-[220px]" data-testid="select-agent-filter">
+            <SelectValue placeholder="Selectează agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toți agenții</SelectItem>
+            {agents.filter((a) => a.id).map((agent) => (
+              <SelectItem key={agent.id} value={agent.id}>
+                {agent.firstName} {agent.lastName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Offer Statuses */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {offerStatuses.map((status, index) => (
-          <Card key={index}>
+      {/* Statistici azi */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {cards.map((card, index) => (
+          <Card key={index} className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <status.icon className={cn("h-8 w-8", status.color)} />
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold" data-testid={`status-${status.label.toLowerCase().replace(/\s+/g, '-')}`}>
-                    {statsLoading ? "..." : status.value}
+                  <p className="text-sm text-slate-400">{card.title}</p>
+                  <p className="text-2xl font-bold text-slate-50" data-testid={`stat-${card.title.toLowerCase().replace(/\s+/g, "-")}`}>
+                    {isLoading ? "..." : card.value}
                   </p>
-                  <p className="text-sm text-slate-400">{status.label}</p>
+                </div>
+                <div className="p-3 rounded-full border border-yellow-500/40 bg-[#111827]">
+                  <card.icon className="h-6 w-6 text-[#fbbf24]" />
                 </div>
               </div>
             </CardContent>
@@ -511,45 +173,74 @@ export default function CRMDashboard() {
         ))}
       </div>
 
-      {/* Info Card - Updated to reflect completed features */}
-      {isAdmin && (
-        <Card className="border-dashed border-blue-300 bg-blue-50/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-800">
-              <AlertCircle className="h-5 w-5" />
-              Funcționalități CRM
-            </CardTitle>
-            <CardDescription>
-              Progresul dezvoltării:
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 text-sm text-slate-400">
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                Gestionare Clienți (CRUD complet)
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                Dashboard cu statistici live
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                Filtrare după agent
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                Sistem de Oferte cu PDF
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                Target-uri lunare pentru agenți
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500" />
-                Vânzări și rapoarte
-              </li>
+      {/* Lead-uri: din reclama/extern și clienți care au primit ofertă */}
+      <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-[#fbbf24]" />
+              Lead-uri (reclame / extern / ofertă trimisă)
+            </h2>
+            <Link href="/clienti">
+              <span className="text-sm text-[#fbbf24] hover:underline">Vezi toți clienții</span>
+            </Link>
+          </div>
+          {recentLeads.length === 0 ? (
+            <p className="text-sm text-slate-500">Niciun lead recent.</p>
+          ) : (
+            <ul className="space-y-2 max-h-48 overflow-y-auto">
+              {recentLeads.slice(0, 15).map((lead) => (
+                <li key={lead.id}>
+                  <Link
+                    href={`/clienti?highlight=${lead.id}`}
+                    className="block rounded-lg p-2 hover:bg-[#1f2937] text-slate-200 hover:text-[#fbbf24] transition-colors"
+                  >
+                    <span className="font-medium">{lead.nume}</span>
+                    <span className="text-slate-500 text-sm ml-2">
+                      {lead.sursa}
+                      {lead.dataAdaugare
+                        ? " · " + format(new Date(lead.dataAdaugare), "dd.MM.yyyy", { locale: ro })
+                        : ""}
+                    </span>
+                    {lead.dataOfertarii && (
+                      <span className="text-xs text-[#fbbf24] ml-2">Ofertă trimisă</span>
+                    )}
+                  </Link>
+                </li>
+              ))}
             </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Export pentru agenți (non-admin) */}
+      {!isAdmin && user?.id && (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-slate-400 mb-3">Export raport activitate</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={`/admin/exporturi?agentId=${user.id}&from=${startOfDay(new Date()).toISOString()}&to=${endOfDay(new Date()).toISOString()}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black px-4 py-2 text-sm"
+              >
+                <Download className="h-4 w-4" />
+                Export zilnic
+              </a>
+              <a
+                href={`/admin/exporturi?agentId=${user.id}&from=${startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString()}&to=${endOfWeek(new Date(), { weekStartsOn: 1 }).toISOString()}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black px-4 py-2 text-sm"
+              >
+                <Download className="h-4 w-4" />
+                Export săptămânal
+              </a>
+              <a
+                href={`/admin/exporturi?agentId=${user.id}&from=${startOfMonth(new Date()).toISOString()}&to=${endOfMonth(new Date()).toISOString()}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#111827] border border-yellow-500/60 text-[#fbbf24] hover:bg-[#fbbf24] hover:text-black px-4 py-2 text-sm"
+              >
+                <Download className="h-4 w-4" />
+                Export lunar
+              </a>
+            </div>
           </CardContent>
         </Card>
       )}

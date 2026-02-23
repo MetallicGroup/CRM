@@ -389,6 +389,7 @@ const defaultFormData: Partial<CreateClient> = {
   observatiiClient: "",
   comentariiDupaContact: "",
   contactat: false,
+  urgenta: false,
   agentId: "",
 };
 
@@ -400,6 +401,9 @@ export default function Clienti() {
       user.email?.toLowerCase().includes("razvan") ||
       user.firstName?.toLowerCase().includes("razvan")
     );
+  const isOana =
+    !!user &&
+    (user.email?.toLowerCase().includes("oana") || user.firstName?.toLowerCase().includes("oana"));
   const isAlexandruCroitoru =
     user?.email === "alexandru@metallicgroup.ro" ||
     (user?.firstName?.toLowerCase() === "alexandru" && user?.lastName?.toLowerCase().includes("croitoru"));
@@ -479,8 +483,8 @@ export default function Clienti() {
         return [];
       }
     },
-    // Pentru Razvan avem nevoie de lista de agenți ca să poată selecta Alexandru
-    enabled: isAdmin || isRazvan,
+    // Pentru Razvan și Oana avem nevoie de lista de agenți (filtru după agent)
+    enabled: isAdmin || isRazvan || isOana,
     retry: false,
   });
 
@@ -669,6 +673,7 @@ export default function Clienti() {
       observatiiClient: client.observatiiClient || "",
       comentariiDupaContact: client.comentariiDupaContact || "",
       contactat: client.contactat || false,
+      urgenta: (client as any).urgenta ?? false,
       agentId: client.agentId || "",
       numCriteriu: client.numCriteriu ?? undefined,
     });
@@ -774,7 +779,7 @@ export default function Clienti() {
                 ))}
               </SelectContent>
             </Select>
-            {(isAdmin || isRazvan) && (
+            {(isAdmin || isRazvan || isOana) && (
               <Select value={agentFilter} onValueChange={setAgentFilter}>
                 <SelectTrigger className="w-full md:w-[200px]" data-testid="select-agent-filter">
                   <SelectValue placeholder="Toți agenții" />
@@ -782,7 +787,7 @@ export default function Clienti() {
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
                   {(
-                    isAdmin
+                    isAdmin || isOana
                       ? agents.filter((a: any) => a.role === "AGENT" || a.role === "ADMIN")
                       : // Pentru Razvan, afișăm doar agentul Alexandru Croitoru
                         agents.filter(
@@ -859,6 +864,7 @@ export default function Clienti() {
                   <TableHead className="w-[10%]">Data adăugare</TableHead>
                   <TableHead className="w-[15%]">Locație</TableHead>
                   <TableHead className="w-[10%]">Stadiu</TableHead>
+                  <TableHead className="w-[6%]">Urgență</TableHead>
                   <TableHead className="w-[12%]">Categorie</TableHead>
                   <TableHead className="w-[10%]">Valoare</TableHead>
                   <TableHead className="w-[8%]">Doc</TableHead>
@@ -927,6 +933,13 @@ export default function Clienti() {
                       )}
                     </TableCell>
                     <TableCell className="py-2">{getOfferStatusBadge(client.stadiuOferta)}</TableCell>
+                    <TableCell className="py-2">
+                      {(client as any).urgenta ? (
+                        <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-2 ring-amber-500/40" title="Urgență" />
+                      ) : (
+                        <span className="inline-flex h-3 w-3 rounded-full bg-slate-600/50" title="Fără urgență" />
+                      )}
+                    </TableCell>
                     <TableCell className="py-2">
                       <Badge variant="outline" className="text-xs border-slate-600 bg-slate-800/50 text-slate-200">
                         {CATEGORY_OPTIONS.find(c => c.value === client.categorieProdus)?.label || "-"}
@@ -1838,14 +1851,26 @@ export default function Clienti() {
               </TabsContent>
 
               <TabsContent value="notes" className="space-y-4 mt-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="contactat"
-                    checked={formData.contactat}
-                    onCheckedChange={(checked) => setFormData({ ...formData, contactat: !!checked })}
-                    data-testid="checkbox-contactat"
-                  />
-                  <Label htmlFor="contactat">Contactat</Label>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="contactat"
+                      checked={formData.contactat}
+                      onCheckedChange={(checked) => setFormData({ ...formData, contactat: !!checked })}
+                      data-testid="checkbox-contactat"
+                    />
+                    <Label htmlFor="contactat">Contactat</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="urgenta"
+                      checked={formData.urgenta ?? false}
+                      onCheckedChange={(checked) => setFormData({ ...formData, urgenta: !!checked })}
+                      data-testid="checkbox-urgenta"
+                    />
+                    <Label htmlFor="urgenta">Urgență</Label>
+                    <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-1 ring-amber-500/40" title="Bulină urgență" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="observatiiClient">Observații Client</Label>
@@ -1988,6 +2013,17 @@ export default function Clienti() {
                   <div>
                     <p className="text-sm text-slate-400">Stadiu Ofertă</p>
                     {getOfferStatusBadge(viewClient.stadiuOferta)}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Urgență</p>
+                    <p className="font-medium flex items-center gap-2">
+                      {(viewClient as any).urgenta ? (
+                        <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 ring-2 ring-amber-500/40" title="Urgență" />
+                      ) : (
+                        <span className="inline-flex h-3 w-3 rounded-full bg-slate-600/50" />
+                      )}
+                      {(viewClient as any).urgenta ? "Da" : "Nu"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-400">Valoare</p>

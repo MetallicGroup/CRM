@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
 import CRMDashboard from "@/pages/CRMDashboard";
+import TaskuriProiecte from "@/pages/TaskuriProiecte";
 import FinancialDashboard from "@/pages/Dashboard";
 import Angajati from "@/pages/Angajati";
 import ShowroomRegional from "@/pages/ShowroomRegional";
@@ -23,8 +24,10 @@ import Exporturi from "@/pages/Exporturi";
 import UrmaririClienti from "@/pages/UrmaririClienti";
 import Followup from "@/pages/Followup";
 import Ofertare from "@/pages/Ofertare";
-import OfertareAccesorii from "@/pages/OfertareAccesorii";
 import ComingSoon from "@/pages/ComingSoon";
+import Documentatie from "@/pages/Documentatie";
+import Marketing from "@/pages/Marketing";
+import Chat from "@/pages/Chat";
 import { Layout } from "@/components/layout/Layout";
 
 function ProtectedRoute({ 
@@ -89,6 +92,12 @@ function Router() {
       <Route path="/">
         <ProtectedRoute component={CRMDashboard} />
       </Route>
+      <Route path="/chat">
+        <ProtectedRoute component={Chat} />
+      </Route>
+      <Route path="/taskuri">
+        <ProtectedRoute component={TaskuriProiecte} />
+      </Route>
       <Route path="/clienti">
         <ProtectedRoute component={Clienti} />
       </Route>
@@ -107,8 +116,11 @@ function Router() {
       <Route path="/ofertare">
         <ProtectedRoute component={Ofertare} />
       </Route>
-      <Route path="/ofertare-accesorii">
-        <ProtectedRoute component={OfertareAccesorii} />
+      <Route path="/documentatie">
+        <ProtectedRoute component={Documentatie} />
+      </Route>
+      <Route path="/marketing">
+        <ProtectedRoute component={Marketing} />
       </Route>
       <Route path="/oferte">
         <ProtectedRoute component={ComingSoon} />

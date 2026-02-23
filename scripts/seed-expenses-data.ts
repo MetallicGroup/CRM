@@ -4,15 +4,15 @@ import { sedii, expenseCategories } from '../shared/schema';
 async function seed() {
     console.log('Seeding expense data...');
 
-    // 1. Seed Sedii
+    // 1. Seed Sedii (lista de sedii: central, hală producție, showroom-uri)
     console.log('Seeding sedii...');
     const sediiData = [
-        { nume: 'Showroom București', oras: 'București', judet: 'București' },
+        { nume: 'Sediu central București', oras: 'București', judet: 'București' },
+        { nume: 'Hală producție', oras: 'București', judet: 'Ilfov' },
+        { nume: 'Showroom Bragadiru', oras: 'Bragadiru', judet: 'Ilfov' },
         { nume: 'Showroom Constanța', oras: 'Constanța', judet: 'Constanța' },
-        { nume: 'Showroom Teleorman', oras: 'Alexandria', judet: 'Teleorman' },
+        { nume: 'Showroom TR', oras: 'Alexandria', judet: 'Teleorman' },
         { nume: 'Showroom Giurgiu', oras: 'Giurgiu', judet: 'Giurgiu' },
-        { nume: 'Showroom Brăgădiru', oras: 'Brăgădiru', judet: 'Ilfov' },
-        { nume: 'Showroom Bârlad', oras: 'Bârlad', judet: 'Vaslui' },
     ];
 
     for (const s of sediiData) {
@@ -52,29 +52,40 @@ async function seed() {
         { id: 'sub-bonuri', parentId: 'cat-salarii', name: 'Bonuri de masa', displayOrder: 3 },
     ];
 
-    // Level 2: Sub (Auto)
+    // Level 2: Sub (Auto) – Service, Altele (în loc de Revizie)
     const subAuto = [
         { id: 'sub-combustibil', parentId: 'cat-auto', name: 'Combustibil', displayOrder: 1 },
-        { id: 'sub-revizii', parentId: 'cat-auto', name: 'Revizii', displayOrder: 2 },
-        { id: 'sub-asigurări', parentId: 'cat-auto', name: 'Asigurări', displayOrder: 3 },
-        { id: 'sub-leasing', parentId: 'cat-auto', name: 'Leasing', displayOrder: 4 },
-        { id: 'sub-rovinieta', parentId: 'cat-auto', name: 'Rovinieta', displayOrder: 5 },
+        { id: 'sub-service', parentId: 'cat-auto', name: 'Service', displayOrder: 2 },
+        { id: 'sub-altele-auto', parentId: 'cat-auto', name: 'Altele', displayOrder: 3 },
+        { id: 'sub-asigurări', parentId: 'cat-auto', name: 'Asigurări', displayOrder: 4 },
+        { id: 'sub-leasing', parentId: 'cat-auto', name: 'Leasing', displayOrder: 5 },
+        { id: 'sub-rovinieta', parentId: 'cat-auto', name: 'Rovinieta', displayOrder: 6 },
     ];
 
-    // Level 2: Sub (Generale)
+    // Level 2: Sub (Bugete de stat)
+    const subBugete = [
+        { id: 'sub-tva', parentId: 'cat-bugete', name: 'TVA', displayOrder: 1 },
+        { id: 'sub-impozit', parentId: 'cat-bugete', name: 'Impozit', displayOrder: 2 },
+        { id: 'sub-penalitati', parentId: 'cat-bugete', name: 'Penalități', displayOrder: 3 },
+        { id: 'sub-esalonari', parentId: 'cat-bugete', name: 'Eșalonări', displayOrder: 4 },
+    ];
+
+    // Level 2: Sub (Generale) – chirie, utilități, consumabile, securitate, abonamente, salubritate, altele
     const subGenerale = [
-        { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 1 },
-        { id: 'sub-showroom', parentId: 'cat-generale', name: 'Cota parte showroom', displayOrder: 2 },
-        { id: 'sub-cota-generale', parentId: 'cat-generale', name: 'Cota parte generale', displayOrder: 3 },
-        { id: 'sub-marketing', parentId: 'cat-generale', name: 'Marketing', displayOrder: 4 },
-        { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 5 },
-        { id: 'sub-medicina-muncii', parentId: 'cat-generale', name: 'Protecția medicina muncii', displayOrder: 6 },
-        { id: 'sub-contabil-jurist', parentId: 'cat-generale', name: 'Contabil / jurist', displayOrder: 7 },
-        { id: 'sub-neproductivi', parentId: 'cat-generale', name: 'Angajații neproductivi', displayOrder: 8 },
-        { id: 'sub-credite-banci', parentId: 'cat-generale', name: 'Credite / bănci', displayOrder: 9 },
+        { id: 'sub-chirie', parentId: 'cat-generale', name: 'Chirie', displayOrder: 1 },
+        { id: 'sub-utilitati', parentId: 'cat-generale', name: 'Utilități', displayOrder: 2 },
+        { id: 'sub-consumabile', parentId: 'cat-generale', name: 'Consumabile', displayOrder: 3 },
+        { id: 'sub-securitate', parentId: 'cat-generale', name: 'Securitate', displayOrder: 4 },
+        { id: 'sub-abonamente', parentId: 'cat-generale', name: 'Abonamente', displayOrder: 5 },
+        { id: 'sub-salubritate', parentId: 'cat-generale', name: 'Salubritate', displayOrder: 6 },
+        { id: 'sub-altele-generale', parentId: 'cat-generale', name: 'Altele', displayOrder: 7 },
+        { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 8 },
+        { id: 'sub-showroom', parentId: 'cat-generale', name: 'Cota parte showroom', displayOrder: 9 },
+        { id: 'sub-marketing', parentId: 'cat-generale', name: 'Marketing', displayOrder: 10 },
+        { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 11 },
     ];
 
-    const allSubs = [...subSalarii, ...subAuto, ...subGenerale];
+    const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale];
 
     for (const sub of allSubs) {
         await db.insert(expenseCategories).values({

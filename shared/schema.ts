@@ -177,6 +177,25 @@ export const userSessions = pgTable("user_sessions", {
   expire: timestamp("expire", { precision: 6 }).notNull(),
 });
 
+// ============ CRM CHAT (mesaje între utilizatori) ============
+
+export const crmMessages = pgTable("crm_messages", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id", { length: 36 }).references(() => users.id).notNull(),
+  recipientId: varchar("recipient_id", { length: 36 }).references(() => users.id).notNull(),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCrmMessageSchema = createInsertSchema(crmMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type CrmMessage = typeof crmMessages.$inferSelect;
+export type InsertCrmMessage = z.infer<typeof insertCrmMessageSchema>;
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -286,6 +305,7 @@ export const clients = pgTable("clients", {
   comentariiDupaContact: text("comentarii_dupa_contact"),
   contactat: boolean("contactat").default(false),
   underObservation: boolean("under_observation").default(false), // Pentru pagina "Urmăriri clienți"
+  urgenta: boolean("urgenta").default(false),
 
   // Relații
   agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
@@ -420,6 +440,7 @@ export const createClientSchema = z.object({
   comentariiDupaContact: z.string().optional(),
   contactat: z.boolean().optional().default(false),
   underObservation: z.boolean().optional().default(false),
+  urgenta: z.boolean().optional().default(false),
 
   // Relații
   agentId: z.string().optional(),
@@ -496,13 +517,22 @@ export type CommissionPercent = "1" | "2" | "3";
 
 // ============ TARGETS (Target-uri) ============
 
+export const targetCategoriaEnum = pgEnum("target_categoria", ["AGENTI", "COMISIONARI", "PARTENERI", "DIRECTOR"]);
+
 export const targets = pgTable("targets", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-  agentId: varchar("agent_id", { length: 36 }).references(() => users.id).notNull(),
+  categoria: targetCategoriaEnum("categoria").notNull().default("AGENTI"),
+  agentId: varchar("agent_id", { length: 36 }).references(() => users.id),
   luna: integer("luna").notNull(),
   an: integer("an").notNull(),
   targetVanzari: decimal("target_vanzari", { precision: 12, scale: 2 }).notNull(),
   targetClienti: integer("target_clienti").notNull().default(0),
+  targetOferteTransmise: integer("target_oferte_transmise").notNull().default(0),
+  targetFollowUp: integer("target_follow_up").notNull().default(0),
+  targetConversie: decimal("target_conversie", { precision: 8, scale: 2 }),
+  targetClientiNoi: integer("target_clienti_noi").notNull().default(0),
+  targetColaboratoriNoi: integer("target_colaboratori_noi").notNull().default(0),
+  targetPartenerActiv: integer("target_partener_activ").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -514,11 +544,18 @@ export const insertTargetSchema = createInsertSchema(targets).omit({
 });
 
 export const createTargetSchema = z.object({
-  agentId: z.string().min(1, "Agentul este obligatoriu"),
+  categoria: z.enum(["AGENTI", "COMISIONARI", "PARTENERI", "DIRECTOR"]).default("AGENTI"),
+  agentId: z.string().optional().nullable(),
   luna: z.number().min(1).max(12),
   an: z.number().min(2020).max(2100),
-  targetVanzari: z.string().min(1, "Target-ul de vânzări este obligatoriu"),
+  targetVanzari: z.string().min(1, "Target-ul în RON este obligatoriu"),
   targetClienti: z.number().min(0).default(0),
+  targetOferteTransmise: z.number().min(0).default(0),
+  targetFollowUp: z.number().min(0).default(0),
+  targetConversie: z.string().optional().nullable(),
+  targetClientiNoi: z.number().min(0).default(0),
+  targetColaboratoriNoi: z.number().min(0).default(0),
+  targetPartenerActiv: z.number().min(0).default(0),
 });
 
 export const updateTargetSchema = createTargetSchema.partial();
@@ -527,6 +564,42 @@ export type Target = typeof targets.$inferSelect;
 export type InsertTarget = z.infer<typeof insertTargetSchema>;
 export type CreateTarget = z.infer<typeof createTargetSchema>;
 export type UpdateTarget = z.infer<typeof updateTargetSchema>;
+
+// ============ TASKS / PROIECTE (Task-uri) ============
+
+export const tasks = pgTable("tasks", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  numeProiect: varchar("nume_proiect", { length: 255 }).notNull(),
+  dataLimita: timestamp("data_limita", { withTimezone: true }),
+  createdById: varchar("created_by_id", { length: 36 }).references(() => users.id).notNull(),
+  assignedAgentId: varchar("assigned_agent_id", { length: 36 }).references(() => users.id),
+  observatii: text("observatii"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createTaskSchema = z.object({
+  numeProiect: z.string().min(1, "Numele proiectului este obligatoriu"),
+  dataLimita: z.string().optional().nullable(),
+  createdById: z.string().min(1, "Creatorul este obligatoriu"),
+  assignedAgentId: z.string().optional().nullable(),
+  observatii: z.string().optional().nullable(),
+});
+
+export const updateTaskSchema = createTaskSchema.partial().extend({
+  createdById: z.string().optional(),
+});
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type CreateTask = z.infer<typeof createTaskSchema>;
+export type UpdateTask = z.infer<typeof updateTaskSchema>;
 
 // ============ PARTNERS (Parteneri) ============
 
@@ -541,6 +614,13 @@ export const partnerTypeEnum = pgEnum("partner_type", [
   "PARTENER_COMISIONAR",
 ]);
 
+export const partnerStatusPerformantaEnum = pgEnum("partner_status_performanta", ["PERFORMANT", "MEDIU", "OCAZIONAL"]);
+export const partnerCalificareEnum = pgEnum("partner_calificare", ["INTERESAT", "NU"]);
+export const partnerClasificareEnum = pgEnum("partner_clasificare", ["ATELIER", "FIRMA_MICA", "NECLAR"]);
+export const partnerStatusContactEnum = pgEnum("partner_status_contact", [
+  "CONTACTAT", "INTERESAT", "DISCUTII_DIRECTOR", "PARTENER_ACTIV", "PARTENER_RECURRENT", "REFUZAT"
+]);
+
 export const partners = pgTable("partners", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   nume: varchar("nume", { length: 150 }).notNull(),
@@ -549,12 +629,17 @@ export const partners = pgTable("partners", {
   telefon: varchar("telefon", { length: 20 }),
   email: varchar("email", { length: 120 }),
   adresa: text("adresa"),
+  judet: varchar("judet", { length: 80 }),
   persoanaContact: varchar("persoana_contact", { length: 100 }),
   note: text("note"),
   platitorTva: boolean("platitor_tva").notNull().default(false),
   file1: varchar("file1", { length: 255 }),
   file2: varchar("file2", { length: 255 }),
   activ: boolean("activ").notNull().default(true),
+  statusPerformanta: partnerStatusPerformantaEnum("status_performanta"),
+  calificare: partnerCalificareEnum("calificare"),
+  clasificare: partnerClasificareEnum("clasificare"),
+  statusContact: partnerStatusContactEnum("status_contact"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -572,9 +657,14 @@ export const createPartnerSchema = z.object({
   telefon: z.string().optional(),
   email: z.string().email("Email invalid").optional().or(z.literal("")),
   adresa: z.string().optional(),
+  judet: z.string().optional(),
   persoanaContact: z.string().optional(),
   note: z.string().optional(),
   platitorTva: z.boolean().optional().default(false),
+  statusPerformanta: z.enum(["PERFORMANT", "MEDIU", "OCAZIONAL"]).optional().nullable(),
+  calificare: z.enum(["INTERESAT", "NU"]).optional().nullable(),
+  clasificare: z.enum(["ATELIER", "FIRMA_MICA", "NECLAR"]).optional().nullable(),
+  statusContact: z.enum(["CONTACTAT", "INTERESAT", "DISCUTII_DIRECTOR", "PARTENER_ACTIV", "PARTENER_RECURRENT", "REFUZAT"]).optional().nullable(),
   file1: z.string().optional(),
   file2: z.string().optional(),
   activ: z.boolean().default(true),
