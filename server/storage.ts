@@ -121,6 +121,7 @@ export interface IStorage {
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
   getAgents(): Promise<SafeUser[]>;
+  getChatUsers(): Promise<SafeUser[]>;
   getClientStatsWithPeriod(agentId?: string, startDate?: Date, endDate?: Date): Promise<{ total: number; byStatus: Record<string, number>; totalValue: number; wonValue: number; pipelineValue: number }>;
   registerClientCall(clientId: string, userId: string): Promise<void>;
 
@@ -766,7 +767,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getConversationsForUser(userId: string): Promise<{ userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[]> {
-    const agents = await this.getAgents();
+    const agents = await this.getChatUsers();
     const result: { userId: string; firstName: string; lastName: string; lastMessage: string | null; lastAt: Date | null; unread: number }[] = [];
     for (const u of agents) {
       if (u.id === userId) continue;
@@ -804,7 +805,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllConversationsAdmin(): Promise<{ user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }[]> {
-    const agents = await this.getAgents();
+    const agents = await this.getChatUsers();
     const pairs = new Map<string, { user1: SafeUser; user2: SafeUser; lastMessage: string | null; lastAt: Date | null }>();
     for (const u1 of agents) {
       for (const u2 of agents) {
@@ -1470,6 +1471,19 @@ export class DatabaseStorage implements IStorage {
       )
     );
     return agents.map(u => {
+      const { passwordHash, ...safe } = u;
+      return safe;
+    });
+  }
+
+  async getChatUsers(): Promise<SafeUser[]> {
+    const list = await db.select().from(users).where(
+      and(
+        eq(users.active, true),
+        or(eq(users.role, "AGENT"), eq(users.role, "ADMIN"))
+      )
+    );
+    return list.map(u => {
       const { passwordHash, ...safe } = u;
       return safe;
     });

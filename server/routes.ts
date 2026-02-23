@@ -7,7 +7,7 @@ import { fetchClientsFromSheet } from "./services/google-sheets";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -217,7 +217,7 @@ export async function registerRoutes(
     }
   });
 
-  // Lightweight list of agents (for filters) - accesibilă tuturor utilizatorilor autentificați
+  // Lightweight list of agents (for filters, chat) - accesibilă tuturor utilizatorilor autentificați
   app.get("/api/users/agents", requireAuth, async (_req: AuthRequest, res: Response) => {
     try {
       const rows = await db
@@ -229,7 +229,7 @@ export async function registerRoutes(
           role: users.role,
         })
         .from(users)
-        .where(inArray(users.role, ["AGENT", "ADMIN"]));
+        .where(and(eq(users.active, true), inArray(users.role, ["AGENT", "ADMIN"])));
 
       res.json(rows);
     } catch (error) {

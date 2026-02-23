@@ -50,9 +50,9 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: agents = [] } = useQuery<Agent[]>({
-    queryKey: ["dashboard-agents"],
+    queryKey: ["chat-users"],
     queryFn: async () => {
-      const res = await fetch("/api/dashboard/agents");
+      const res = await fetch("/api/users/agents");
       if (!res.ok) return [];
       return res.json();
     },
