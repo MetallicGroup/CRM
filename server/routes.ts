@@ -1605,6 +1605,42 @@ export async function registerRoutes(
   app.post("/api/cheltuieli-agent", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const data = createCheltuialaAgentSchema.parse(req.body);
+
+      // Caz special: distribuim cheltuiala la toate showroom-urile în mod egal
+      if (data.sediuId === "__ALL_SHOWROOMS__") {
+        const sediiList = await storage.getAllSedii(true);
+        const showrooms = sediiList.filter((s) => s.nume.toLowerCase().includes("showroom"));
+
+        if (showrooms.length === 0) {
+          return res.status(400).json({ message: "Nu există showroom-uri configurate pentru distribuire." });
+        }
+
+        const total = parseFloat(data.suma);
+        const per = total / showrooms.length;
+
+        const created: any[] = [];
+        let remaining = total;
+        showrooms.forEach((s, index) => {
+          let suma = per;
+          if (index === showrooms.length - 1) {
+            suma = remaining;
+          } else {
+            remaining -= per;
+          }
+
+          created.push(
+            storage.createCheltuialaAgent({
+              ...data,
+              sediuId: s.id,
+              suma: suma.toFixed(2),
+            } as any)
+          );
+        });
+
+        const results = await Promise.all(created);
+        return res.status(201).json(results);
+      }
+
       const cheltuiala = await storage.createCheltuialaAgent(data);
       res.status(201).json(cheltuiala);
     } catch (error) {

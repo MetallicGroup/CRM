@@ -212,16 +212,24 @@ export default function Cheltuieli() {
     },
   });
 
-  const sediiForSelect = sedii
-    .filter((s) => !s.nume.toLowerCase().includes("bârlad"))
-    .map((s) => ({
-      ...s,
-      nume:
-        s.nume === "Showroom Brăgădiru" ||
-        s.nume === "Showroom Brăgadiru"
-          ? "Showroom Bragadiru"
-          : s.nume,
-    }));
+  const sediiForSelect = (() => {
+    const byName = new Map<string, Sediu & { nume: string }>();
+    sedii
+      .filter((s) => !s.nume.toLowerCase().includes("bârlad"))
+      .forEach((s) => {
+        let nume = s.nume;
+        if (nume === "Showroom Brăgădiru" || nume === "Showroom Bragadiru") {
+          nume = "Showroom Bragadiru";
+        }
+        if (nume === "Hală producție" || nume === "Hala Productie") {
+          nume = "Hala Productie";
+        }
+        if (!byName.has(nume)) {
+          byName.set(nume, { ...s, nume });
+        }
+      });
+    return Array.from(byName.values()).sort((a, b) => a.nume.localeCompare(b.nume));
+  })();
 
   const { data: agents = [] } = useQuery<Agent[]>({
     queryKey: ["cheltuieli-angajati"],
@@ -1096,10 +1104,7 @@ export default function Cheltuieli() {
                     onValueChange={(val) =>
                       setFormData({
                         ...formData,
-                        sediuId:
-                          val === "__ALL_SHOWROOMS__" || val === "__HALA_PRODUCTIE__"
-                            ? ""
-                            : val,
+                        sediuId: val,
                       })
                     }
                   >
@@ -1108,7 +1113,6 @@ export default function Cheltuieli() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__ALL_SHOWROOMS__">Toate showroom-urile</SelectItem>
-                      <SelectItem value="__HALA_PRODUCTIE__">Hala Productie</SelectItem>
                       {sediiForSelect.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.nume}
