@@ -70,17 +70,17 @@ async function seed() {
         { id: 'sub-esalonari', parentId: 'cat-bugete', name: 'Eșalonări', displayOrder: 4 },
     ];
 
-    // Level 2: Sub (Generale) – chirie, utilități, consumabile, securitate, abonamente, salubritate, altele
+    // Level 2: Sub (Generale) – chirie, utilități, consumabile, materie primă și ambalaj, securitate, abonamente, salubritate, altele
     const subGenerale = [
         { id: 'sub-chirie', parentId: 'cat-generale', name: 'Chirie', displayOrder: 1 },
         { id: 'sub-utilitati', parentId: 'cat-generale', name: 'Utilități', displayOrder: 2 },
         { id: 'sub-consumabile', parentId: 'cat-generale', name: 'Consumabile', displayOrder: 3 },
-        { id: 'sub-securitate', parentId: 'cat-generale', name: 'Securitate', displayOrder: 4 },
-        { id: 'sub-abonamente', parentId: 'cat-generale', name: 'Abonamente', displayOrder: 5 },
-        { id: 'sub-salubritate', parentId: 'cat-generale', name: 'Salubritate', displayOrder: 6 },
-        { id: 'sub-altele-generale', parentId: 'cat-generale', name: 'Altele', displayOrder: 7 },
-        { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 8 },
-        { id: 'sub-showroom', parentId: 'cat-generale', name: 'Cota parte showroom', displayOrder: 9 },
+        { id: 'sub-materie-ambalaj', parentId: 'cat-generale', name: 'Materie primă și ambalaj', displayOrder: 4 },
+        { id: 'sub-securitate', parentId: 'cat-generale', name: 'Securitate', displayOrder: 5 },
+        { id: 'sub-abonamente', parentId: 'cat-generale', name: 'Abonamente', displayOrder: 6 },
+        { id: 'sub-salubritate', parentId: 'cat-generale', name: 'Salubritate', displayOrder: 7 },
+        { id: 'sub-altele-generale', parentId: 'cat-generale', name: 'Altele', displayOrder: 8 },
+        { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 9 },
         { id: 'sub-marketing', parentId: 'cat-generale', name: 'Marketing', displayOrder: 10 },
         { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 11 },
     ];

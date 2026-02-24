@@ -2106,9 +2106,44 @@ export class DatabaseStorage implements IStorage {
         .orderBy(expenseCategories.displayOrder);
 
     let rows = await load();
-    if (rows.length > 0) return rows;
+    if (rows.length > 0) {
+      // Ajustări speciale pentru Cheltuieli generale:
+      if (parentId === "cat-generale") {
+        const allowedNames = new Set([
+          "Chirie",
+          "Utilități",
+          "Consumabile",
+          "Securitate",
+          "Abonamente",
+          "Salubritate",
+          "Altele",
+          "Materie primă și ambalaj",
+        ]);
 
-    // Auto-seed subcategorii implicite dacă lipsesc
+        // Asigurăm existența „Materie primă și ambalaj”
+        const hasMaterie = rows.some((r) => r.name === "Materie primă și ambalaj");
+        if (!hasMaterie) {
+          const [inserted] = await db
+            .insert(expenseCategories)
+            .values({
+              parentId: parentId,
+              name: "Materie primă și ambalaj",
+              level: "sub",
+              displayOrder: 8,
+              active: true,
+            } as any)
+            .returning();
+          rows.push(inserted);
+        }
+
+        // Filtrăm subcategoriile vechi nedorite (ex: Cota parte showroom, Cota parte generale, Angajați neproductivi)
+        rows = rows.filter((r) => allowedNames.has(r.name));
+      }
+
+      return rows;
+    }
+
+    // Auto-seed subcategorii implicite dacă lipsesc complet
     const subs: { id: string; name: string; displayOrder: number }[] = [];
     if (parentId === "cat-bugete") {
       subs.push(
