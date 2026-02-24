@@ -47,7 +47,8 @@ import {
   Trash2, 
   TrendingUp,
   Users,
-  Calendar
+  Calendar,
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +87,29 @@ interface TargetProgress {
   realizedClients: number;
 }
 
+interface TargetWithProgress extends TargetData {
+  progressSummary: {
+    realizedValue: number;
+    targetVanzari: number;
+    percentVanzari: number;
+  };
+}
+
+interface TargetDetailedProgress {
+  target: TargetData | null;
+  progress: {
+    realizedValue: number;
+    realizedVanzariNr: number;
+    realizedClientiContactati: number;
+    realizedOferteTransmise: number;
+    realizedFollowUp: number;
+    realizedConversie: number | null;
+    realizedClientiNoi: number;
+    realizedColaboratoriNoi: number;
+    realizedPartenerActiv: number;
+  };
+}
+
 const MONTHS = [
   "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
   "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"
@@ -99,6 +123,7 @@ export default function Targeturi() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<TargetData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TargetData | null>(null);
+  const [detailsTargetId, setDetailsTargetId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     categoria: "AGENTI" as const,
@@ -115,10 +140,10 @@ export default function Targeturi() {
     targetPartenerActiv: 0,
   });
 
-  const { data: targets = [], isLoading } = useQuery<TargetData[]>({
-    queryKey: ["targets", selectedYear, selectedMonth],
+  const { data: targets = [], isLoading } = useQuery<TargetWithProgress[]>({
+    queryKey: ["targets", "with-progress", selectedYear, selectedMonth],
     queryFn: async () => {
-      const res = await fetch(`/api/targets?an=${selectedYear}&luna=${selectedMonth}`);
+      const res = await fetch(`/api/targets/with-progress?an=${selectedYear}&luna=${selectedMonth}`);
       if (!res.ok) throw new Error("Eroare la încărcarea target-urilor");
       return res.json();
     },
@@ -132,6 +157,16 @@ export default function Targeturi() {
       return res.json();
     },
     enabled: isAdmin,
+  });
+
+  const { data: detailsProgress, isLoading: detailsLoading } = useQuery<TargetDetailedProgress>({
+    queryKey: ["target-details", detailsTargetId],
+    queryFn: async () => {
+      const res = await fetch(`/api/targets/${detailsTargetId}/progress`);
+      if (!res.ok) throw new Error("Eroare la încărcarea detaliilor");
+      return res.json();
+    },
+    enabled: !!detailsTargetId,
   });
 
   const createMutation = useMutation({
@@ -389,6 +424,8 @@ export default function Targeturi() {
                   <TableHead>Agent</TableHead>
                   <TableHead>Target RON</TableHead>
                   <TableHead>Target Clienți</TableHead>
+                  <TableHead>% îndeplinit (RON)</TableHead>
+                  <TableHead className="w-[100px]">Detalii</TableHead>
                   {isAdmin && <TableHead className="w-[100px]">Acțiuni</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -406,6 +443,28 @@ export default function Targeturi() {
                       {parseFloat(target.targetVanzari).toLocaleString("ro-RO")} RON
                     </TableCell>
                     <TableCell>{target.targetClienti} clienți</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={target.progressSummary.percentVanzari}
+                          className="h-2 w-24"
+                        />
+                        <span className="text-sm font-medium tabular-nums">
+                          {target.progressSummary.percentVanzari}%
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDetailsTargetId(target.id)}
+                        className="gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Detalii
+                      </Button>
+                    </TableCell>
                     {isAdmin && (
                       <TableCell>
                         <div className="flex gap-1">
@@ -597,6 +656,125 @@ export default function Targeturi() {
               {editingTarget ? "Salvează" : "Creează"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!detailsTargetId} onOpenChange={(open) => !open && setDetailsTargetId(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalii target</DialogTitle>
+            <DialogDescription>
+              Vezi realizarea pe fiecare categorie de target pentru luna selectată.
+            </DialogDescription>
+          </DialogHeader>
+          {detailsLoading || !detailsProgress ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="text-sm text-slate-400">
+                <div>{getCategoriaLabel(detailsProgress.target?.categoria ?? "AGENTI")} – {getAgentName(detailsProgress.target?.agentId ?? null)}</div>
+                <div>
+                  Luna: {MONTHS[(detailsProgress.target?.luna ?? selectedMonth) - 1]}{" "}
+                  {detailsProgress.target?.an ?? selectedYear}
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Indicator</TableHead>
+                      <TableHead>Target</TableHead>
+                      <TableHead>Realizat</TableHead>
+                      <TableHead>%</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(() => {
+                      const t = detailsProgress.target;
+                      const p = detailsProgress.progress;
+                      const rows: { label: string; target: number | null; realized: number; isMoney?: boolean; isPercent?: boolean }[] = [
+                        {
+                          label: "Vânzări (RON)",
+                          target: t ? parseFloat(t.targetVanzari) : null,
+                          realized: p.realizedValue,
+                          isMoney: true,
+                        },
+                        {
+                          label: "Clienți contactați",
+                          target: t?.targetClienti ?? null,
+                          realized: p.realizedClientiContactati,
+                        },
+                        {
+                          label: "Oferte transmise",
+                          target: t?.targetOferteTransmise ?? null,
+                          realized: p.realizedOferteTransmise,
+                        },
+                        {
+                          label: "Follow-up",
+                          target: t?.targetFollowUp ?? null,
+                          realized: p.realizedFollowUp,
+                        },
+                        {
+                          label: "Conversie (%)",
+                          target: t?.targetConversie ? parseFloat(t.targetConversie) : null,
+                          realized: p.realizedConversie ?? 0,
+                          isPercent: true,
+                        },
+                        {
+                          label: "Clienți noi",
+                          target: t?.targetClientiNoi ?? null,
+                          realized: p.realizedClientiNoi,
+                        },
+                        {
+                          label: "Colaboratori noi",
+                          target: t?.targetColaboratoriNoi ?? null,
+                          realized: p.realizedColaboratoriNoi,
+                        },
+                        {
+                          label: "Parteneri activi",
+                          target: t?.targetPartenerActiv ?? null,
+                          realized: p.realizedPartenerActiv,
+                        },
+                      ];
+
+                      return rows.map((row) => {
+                        const { label, target, realized, isMoney, isPercent } = row;
+                        const percent =
+                          target && target > 0
+                            ? Math.min(100, Math.round((realized / target) * 1000) / 10)
+                            : null;
+                        const formatNumber = (val: number) =>
+                          isMoney
+                            ? `${val.toLocaleString("ro-RO")} RON`
+                            : isPercent
+                            ? `${val.toLocaleString("ro-RO")} %`
+                            : val.toLocaleString("ro-RO");
+
+                        return (
+                          <TableRow key={label}>
+                            <TableCell className="font-medium">{label}</TableCell>
+                            <TableCell>
+                              {target != null ? formatNumber(target) : <span className="text-slate-400">-</span>}
+                            </TableCell>
+                            <TableCell>{formatNumber(realized)}</TableCell>
+                            <TableCell>
+                              {percent != null ? (
+                                <span className="tabular-nums">{percent}%</span>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      });
+                    })()}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

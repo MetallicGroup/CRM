@@ -1169,6 +1169,60 @@ export async function registerRoutes(
     }
   });
 
+  // Get targets list with progress summary (for list page: % per target)
+  app.get("/api/targets/with-progress", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId, luna, an } = req.query;
+      const filters: { agentId?: string; luna?: number; an?: number } = {};
+      if (req.userRole !== "ADMIN") {
+        filters.agentId = req.userId!;
+      } else if (agentId && agentId !== "all") {
+        filters.agentId = agentId as string;
+      }
+      if (luna) filters.luna = parseInt(luna as string);
+      if (an) filters.an = parseInt(an as string);
+
+      const list = await storage.getAllTargets(filters);
+      const withProgress = await Promise.all(
+        list.map(async (t) => {
+          const { target, progress } = await storage.getTargetDetailedProgress(t.id);
+          const targetVanzari = target ? parseFloat(target.targetVanzari) : 0;
+          const percentVanzari = targetVanzari > 0 ? Math.min(100, Math.round((progress.realizedValue / targetVanzari) * 1000) / 10) : 0;
+          return {
+            ...t,
+            progressSummary: {
+              realizedValue: progress.realizedValue,
+              targetVanzari,
+              percentVanzari,
+            },
+          };
+        })
+      );
+      res.json(withProgress);
+    } catch (error) {
+      console.error("Get targets with progress error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea target-urilor cu progres" });
+    }
+  });
+
+  // Get full detailed progress for one target (for "Detalii" dialog)
+  app.get("/api/targets/:id/progress", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const detailed = await storage.getTargetDetailedProgress(id);
+      if (!detailed.target) {
+        return res.status(404).json({ message: "Target negăsit" });
+      }
+      if (req.userRole !== "ADMIN" && detailed.target.agentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți acces la acest target" });
+      }
+      res.json(detailed);
+    } catch (error) {
+      console.error("Get target detailed progress error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea detaliilor progresului" });
+    }
+  });
+
   // Create target (admin only)
   app.post("/api/targets", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {

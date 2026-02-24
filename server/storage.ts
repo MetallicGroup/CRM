@@ -136,6 +136,20 @@ export interface IStorage {
   updateTarget(id: string, data: UpdateTarget): Promise<Target | undefined>;
   deleteTarget(id: string): Promise<boolean>;
   getTargetProgress(agentId: string, luna: number, an: number): Promise<{ target: Target | null; realizedValue: number; realizedClients: number }>;
+  getTargetDetailedProgress(targetId: string): Promise<{
+    target: Target | null;
+    progress: {
+      realizedValue: number;
+      realizedVanzariNr: number;
+      realizedClientiContactati: number;
+      realizedOferteTransmise: number;
+      realizedFollowUp: number;
+      realizedConversie: number | null;
+      realizedClientiNoi: number;
+      realizedColaboratoriNoi: number;
+      realizedPartenerActiv: number;
+    };
+  }>;
 
   // Task / Proiecte methods
   getTask(id: string): Promise<Task | undefined>;
@@ -1669,12 +1683,15 @@ export class DatabaseStorage implements IStorage {
     const startDate = new Date(an, luna - 1, 1);
     const endDate = new Date(an, luna, 0, 23, 59, 59);
 
+    const agentConditions = agentId ? [eq(clients.agentId, agentId), isNotNull(clients.agentId)] : [];
     const wonClients = await db.select().from(clients).where(
       and(
-        eq(clients.agentId, agentId),
+        ...agentConditions,
         eq(clients.stadiuOferta, "VANDUT"),
-        gte(clients.updatedAt, startDate),
-        lte(clients.updatedAt, endDate)
+        or(
+          and(gte(clients.dataVanzarii, startDate), lte(clients.dataVanzarii, endDate)),
+          and(sql`${clients.dataVanzarii} IS NULL`, gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
+        )
       )
     );
 
@@ -1689,6 +1706,111 @@ export class DatabaseStorage implements IStorage {
       target: target || null,
       realizedValue,
       realizedClients: wonClients.length
+    };
+  }
+
+  async getTargetDetailedProgress(targetId: string): Promise<{
+    target: Target | null;
+    progress: {
+      realizedValue: number;
+      realizedVanzariNr: number;
+      realizedClientiContactati: number;
+      realizedOferteTransmise: number;
+      realizedFollowUp: number;
+      realizedConversie: number | null;
+      realizedClientiNoi: number;
+      realizedColaboratoriNoi: number;
+      realizedPartenerActiv: number;
+    };
+  }> {
+    const zeroProgress = {
+      realizedValue: 0,
+      realizedVanzariNr: 0,
+      realizedClientiContactati: 0,
+      realizedOferteTransmise: 0,
+      realizedFollowUp: 0,
+      realizedConversie: null as number | null,
+      realizedClientiNoi: 0,
+      realizedColaboratoriNoi: 0,
+      realizedPartenerActiv: 0,
+    };
+
+    const [target] = await db.select().from(targets).where(eq(targets.id, targetId));
+    if (!target) {
+      return { target: null, progress: zeroProgress };
+    }
+
+    const agentId = target.agentId;
+    const luna = target.luna;
+    const an = target.an;
+    const startDate = new Date(an, luna - 1, 1);
+    const endDate = new Date(an, luna, 0, 23, 59, 59);
+
+    const agentFilter = agentId ? [eq(clients.agentId, agentId), isNotNull(clients.agentId)] : [];
+    const soldDateInRange = or(
+      and(gte(clients.dataVanzarii, startDate), lte(clients.dataVanzarii, endDate)),
+      and(sql`${clients.dataVanzarii} IS NULL`, gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
+    );
+
+    const wonClients = await db.select().from(clients).where(
+      and(...agentFilter, eq(clients.stadiuOferta, "VANDUT"), soldDateInRange)
+    );
+    let realizedValue = 0;
+    const partnerIdsSold = new Set<string>();
+    for (const c of wonClients) {
+      if (c.valoareOferta) realizedValue += parseFloat(c.valoareOferta);
+      if (c.isPartnerOrder && c.partnerId) partnerIdsSold.add(c.partnerId);
+    }
+    const realizedVanzariNr = wonClients.length;
+    const realizedPartenerActiv = partnerIdsSold.size;
+
+    const clientsContactati = await db.select({ id: clients.id }).from(clients).where(
+      and(...agentFilter, eq(clients.contactat, true), gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
+    );
+    const realizedClientiContactati = clientsContactati.length;
+
+    const oferteInRange = await db.select({ id: clients.id }).from(clients).where(
+      and(...agentFilter, gte(clients.dataOfertarii, startDate), lte(clients.dataOfertarii, endDate))
+    );
+    const realizedOferteTransmise = oferteInRange.length;
+
+    const clientiNoiInRange = await db.select({ id: clients.id, sursa: clients.sursa }).from(clients).where(
+      and(...agentFilter, gte(clients.dataAdaugare, startDate), lte(clients.dataAdaugare, endDate))
+    );
+    let realizedClientiNoi = clientiNoiInRange.length;
+    const realizedColaboratoriNoi = clientiNoiInRange.filter(
+      (c) => c.sursa === "MONTATORI" || c.sursa === "MONTATORI_COLABORATORI"
+    ).length;
+
+    let realizedFollowUp = 0;
+    if (agentId) {
+      const followUpLogs = await db.select().from(activityLogs).where(
+        and(
+          eq(activityLogs.userId, agentId),
+          eq(activityLogs.type, "FOLLOWUP_CLICK"),
+          gte(activityLogs.createdAt, startDate),
+          lte(activityLogs.createdAt, endDate)
+        )
+      );
+      realizedFollowUp = followUpLogs.length;
+    }
+
+    const realizedConversie =
+      realizedOferteTransmise > 0 ? Math.round((realizedVanzariNr / realizedOferteTransmise) * 1000) / 10 : null;
+
+    return {
+      target,
+      progress: {
+        realizedValue,
+        realizedVanzariNr,
+        realizedClientiContactati,
+        realizedOferteTransmise,
+        realizedFollowUp,
+        realizedConversie,
+        realizedClientiNoi,
+        realizedColaboratoriNoi,
+        realizedPartenerActiv,
+      },
     };
   }
 
