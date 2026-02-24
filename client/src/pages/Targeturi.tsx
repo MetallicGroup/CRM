@@ -680,8 +680,8 @@ export default function Targeturi() {
                   {detailsProgress.target?.an ?? selectedYear}
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-x-auto text-slate-900">
+                <Table className="text-slate-900">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-slate-900">Indicator</TableHead>
@@ -753,13 +753,13 @@ export default function Targeturi() {
                             : val.toLocaleString("ro-RO");
 
                         return (
-                          <TableRow key={label} className="text-slate-900">
-                            <TableCell className="font-medium">{label}</TableCell>
-                            <TableCell>
+                          <TableRow key={label} className="!text-slate-900 !opacity-100">
+                            <TableCell className="font-medium !text-slate-900">{label}</TableCell>
+                            <TableCell className="!text-slate-900">
                               {target != null ? formatNumber(target) : <span className="text-slate-400">-</span>}
                             </TableCell>
-                            <TableCell>{formatNumber(realized)}</TableCell>
-                            <TableCell>
+                            <TableCell className="!text-slate-900">{formatNumber(realized)}</TableCell>
+                            <TableCell className="!text-slate-900">
                               {percent != null ? (
                                 <span className="tabular-nums">{percent}%</span>
                               ) : (
