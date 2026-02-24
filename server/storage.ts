@@ -3550,8 +3550,44 @@ export class DatabaseStorage implements IStorage {
 
     // 5. Showroom Totals
     const sediiList = await db.select().from(sedii);
-    const cheltuieliSediuList = await db.select().from(cheltuieliSediu).where(range(cheltuieliSediu));
-    const cheltuieliAgentList = await db.select().from(cheltuieliAgent).where(range(cheltuieliAgent));
+
+    // Harta agent -> sediu (pentru a repartiza cheltuielile vechi fără sediu)
+    const agentSediuMap: Record<string, string | null> = {};
+    for (const agent of agents) {
+      if (agent.id) {
+        agentSediuMap[agent.id] = (agent as any).sediuId || null;
+      }
+    }
+
+    // Normalizăm anumite sedii vechi (ex: „Showroom București”) către cele noi (ex: „Sediu central București”)
+    const sediuCentral = sediiList.find((s) => s.nume === "Sediu central București");
+    const aliasToCentralIds = new Set<string>(
+      sediiList
+        .filter((s) => s.nume === "Showroom București")
+        .map((s) => s.id),
+    );
+    const normalizeSediuId = (id: string | null) => {
+      if (!id) return id;
+      if (sediuCentral && aliasToCentralIds.has(id)) {
+        return sediuCentral.id;
+      }
+      return id;
+    };
+
+    const rawCheltuieliSediuList = await db.select().from(cheltuieliSediu).where(range(cheltuieliSediu));
+    const rawCheltuieliAgentList = await db.select().from(cheltuieliAgent).where(range(cheltuieliAgent));
+
+    const cheltuieliSediuList = rawCheltuieliSediuList.map((e) => ({
+      ...e,
+      sediuId: normalizeSediuId(e.sediuId as any),
+    }));
+    const cheltuieliAgentList = rawCheltuieliAgentList.map((e) => {
+      const originalSediuId = (e.sediuId as any) || (e.agentId ? agentSediuMap[e.agentId as any] : null);
+      return {
+        ...e,
+        sediuId: normalizeSediuId(originalSediuId),
+      };
+    });
 
     const showroomTotals = sediiList.map(s => {
       const expenses = cheltuieliSediuList.filter(c => c.sediuId === s.id);
