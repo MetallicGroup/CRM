@@ -212,6 +212,17 @@ export default function Cheltuieli() {
     },
   });
 
+  const sediiForSelect = sedii
+    .filter((s) => !s.nume.toLowerCase().includes("bârlad"))
+    .map((s) => ({
+      ...s,
+      nume:
+        s.nume === "Showroom Brăgădiru" ||
+        s.nume === "Showroom Brăgadiru"
+          ? "Showroom Bragadiru"
+          : s.nume,
+    }));
+
   const { data: agents = [] } = useQuery<Agent[]>({
     queryKey: ["cheltuieli-angajati"],
     queryFn: async () => {
@@ -1082,14 +1093,22 @@ export default function Cheltuieli() {
                   <Label>Sediu</Label>
                   <Select
                     value={formData.sediuId}
-                    onValueChange={(val) => setFormData({ ...formData, sediuId: val })}
+                    onValueChange={(val) =>
+                      setFormData({
+                        ...formData,
+                        sediuId: val === "__ALL_SHOWROOMS__" ? "" : val,
+                      })
+                    }
                   >
                     <SelectTrigger data-testid="select-sediu">
                       <SelectValue placeholder="Selectează sediu" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sedii.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nume}</SelectItem>
+                      <SelectItem value="__ALL_SHOWROOMS__">Toate showroom-urile</SelectItem>
+                      {sediiForSelect.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.nume}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1108,7 +1127,7 @@ export default function Cheltuieli() {
                     <SelectValue placeholder="Selectează sediu" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sedii.map((s) => (
+                    {sediiForSelect.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.nume}</SelectItem>
                     ))}
                   </SelectContent>
