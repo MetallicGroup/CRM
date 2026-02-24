@@ -2029,10 +2029,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSedii(activ?: boolean): Promise<Sediu[]> {
-    if (activ !== undefined) {
-      return await db.select().from(sedii).where(eq(sedii.activ, activ)).orderBy(sedii.nume);
+    // Asigurăm existența sediilor de bază (central + hală + showroom-uri)
+    const defaultSedii = [
+      { nume: "Sediu central București", oras: "București", judet: "București" },
+      { nume: "Hală producție", oras: "București", judet: "Ilfov" },
+      { nume: "Showroom Bragadiru", oras: "Bragadiru", judet: "Ilfov" },
+      { nume: "Showroom Constanța", oras: "Constanța", judet: "Constanța" },
+      { nume: "Showroom TR", oras: "Alexandria", judet: "Teleorman" },
+      { nume: "Showroom Giurgiu", oras: "Giurgiu", judet: "Giurgiu" },
+    ];
+
+    let allSedii = await db.select().from(sedii);
+    const existingNames = new Set(allSedii.map((s) => s.nume));
+
+    const missing = defaultSedii.filter((d) => !existingNames.has(d.nume));
+    if (missing.length > 0) {
+      for (const s of missing) {
+        await db
+          .insert(sedii)
+          .values({
+            nume: s.nume,
+            oras: s.oras,
+            judet: s.judet,
+            activ: true,
+          } as any)
+          .onConflictDoNothing();
+      }
+      allSedii = await db.select().from(sedii);
     }
-    return await db.select().from(sedii).orderBy(sedii.nume);
+
+    let filtered = allSedii;
+    if (activ !== undefined) {
+      filtered = filtered.filter((s) => s.activ === activ);
+    }
+
+    return filtered.sort((a, b) => a.nume.localeCompare(b.nume));
   }
 
   async createSediu(data: CreateSediu): Promise<Sediu> {
@@ -2109,35 +2140,44 @@ export class DatabaseStorage implements IStorage {
     if (rows.length > 0) {
       // Ajustări speciale pentru Cheltuieli generale:
       if (parentId === "cat-generale") {
-        const allowedNames = new Set([
-          "Chirie",
-          "Utilități",
-          "Consumabile",
-          "Securitate",
-          "Abonamente",
-          "Salubritate",
-          "Altele",
-          "Materie primă și ambalaj",
+        // 1) Scoatem doar subcategoriile vechi nedorite
+        const bannedNames = new Set([
+          "Cota parte showroom",
+          "Cota parte generale",
+          "Angajați neproductivi",
         ]);
+        rows = rows.filter((r) => !bannedNames.has(r.name));
 
-        // Asigurăm existența „Materie primă și ambalaj”
-        const hasMaterie = rows.some((r) => r.name === "Materie primă și ambalaj");
-        if (!hasMaterie) {
-          const [inserted] = await db
-            .insert(expenseCategories)
-            .values({
-              parentId: parentId,
-              name: "Materie primă și ambalaj",
-              level: "sub",
-              displayOrder: 8,
-              active: true,
-            } as any)
-            .returning();
-          rows.push(inserted);
+        // 2) Ne asigurăm că există subcategoriile cerute
+        const requiredNames = [
+          "Abonamente",
+          "Consumabile",
+          "Materie primă și ambalaj",
+          "Utilități",
+          "Chirie",
+        ];
+
+        const existingNames = new Set(rows.map((r) => r.name));
+        let displayOrderStart = rows.length > 0 ? Math.max(...rows.map((r) => r.displayOrder ?? 0)) + 1 : 1;
+
+        for (const name of requiredNames) {
+          if (!existingNames.has(name)) {
+            const [inserted] = await db
+              .insert(expenseCategories)
+              .values({
+                parentId,
+                name,
+                level: "sub",
+                displayOrder: displayOrderStart++,
+                active: true,
+              } as any)
+              .returning();
+            rows.push(inserted);
+          }
         }
 
-        // Filtrăm subcategoriile vechi nedorite (ex: Cota parte showroom, Cota parte generale, Angajați neproductivi)
-        rows = rows.filter((r) => allowedNames.has(r.name));
+        // Reordonăm după displayOrder pentru UI consistent
+        rows.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
       }
 
       return rows;
