@@ -673,7 +673,7 @@ export default function Targeturi() {
             </div>
           ) : (
             <div className="space-y-4 py-2">
-              <div className="text-sm text-slate-400">
+              <div className="text-sm text-slate-900">
                 <div>{getCategoriaLabel(detailsProgress.target?.categoria ?? "AGENTI")} – {getAgentName(detailsProgress.target?.agentId ?? null)}</div>
                 <div>
                   Luna: {MONTHS[(detailsProgress.target?.luna ?? selectedMonth) - 1]}{" "}
@@ -684,10 +684,10 @@ export default function Targeturi() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Indicator</TableHead>
-                      <TableHead>Target</TableHead>
-                      <TableHead>Realizat</TableHead>
-                      <TableHead>%</TableHead>
+                      <TableHead className="text-slate-900">Indicator</TableHead>
+                      <TableHead className="text-slate-900">Target</TableHead>
+                      <TableHead className="text-slate-900">Realizat</TableHead>
+                      <TableHead className="text-slate-900">%</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -753,7 +753,7 @@ export default function Targeturi() {
                             : val.toLocaleString("ro-RO");
 
                         return (
-                          <TableRow key={label}>
+                          <TableRow key={label} className="text-slate-900">
                             <TableCell className="font-medium">{label}</TableCell>
                             <TableCell>
                               {target != null ? formatNumber(target) : <span className="text-slate-400">-</span>}
