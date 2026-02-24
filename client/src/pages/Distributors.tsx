@@ -67,7 +67,7 @@ export default function Distributors() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[150px] sticky left-0 bg-background z-10">Nume Distribuitor</TableHead>
+                    <TableHead className="w-[150px] sticky left-0 bg-slate-900 text-slate-50 z-10">Nume Distribuitor</TableHead>
                     <TableHead className="min-w-[120px]">Venit TVA</TableHead>
                     <TableHead className="min-w-[120px]">Achiziție TVA</TableHead>
                     <TableHead className="min-w-[120px]">ADAOS TVA</TableHead>
@@ -88,7 +88,7 @@ export default function Distributors() {
 
                     return (
                       <TableRow key={dist.id}>
-                        <TableCell className="sticky left-0 bg-background z-10 font-medium border-r">
+                        <TableCell className="sticky left-0 bg-slate-900 text-slate-50 z-10 font-medium border-r">
                           {dist.nume}
                         </TableCell>
                         <TableCell>
