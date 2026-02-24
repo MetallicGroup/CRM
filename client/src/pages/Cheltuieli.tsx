@@ -1096,7 +1096,10 @@ export default function Cheltuieli() {
                     onValueChange={(val) =>
                       setFormData({
                         ...formData,
-                        sediuId: val === "__ALL_SHOWROOMS__" ? "" : val,
+                        sediuId:
+                          val === "__ALL_SHOWROOMS__" || val === "__HALA_PRODUCTIE__"
+                            ? ""
+                            : val,
                       })
                     }
                   >
@@ -1105,6 +1108,7 @@ export default function Cheltuieli() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__ALL_SHOWROOMS__">Toate showroom-urile</SelectItem>
+                      <SelectItem value="__HALA_PRODUCTIE__">Hala Productie</SelectItem>
                       {sediiForSelect.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.nume}
