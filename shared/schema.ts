@@ -285,6 +285,7 @@ export const clients = pgTable("clients", {
   // SECȚIUNEA 5: Fișiere (salvăm doar numele, fișierele vor fi în storage separat)
   ofertaFilename: varchar("oferta_filename", { length: 255 }),
   ofertaFilename2: varchar("oferta_filename_2", { length: 255 }),
+  ofertaFilename3: varchar("oferta_filename_3", { length: 255 }),
 
   // SECȚIUNEA 6: Follow-up 1
   dataRevenire1: timestamp("data_revenire_1"),
@@ -426,6 +427,7 @@ export const createClientSchema = z.object({
   // Secțiunea 5: Fișiere
   ofertaFilename: z.string().optional(),
   ofertaFilename2: z.string().optional(),
+  ofertaFilename3: z.string().optional(),
 
   // Secțiunea 6: Follow-up
   dataRevenire1: z.string().optional(),

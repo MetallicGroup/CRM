@@ -2528,6 +2528,9 @@ export async function registerRoutes(
       } else if (fileType === "oferta2") {
         console.log(`[Upload API] Updating client ${clientId} with oferta2: ${objectPath} `);
         await storage.updateClient(clientId, { ofertaFilename2: objectPath });
+      } else if (fileType === "oferta3") {
+        console.log(`[Upload API] Updating client ${clientId} with oferta3: ${objectPath} `);
+        await storage.updateClient(clientId, { ofertaFilename3: objectPath } as any);
       }
 
       console.log(`[Upload API] Client upload success: ${objectPath} `);

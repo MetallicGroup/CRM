@@ -593,6 +593,7 @@ export class DatabaseStorage implements IStorage {
       pretAchizitie: parseDecimal(data.pretAchizitie),
       ofertaFilename: data.ofertaFilename || null,
       ofertaFilename2: data.ofertaFilename2 || null,
+      ofertaFilename3: (data as any).ofertaFilename3 || null,
       // Auto-set dataRevenire1 to next day if status is IN_ASTEPTARE and dataRevenire1 is not provided
       dataRevenire1: parseDate(data.dataRevenire1) || (data.stadiuOferta === "IN_ASTEPTARE" ? (() => {
         const tomorrow = new Date();
@@ -682,6 +683,7 @@ export class DatabaseStorage implements IStorage {
     if (data.pretAchizitie !== undefined) updateData.pretAchizitie = parseDecimal(data.pretAchizitie);
     if (data.ofertaFilename !== undefined) updateData.ofertaFilename = data.ofertaFilename || null;
     if (data.ofertaFilename2 !== undefined) updateData.ofertaFilename2 = data.ofertaFilename2 || null;
+    if ((data as any).ofertaFilename3 !== undefined) updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
     if (data.dataRevenire1 !== undefined) updateData.dataRevenire1 = parseDate(data.dataRevenire1);
     if (data.comentariuObservatii1 !== undefined) updateData.comentariuObservatii1 = data.comentariuObservatii1 || null;
     if (data.followUpEfectuat1 !== undefined) updateData.followUpEfectuat1 = data.followUpEfectuat1;

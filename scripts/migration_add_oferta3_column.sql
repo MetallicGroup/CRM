@@ -1,0 +1,3 @@
+ALTER TABLE clients
+  ADD COLUMN IF NOT EXISTS oferta_filename_3 VARCHAR(255);
+

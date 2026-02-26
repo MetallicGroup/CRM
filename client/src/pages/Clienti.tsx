@@ -385,6 +385,7 @@ const defaultFormData: Partial<CreateClient> = {
   pretAchizitie: "",
   ofertaFilename: "",
   ofertaFilename2: "",
+  ofertaFilename3: "" as any,
   dataRevenire1: "",
   comentariuObservatii1: "",
   followUpEfectuat1: false,
@@ -435,7 +436,7 @@ export default function Clienti() {
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
-  const [pendingFiles, setPendingFiles] = useState<{ oferta1?: File; oferta2?: File }>({});
+  const [pendingFiles, setPendingFiles] = useState<{ oferta1?: File; oferta2?: File; oferta3?: File }>({});
   const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false);
   const [sheetId, setSheetId] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -532,13 +533,16 @@ export default function Clienti() {
       return res.json();
     },
     onSuccess: async (newClient) => {
-      if (pendingFiles.oferta1 || pendingFiles.oferta2) {
+      if (pendingFiles.oferta1 || pendingFiles.oferta2 || pendingFiles.oferta3) {
         try {
           if (pendingFiles.oferta1) {
             await uploadFileForClient(pendingFiles.oferta1, newClient.id, "oferta1");
           }
           if (pendingFiles.oferta2) {
             await uploadFileForClient(pendingFiles.oferta2, newClient.id, "oferta2");
+          }
+          if (pendingFiles.oferta3) {
+            await uploadFileForClient(pendingFiles.oferta3, newClient.id, "oferta3");
           }
           toast.success("Client creat și fișiere încărcate cu succes");
         } catch (uploadError) {
@@ -677,6 +681,7 @@ export default function Clienti() {
       pretAchizitie: client.pretAchizitie || "",
       ofertaFilename: client.ofertaFilename || "",
       ofertaFilename2: client.ofertaFilename2 || "",
+      ofertaFilename3: (client as any).ofertaFilename3 || "",
       dataRevenire1: client.dataRevenire1 ? format(new Date(client.dataRevenire1), "yyyy-MM-dd") : "",
       comentariuObservatii1: client.comentariuObservatii1 || "",
       followUpEfectuat1: client.followUpEfectuat1 || false,
@@ -1138,6 +1143,63 @@ export default function Clienti() {
                       required
                       data-testid="input-telefon"
                     />
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="ofertaFilename3">Fișier Ofertă 3</Label>
+                  <div className="flex items-center gap-2">
+                    {(formData as any).ofertaFilename3 ? (
+                      <>
+                        <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                          <FileIcon className="h-4 w-4 text-slate-400" />
+                          <span className="text-sm truncate flex-1">
+                            {(formData as any).ofertaFilename3.split("/").pop() || "Fișier încărcat"}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            window.open(
+                              `${window.location.origin}${(formData as any).ofertaFilename3}`,
+                              "_blank",
+                              "noopener",
+                            )
+                          }
+                          data-testid="button-download-oferta-3"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFormData({ ...formData, ofertaFilename3: "" as any })}
+                          data-testid="button-remove-oferta-3"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    ) : (
+                      <ObjectUploader
+                        clientId={editingClient?.id}
+                        fileType="oferta3"
+                        pendingFile={pendingFiles.oferta3}
+                        onComplete={(objectPath, filename) => {
+                          setFormData({ ...formData, ofertaFilename3: objectPath as any });
+                          toast.success(`Fișier "${filename}" încărcat cu succes`);
+                        }}
+                        onFileSelected={(file) => {
+                          setPendingFiles({ ...pendingFiles, oferta3: file });
+                          toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
+                        }}
+                        onError={(error) => toast.error(error.message)}
+                        data-testid="uploader-oferta-3"
+                      >
+                        Încarcă Fișier
+                      </ObjectUploader>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -2090,7 +2152,7 @@ export default function Clienti() {
                 </div>
               )}
 
-              {(viewClient.ofertaFilename || viewClient.ofertaFilename2) && (
+              {(viewClient.ofertaFilename || viewClient.ofertaFilename2 || (viewClient as any).ofertaFilename3) && (
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-3">Documente</h4>
                   <div className="flex flex-wrap gap-3">
@@ -2116,6 +2178,24 @@ export default function Clienti() {
                       >
                         <Download className="h-4 w-4" />
                         {viewClient.ofertaFilename2.split('/').pop() || "Ofertă 2"}
+                      </Button>
+                    )}
+                    {(viewClient as any).ofertaFilename3 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          window.open(
+                            `${window.location.origin}${(viewClient as any).ofertaFilename3}`,
+                            "_blank",
+                            "noopener",
+                          )
+                        }
+                        className="gap-2"
+                        data-testid="button-view-download-oferta-3"
+                      >
+                        <Download className="h-4 w-4" />
+                        {(viewClient as any).ofertaFilename3.split("/").pop() || "Ofertă 3"}
                       </Button>
                     )}
                   </div>
