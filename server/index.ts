@@ -114,8 +114,21 @@ async function ensureDatabaseEnums() {
   }
 }
 
+async function ensureClientFileColumns() {
+  try {
+    // Coloana pentru al treilea fișier de ofertă (oferta_filename_3) – sigură dacă există deja
+    await pool.query(`
+      ALTER TABLE clients
+      ADD COLUMN IF NOT EXISTS oferta_filename_3 VARCHAR(255);
+    `);
+  } catch (err) {
+    console.error("Failed to ensure clients table has oferta_filename_3 column:", err);
+  }
+}
+
 (async () => {
   await ensureDatabaseEnums();
+  await ensureClientFileColumns();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
