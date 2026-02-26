@@ -925,6 +925,7 @@ export const createCheltuialaSediuSchema = z.object({
   an: z.number().min(2020).max(2100),
   firma: z.string().min(1, "Firma este obligatorie"),
   facturaFilename: z.string().optional(),
+  documentUrl: z.string().optional(),
   tipCheltuiala: z.string().optional(),
 });
 

@@ -2337,6 +2337,7 @@ export class DatabaseStorage implements IStorage {
       firma: data.firma,
       autoNr: data.autoNr || null,
       facturaFilename: data.facturaFilename || null,
+      documentUrl: data.documentUrl || null,
       tipCheltuiala: data.tipCheltuiala || null,
     }).returning();
     return cheltuiala;
@@ -2361,6 +2362,7 @@ export class DatabaseStorage implements IStorage {
     if (data.firma !== undefined) updateData.firma = data.firma;
     if (data.autoNr !== undefined) updateData.autoNr = data.autoNr || null;
     if (data.facturaFilename !== undefined) updateData.facturaFilename = data.facturaFilename || null;
+    if (data.documentUrl !== undefined) updateData.documentUrl = data.documentUrl || null;
     if (data.tipCheltuiala !== undefined) updateData.tipCheltuiala = data.tipCheltuiala || null;
 
     const [cheltuiala] = await db
@@ -2470,6 +2472,7 @@ export class DatabaseStorage implements IStorage {
       an: data.an,
       firma: data.firma,
       facturaFilename: data.facturaFilename || null,
+      documentUrl: (data as any).documentUrl || null,
       tipCheltuiala: data.tipCheltuiala || null,
     }).returning();
     return cheltuiala;
@@ -2491,6 +2494,7 @@ export class DatabaseStorage implements IStorage {
     if (data.an !== undefined) updateData.an = data.an;
     if (data.firma !== undefined) updateData.firma = data.firma;
     if (data.facturaFilename !== undefined) updateData.facturaFilename = data.facturaFilename || null;
+    if ((data as any).documentUrl !== undefined) updateData.documentUrl = (data as any).documentUrl || null;
     if (data.tipCheltuiala !== undefined) updateData.tipCheltuiala = data.tipCheltuiala || null;
 
     const [cheltuiala] = await db
