@@ -2364,6 +2364,7 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-salariu-brut", parentId: "cat-salarii", name: "Salariu brut", displayOrder: 1 },
         { id: "sub-comision", parentId: "cat-salarii", name: "Comision", displayOrder: 2 },
         { id: "sub-bonuri", parentId: "cat-salarii", name: "Bonuri de masa", displayOrder: 3 },
+        { id: "sub-prestari-servicii", parentId: "cat-salarii", name: "Prestări servicii", displayOrder: 4 },
       );
     } else if (parentId === "cat-transport-marfa") {
       subs.push(
