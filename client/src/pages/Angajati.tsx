@@ -543,13 +543,25 @@ export default function Angajati() {
                           {isAgent ? m.cheltuieliIndirecte.toFixed(0) : "-"}
                         </TableCell>
 
-                        <TableCell className="font-bold text-emerald-400 text-right">
+                        <TableCell className={`font-bold text-right ${
+                          isAgent
+                            ? m.profitOperational >= 0
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                            : ""
+                        }`}>
                           {isAgent ? m.profitOperational.toFixed(0) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           {isAgent ? `${m.comisionPercent.toFixed(2)}%` : "-"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className={`font-bold text-right ${
+                          isAgent
+                            ? m.profitOperational >= 0
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                            : ""
+                        }`}>
                           {isAgent ? m.comisionValoare.toFixed(0) : "-"}
                         </TableCell>
                         <TableCell className={`font-bold text-lg border-l-4 ${
