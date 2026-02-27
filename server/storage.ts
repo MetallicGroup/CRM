@@ -3657,6 +3657,33 @@ export class DatabaseStorage implements IStorage {
     const agentsFixedCosts = await db.select().from(agentFixedCosts).where(range(agentFixedCosts));
     const agentsSales = await db.select().from(agentSalesProfitability).where(range(agentSalesProfitability));
 
+    // Venit productie: sumă din clienți cu stadiu comandă PRODUS și câmpul Venit productie completat.
+    // O treime merge în mod egal la Kuke, Marian angajat, Laurentiu (la venit total).
+    const venitProductieRows = await db
+      .select({ procentComision: clients.procentComision })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.stadiuComanda, "PRODUS"),
+          isNotNull(clients.procentComision),
+          sql`TRIM(COALESCE(${clients.procentComision}, '')) != ''`,
+          sql`EXTRACT(YEAR FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${an}`,
+          sql`EXTRACT(MONTH FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) >= ${startMonth}`,
+          sql`EXTRACT(MONTH FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) <= ${endMonth}`
+        )
+      );
+    let totalVenitProductie = 0;
+    for (const row of venitProductieRows) {
+      const v = parseFloat(String(row.procentComision || "").trim().replace(",", "."));
+      if (!isNaN(v)) totalVenitProductie += v;
+    }
+    const venitProductiePerAgent = totalVenitProductie / 3; // o treime la fiecare din cei trei
+    const venitProductieAgentNames = ["kuke", "marian angajat", "laurentiu"];
+    const isVenitProductieAgent = (firstName: string, lastName: string) => {
+      const full = `${(firstName || "").trim()} ${(lastName || "").trim()}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return venitProductieAgentNames.some((n) => full.includes(n));
+    };
+
     // Sum cheltuieli_agent by agentId for the period (real expenses attributed to each agent)
     const rawCheltuieliAgentInRange = await db.select().from(cheltuieliAgent).where(range(cheltuieliAgent));
     const cheltuieliAgentSumByAgentId: Record<string, number> = {};
@@ -3703,7 +3730,11 @@ export class DatabaseStorage implements IStorage {
       const venitAcoperis = parseFloat(sales?.venitAcoperis || "0");
       const achizitieGard = parseFloat(sales?.achizitieGard || "0");
       const achizitieAcoperis = parseFloat(sales?.achizitieAcoperis || "0");
-      const venitTotal = venitGard + venitAcoperis;
+      let venitTotal = venitGard + venitAcoperis;
+      // Venit productie: o treime la Kuke, Marian angajat, Laurentiu (doar dacă există sumă)
+      if (venitProductiePerAgent > 0 && isVenitProductieAgent(agent.firstName, agent.lastName)) {
+        venitTotal += venitProductiePerAgent;
+      }
       const achizitieTotal = achizitieGard + achizitieAcoperis;
       const adaosTVA = venitTotal - achizitieTotal;
 
