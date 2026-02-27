@@ -44,15 +44,34 @@ interface Agent {
   role: string;
 }
 
+const DASHBOARD_PROFIT_AGENT_KEYS = ["alexandru croitoru", "marian costache", "oana", "razvan rosu"];
+function isDashboardProfitAgent(user: { firstName?: string; lastName?: string } | null): boolean {
+  if (!user) return false;
+  const n = `${(user.firstName || "").trim()} ${(user.lastName || "").trim()}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return DASHBOARD_PROFIT_AGENT_KEYS.some((key) => n.includes(key));
+}
+
+interface ProfitComisionAgent {
+  id: string;
+  name: string;
+  profitOperational: number;
+  comisionValoare: number;
+}
+
 export default function CRMDashboard() {
   const { user, isAdmin } = useAuth();
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const isProfitAgent = isDashboardProfitAgent(user);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin && user?.id && isProfitAgent) setSelectedAgent(user.id);
+  }, [isAdmin, user?.id, isProfitAgent]);
 
   const formattedDate = format(currentTime, "EEEE, d MMMM yyyy", { locale: ro });
   const formattedTime = format(currentTime, "HH:mm:ss");
@@ -76,7 +95,31 @@ export default function CRMDashboard() {
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: isAdmin,
+    enabled: isAdmin || isProfitAgent,
+  });
+
+  const luna = new Date().getMonth() + 1;
+  const an = new Date().getFullYear();
+  const showProfitCards = isProfitAgent ? true : isAdmin && selectedAgent !== "all";
+  const { data: profitComisionData } = useQuery<{ agents: ProfitComisionAgent[] }>({
+    queryKey: ["dashboard-profit-comision", luna, an],
+    queryFn: async () => {
+      const res = await fetch(`/api/dashboard/profit-comision?luna=${luna}&an=${an}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea profit/comision");
+      return res.json();
+    },
+    enabled: showProfitCards,
+    refetchInterval: 60000,
+  });
+
+  const profitAgents = profitComisionData?.agents ?? [];
+  const cardAgentId = isProfitAgent ? user?.id : selectedAgent;
+  const cardAgentMetrics = profitAgents.find((a) => a.id === cardAgentId);
+  const leaderboardOrdered = [...profitAgents].sort((a, b) => {
+    const aGreen = a.profitOperational >= 0 ? 1 : 0;
+    const bGreen = b.profitOperational >= 0 ? 1 : 0;
+    if (bGreen !== aGreen) return bGreen - aGreen;
+    return b.comisionValoare - a.comisionValoare;
   });
 
   const { data: notifications } = useQuery<{
@@ -134,15 +177,19 @@ export default function CRMDashboard() {
         </div>
       </div>
 
-      {/* Selectare agenți */}
+      {/* Selectare agenți: agenții din cele 4 nu pot alege "Toți agenții", văd doar contul lor */}
       <div className="flex flex-wrap items-center gap-4">
         <span className="text-sm text-slate-400">Agent:</span>
-        <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+        <Select
+          value={selectedAgent}
+          onValueChange={setSelectedAgent}
+          disabled={!isAdmin && isProfitAgent}
+        >
           <SelectTrigger className="w-[220px]" data-testid="select-agent-filter">
             <SelectValue placeholder="Selectează agent" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toți agenții</SelectItem>
+            {isAdmin && <SelectItem value="all">Toți agenții</SelectItem>}
             {agents.filter((a) => a.id).map((agent) => (
               <SelectItem key={agent.id} value={agent.id}>
                 {agent.firstName} {agent.lastName}
@@ -172,6 +219,52 @@ export default function CRMDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Carduri Cheltuieli + Comision + Leaderboard (doar pentru cei 4 agenți) */}
+      {showProfitCards && (cardAgentMetrics || leaderboardOrdered.length > 0) && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
+            <CardContent className="pt-6">
+              <p className="text-sm text-slate-400 mb-1">Cheltuieli</p>
+              <p
+                className={`text-2xl font-bold ${cardAgentMetrics ? (cardAgentMetrics.profitOperational >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-500"}`}
+              >
+                {cardAgentMetrics != null
+                  ? cardAgentMetrics.profitOperational.toLocaleString("ro-RO", { minimumFractionDigits: 0 })
+                  : "—"}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Profit operațional (lună curentă)</p>
+            </CardContent>
+          </Card>
+          <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
+            <CardContent className="pt-6">
+              <p className="text-sm text-slate-400 mb-1">Comision</p>
+              <p
+                className={`text-2xl font-bold ${cardAgentMetrics ? (cardAgentMetrics.profitOperational >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-500"}`}
+              >
+                {cardAgentMetrics != null
+                  ? cardAgentMetrics.comisionValoare.toLocaleString("ro-RO", { minimumFractionDigits: 0 })
+                  : "—"}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Comision RON (lună curentă)</p>
+            </CardContent>
+          </Card>
+          <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
+            <CardContent className="pt-6">
+              <p className="text-sm text-slate-400 mb-2">Leaderboard</p>
+              <ol className="list-decimal list-inside space-y-1 text-slate-200 font-medium">
+                {leaderboardOrdered.length === 0
+                  ? "—"
+                  : leaderboardOrdered.map((a, i) => (
+                      <li key={a.id}>
+                        {a.name}
+                      </li>
+                    ))}
+              </ol>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Lead-uri: din reclama/extern și clienți care au primit ofertă */}
       <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">

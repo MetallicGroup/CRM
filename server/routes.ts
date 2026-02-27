@@ -391,6 +391,35 @@ export async function registerRoutes(
     }
   });
 
+  // Profit operațional + Comision RON pentru cei 4 agenți (carduri dashboard + leaderboard)
+  const DASHBOARD_PROFIT_AGENT_NAMES = ["alexandru croitoru", "marian costache", "oana", "razvan rosu"];
+  const isDashboardProfitAgent = (name: string) => {
+    const n = (name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return DASHBOARD_PROFIT_AGENT_NAMES.some((key) => n.includes(key));
+  };
+  app.get("/api/dashboard/profit-comision", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const luna = req.query.luna ? parseInt(req.query.luna as string) : new Date().getMonth() + 1;
+      const an = req.query.an ? parseInt(req.query.an as string) : new Date().getFullYear();
+      const report = await storage.getFinancialReport(luna, an);
+      const all = (report?.agentsMetrics || []) as { id: string; name: string; profitOperational: number; comisionValoare: number }[];
+      const agents = all.filter((m) => isDashboardProfitAgent(m.name));
+
+      if (req.userRole !== "ADMIN") {
+        const user = await storage.getUser(req.userId!);
+        if (!user) return res.status(403).json({ message: "Acces interzis" });
+        const fullName = `${(user.firstName || "").trim()} ${(user.lastName || "").trim()}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const allowed = DASHBOARD_PROFIT_AGENT_NAMES.some((key) => fullName.includes(key));
+        if (!allowed) return res.status(403).json({ message: "Acces doar pentru agenții configurați" });
+      }
+
+      res.json({ agents });
+    } catch (error) {
+      console.error("Dashboard profit-comision error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea datelor" });
+    }
+  });
+
   // ---------- CRM Chat ----------
   app.get("/api/chat/conversations", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
