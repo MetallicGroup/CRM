@@ -3687,10 +3687,71 @@ export class DatabaseStorage implements IStorage {
 
     // Harta agent -> sediu (pentru a repartiza cheltuielile vechi fără sediu)
     const agentSediuMap: Record<string, string | null> = {};
+    const normalizeName = (n: string | null | undefined) =>
+      (n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+    const centralSediu = sediiList.find(
+      (s) =>
+        normalizeName(s.nume) === "sediu central bucuresti" ||
+        normalizeName(s.nume) === "sediu central (bucuresti)" ||
+        normalizeName(s.nume) === "sediu central bucuresti ",
+    );
+    const constantaSediu = sediiList.find(
+      (s) => normalizeName(s.nume) === "showroom constanta",
+    );
+    const giurgiuSediu = sediiList.find(
+      (s) => normalizeName(s.nume) === "showroom giurgiu",
+    );
+    const teleormanSediu = sediiList.find(
+      (s) =>
+        normalizeName(s.nume) === "showroom teleorman" ||
+        normalizeName(s.nume) === "showroom tr",
+    );
+
+    const centralAgents = new Set(
+      [
+        "daniel danu",
+        "raluca munteanu",
+        "dana marcu",
+        "madalina madalina",
+        "iulian marcu",
+        "dragos frangache",
+        "alexandru croitoru",
+        "marian costache",
+      ].map((n) => normalizeName(n)),
+    );
+    const constantaAgents = new Set(
+      ["oana frangache", "razvan rosu"].map((n) => normalizeName(n)),
+    );
+    const giurgiuAgents = new Set(
+      ["marian toma"].map((n) => normalizeName(n)),
+    );
+    const teleormanAgents = new Set(
+      ["alexandra"].map((n) => normalizeName(n)),
+    );
+
     for (const agent of agents) {
-      if (agent.id) {
-        agentSediuMap[agent.id] = (agent as any).sediuId || null;
+      if (!agent.id) continue;
+      const fullName = normalizeName(`${agent.firstName} ${agent.lastName}`);
+
+      let sediuId: string | null =
+        ((agent as any).sediuId as string | null) || null;
+
+      if (centralSediu && centralAgents.has(fullName)) {
+        sediuId = centralSediu.id;
+      } else if (constantaSediu && constantaAgents.has(fullName)) {
+        sediuId = constantaSediu.id;
+      } else if (giurgiuSediu && giurgiuAgents.has(fullName)) {
+        sediuId = giurgiuSediu.id;
+      } else if (
+        teleormanSediu &&
+        (teleormanAgents.has(fullName) ||
+          normalizeName(agent.firstName) === "alexandra")
+      ) {
+        sediuId = teleormanSediu.id;
       }
+
+      agentSediuMap[agent.id] = sediuId;
     }
 
     // Normalizăm anumite sedii vechi (ex: „Showroom București”) către cele noi (ex: „Sediu central București”)
