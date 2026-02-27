@@ -2244,6 +2244,44 @@ export class DatabaseStorage implements IStorage {
 
         // Reordonăm după displayOrder pentru UI consistent
         rows.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+      } else if (parentId === "cat-cota-parte") {
+        // Asigurăm toate subcategoriile pentru „Cota parte” (inclusiv Salariu brut, Comision, Bonuri de masa)
+        const required = [
+          { id: "sub-cota-marketing", name: "Marketing" },
+          { id: "sub-cota-contabil-jurist", name: "Contabil/Jurist" },
+          { id: "sub-cota-protectia-medicina-muncii", name: "Protecția/Medicina muncii" },
+          { id: "sub-cota-abonamente", name: "Abonamente" },
+          { id: "sub-cota-salariu", name: "Salariu brut" },
+          { id: "sub-cota-comision", name: "Comision" },
+          { id: "sub-cota-bonuri-masa", name: "Bonuri de masa" },
+        ];
+
+        const existingById = new Set(rows.map((r) => r.id));
+        const existingByName = new Set(rows.map((r) => r.name));
+        let displayOrderStart =
+          rows.length > 0 ? Math.max(...rows.map((r) => r.displayOrder ?? 0)) + 1 : 1;
+
+        for (const def of required) {
+          if (!existingById.has(def.id) && !existingByName.has(def.name)) {
+            const [inserted] = await db
+              .insert(expenseCategories)
+              .values({
+                id: def.id,
+                parentId,
+                name: def.name,
+                level: "sub",
+                displayOrder: displayOrderStart++,
+                active: true,
+              } as any)
+              .onConflictDoNothing()
+              .returning();
+            if (inserted) {
+              rows.push(inserted);
+            }
+          }
+        }
+
+        rows.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
       }
 
       return rows;
@@ -2736,6 +2774,10 @@ export class DatabaseStorage implements IStorage {
     //  - vânzări prin parteneri (distribuitori / colaboratori)
     // Exclude:
     //  - vânzările prin parteneri comisionari (partners.tipPartener = PARTENER_COMISIONAR)
+    // Calculăm intervalul exact al lunii (folosind date locale) ca să nu existe decalaje de o zi
+    const startDate = new Date(an, luna - 1, 1, 0, 0, 0, 0);
+    const endDate = new Date(an, luna, 0, 23, 59, 59, 999);
+
     const soldClients = await db
       .select({
         valoareOferta: clients.valoareOferta,
@@ -2749,8 +2791,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.agentId, agentId),
           eq(clients.stadiuOferta, "VANDUT"),
-          sql`EXTRACT(MONTH FROM ${clients.dataVanzarii}) = ${luna}`,
-          sql`EXTRACT(YEAR FROM ${clients.dataVanzarii}) = ${an}`,
+          gte(clients.dataVanzarii, startDate),
+          lte(clients.dataVanzarii, endDate),
           or(
             isNull(clients.partnerId),
             ne(partners.tipPartener, "PARTENER_COMISIONAR")
