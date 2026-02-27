@@ -2791,8 +2791,20 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.agentId, agentId),
           eq(clients.stadiuOferta, "VANDUT"),
-          gte(clients.dataVanzarii, startDate),
-          lte(clients.dataVanzarii, endDate),
+          // Interval lună: folosim dataVanzarii dacă există, altfel updatedAt (similar cu alte statistici)
+          or(
+            and(
+              isNotNull(clients.dataVanzarii),
+              gte(clients.dataVanzarii, startDate),
+              lte(clients.dataVanzarii, endDate)
+            ),
+            and(
+              isNull(clients.dataVanzarii),
+              gte(clients.updatedAt, startDate),
+              lte(clients.updatedAt, endDate)
+            )
+          ),
+          // Excludem doar partenerii comisionari
           or(
             isNull(clients.partnerId),
             ne(partners.tipPartener, "PARTENER_COMISIONAR")
