@@ -3726,7 +3726,6 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.partnerId, partnerId),
           eq(clients.stadiuOferta, "VANDUT"),
-          eq(clients.incasat, true),
           or(
             and(gte(clients.dataVanzarii, startDate), lte(clients.dataVanzarii, endDate)),
             and(sql`${clients.dataVanzarii} IS NULL`, gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
