@@ -86,9 +86,10 @@ export default function ParteneriComisionari() {
       const v = row.valoareOferta ? parseFloat(row.valoareOferta) : 0;
       const achizPart = row.achizitiePartener ? parseFloat(row.achizitiePartener) : 0;
       const achizFurn = row.pretAchizitie ? parseFloat(row.pretAchizitie) : 0;
-      const tva21 = v * 0.21;
-      const comisionPartener = v - achizPart - tva21;
-      const profit = comisionPartener - achizFurn;
+      const baza = v - achizPart;
+      const tva21 = baza * 0.21;
+      const comisionPartener = baza - tva21; // (V - Achizitie partener) - 21%
+      const profit = achizPart - achizFurn; // Achizitie partener - Achizitie furnizor
 
       totalValoare += v;
       totalAchizPartner += achizPart;
