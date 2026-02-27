@@ -2127,12 +2127,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getExpenseCategoriesByLevel(level: string): Promise<ExpenseCategory[]> {
-    return await db.select().from(expenseCategories)
-      .where(and(
-        eq(expenseCategories.level, level as any),
-        eq(expenseCategories.active, true)
-      ))
+    let rows = await db
+      .select()
+      .from(expenseCategories)
+      .where(
+        and(
+          eq(expenseCategories.level, level as any),
+          eq(expenseCategories.active, true),
+        ),
+      )
       .orderBy(expenseCategories.displayOrder);
+
+    // Asigurăm existența tuturor categoriilor principale standard (inclusiv „Cota parte”)
+    if (level === "main") {
+      const defaultMain = [
+        { id: "cat-salarii", name: "Salarii + bonusuri", displayOrder: 1 },
+        { id: "cat-auto", name: "Cheltuieli auto", displayOrder: 2 },
+        { id: "cat-generale", name: "Cheltuieli generale", displayOrder: 3 },
+        { id: "cat-bugete", name: "Bugete de stat", displayOrder: 4 },
+        { id: "cat-cota-parte", name: "Cota parte", displayOrder: 5 },
+      ];
+
+      const existingIds = new Set(rows.map((r) => r.id));
+      for (const def of defaultMain) {
+        if (!existingIds.has(def.id)) {
+          const [inserted] = await db
+            .insert(expenseCategories)
+            .values({
+              id: def.id,
+              name: def.name,
+              level: "main",
+              active: true,
+              displayOrder: def.displayOrder,
+            } as any)
+            .onConflictDoNothing()
+            .returning();
+          if (inserted) {
+            rows.push(inserted);
+          }
+        }
+      }
+
+      rows.sort(
+        (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+      );
+    }
+
+    return rows;
   }
 
   async getExpenseCategoriesByParent(parentId: string): Promise<ExpenseCategory[]> {
