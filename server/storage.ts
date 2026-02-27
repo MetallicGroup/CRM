@@ -3771,11 +3771,12 @@ export class DatabaseStorage implements IStorage {
 
     const centralAgents = new Set(
       [
-        "daniel danu",
-        "raluca munteanu",
-        "dana marcu",
+        // Nume actuale de user în aplicație
+        "daniel daniel",
+        "raluca raluca",
+        "dana dana",
         "madalina madalina",
-        "iulian marcu",
+        "iulian iulian",
         "dragos frangache",
         "alexandru croitoru",
         "marian costache",
