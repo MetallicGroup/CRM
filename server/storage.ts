@@ -2155,11 +2155,15 @@ export class DatabaseStorage implements IStorage {
     if (rows.length > 0) {
       // Ajustări speciale pentru Cheltuieli generale:
       if (parentId === "cat-generale") {
-        // 1) Scoatem doar subcategoriile vechi nedorite
+        // 1) Scoatem subcategoriile vechi nedorite și cele mutate la „Cota parte”
         const bannedNames = new Set([
           "Cota parte showroom",
           "Cota parte generale",
           "Angajați neproductivi",
+          "Marketing",
+          "Contabil/Jurist",
+          "Protecția/Medicina muncii",
+          "Abonamente",
         ]);
         rows = rows.filter((r) => !bannedNames.has(r.name));
 
