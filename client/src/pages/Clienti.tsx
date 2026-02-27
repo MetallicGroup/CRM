@@ -381,6 +381,7 @@ const defaultFormData: Partial<CreateClient> = {
   dataLivrarii: "",
   procentComision: undefined,
   comisionOferta: "",
+  achizitiePartener: "" as any,
   incasat: false,
   pretAchizitie: "",
   ofertaFilename: "",
@@ -677,6 +678,7 @@ export default function Clienti() {
       dataLivrarii: client.dataLivrarii ? format(new Date(client.dataLivrarii), "yyyy-MM-dd") : "",
       procentComision: client.procentComision || undefined,
       comisionOferta: client.comisionOferta || "",
+      achizitiePartener: (client as any).achizitiePartener || "",
       incasat: client.incasat || false,
       pretAchizitie: client.pretAchizitie || "",
       ofertaFilename: client.ofertaFilename || "",
@@ -1540,18 +1542,12 @@ export default function Clienti() {
                       type="number"
                       step="0.01"
                       value={formData.valoareOferta}
-                      onChange={(e) => {
-                        const newValoare = e.target.value;
-                        const valoareOferta = parseFloat(newValoare || "0");
-                        const comisionCalculat = formData.procentComision
-                          ? (valoareOferta * parseInt(formData.procentComision) / 100).toFixed(2)
-                          : "";
+                      onChange={(e) =>
                         setFormData({
                           ...formData,
-                          valoareOferta: newValoare,
-                          comisionOferta: comisionCalculat
-                        });
-                      }}
+                          valoareOferta: e.target.value,
+                        })
+                      }
                       data-testid="input-valoare-oferta"
                     />
                   </div>
@@ -1663,18 +1659,12 @@ export default function Clienti() {
                     <Label htmlFor="procentComision">Procent Comision</Label>
                     <Select
                       value={formData.procentComision || "none"}
-                      onValueChange={(value) => {
-                        const newProcentComision = value === "none" ? undefined : value as CommissionPercent;
-                        const valoareOferta = parseFloat(formData.valoareOferta || "0");
-                        const comisionCalculat = newProcentComision
-                          ? (valoareOferta * parseInt(newProcentComision) / 100).toFixed(2)
-                          : "";
+                      onValueChange={(value) =>
                         setFormData({
                           ...formData,
-                          procentComision: newProcentComision,
-                          comisionOferta: comisionCalculat
-                        });
-                      }}
+                          procentComision: value === "none" ? undefined : (value as CommissionPercent),
+                        })
+                      }
                     >
                       <SelectTrigger data-testid="select-procent-comision">
                         <SelectValue placeholder="Selectează" />
@@ -1690,19 +1680,22 @@ export default function Clienti() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="comisionOferta">Comision Ofertă (RON)</Label>
+                    <Label htmlFor="achizitiePartener">Achiziție partener (RON)</Label>
                     <Input
-                      id="comisionOferta"
+                      id="achizitiePartener"
                       type="number"
                       step="0.01"
-                      value={formData.comisionOferta}
-                      readOnly
-                      className="bg-muted"
-                      data-testid="input-comision-oferta"
+                      value={(formData as any).achizitiePartener || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          achizitiePartener: e.target.value,
+                        } as any)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pretAchizitie">Preț Achiziție (RON)</Label>
+                    <Label htmlFor="pretAchizitie">Achiziție furnizor (RON)</Label>
                     <Input
                       id="pretAchizitie"
                       type="number"

@@ -2170,6 +2170,8 @@ export class DatabaseStorage implements IStorage {
           "Materie primă și ambalaj",
           "Utilități",
           "Chirie",
+          "Dezvoltare/Inovatie",
+          "Dezvoltare/Extindere",
         ];
 
         const existingNames = new Set(rows.map((r) => r.name));

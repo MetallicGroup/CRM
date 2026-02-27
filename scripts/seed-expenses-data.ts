@@ -70,7 +70,7 @@ async function seed() {
         { id: 'sub-esalonari', parentId: 'cat-bugete', name: 'Eșalonări', displayOrder: 4 },
     ];
 
-    // Level 2: Sub (Generale) – chirie, utilități, consumabile, materie primă și ambalaj, securitate, abonamente, salubritate, altele
+    // Level 2: Sub (Generale) – chirie, utilități, consumabile, materie primă și ambalaj, securitate, abonamente, salubritate, altele, dezvoltare
     const subGenerale = [
         { id: 'sub-chirie', parentId: 'cat-generale', name: 'Chirie', displayOrder: 1 },
         { id: 'sub-utilitati', parentId: 'cat-generale', name: 'Utilități', displayOrder: 2 },
@@ -83,6 +83,8 @@ async function seed() {
         { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 9 },
         { id: 'sub-marketing', parentId: 'cat-generale', name: 'Marketing', displayOrder: 10 },
         { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 11 },
+        { id: 'sub-dezvoltare-inovatie', parentId: 'cat-generale', name: 'Dezvoltare/Inovatie', displayOrder: 12 },
+        { id: 'sub-dezvoltare-extindere', parentId: 'cat-generale', name: 'Dezvoltare/Extindere', displayOrder: 13 },
     ];
 
     const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale];
