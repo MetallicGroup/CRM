@@ -768,13 +768,13 @@ export default function Cheltuieli() {
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0);
 
-  // Card 4: Total Cheltuieli – toate cheltuielile (agent + sediu) pe luna/an selectate
+  // Card 4: Total Cheltuieli – toate cheltuielile (agent + sediu) după toate filtrele (inclusiv Subcategorie)
   const totalGeneralCard =
-    cheltuieliAgent.reduce((sum, c) => {
+    filteredCheltuieliAgent.reduce((sum, c) => {
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0) +
-    cheltuieliSediu.reduce((sum, c) => {
+    filteredCheltuieliSediu.reduce((sum, c) => {
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0);
