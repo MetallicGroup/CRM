@@ -281,6 +281,7 @@ export const clients = pgTable("clients", {
   comisionOferta: decimal("comision_oferta", { precision: 12, scale: 2 }),
   incasat: boolean("incasat").default(false),
   pretAchizitie: decimal("pret_achizitie", { precision: 12, scale: 2 }),
+  achizitiePartener: decimal("achizitie_partener", { precision: 12, scale: 2 }),
 
   // SECȚIUNEA 5: Fișiere (salvăm doar numele, fișierele vor fi în storage separat)
   ofertaFilename: varchar("oferta_filename", { length: 255 }),
@@ -423,6 +424,7 @@ export const createClientSchema = z.object({
   comisionOferta: z.string().optional(),
   incasat: z.boolean().optional().default(false),
   pretAchizitie: z.string().optional(),
+  achizitiePartener: z.string().optional(),
 
   // Secțiunea 5: Fișiere
   ofertaFilename: z.string().optional(),

@@ -79,6 +79,7 @@ const menuSections: MenuSection[] = [
       { icon: LayoutDashboard, label: 'Raport Financiar', href: '/profitabilitate/raport' },
       { icon: Users, label: 'Angajați', href: '/profitabilitate/angajati' },
       { icon: Truck, label: 'Distribuitori', href: '/profitabilitate/distribuitori' },
+      { icon: Truck, label: 'Parteneri comisionari', href: '/profitabilitate/parteneri-comisionari' },
       { icon: Building2, label: 'Showroom-uri', href: '/profitabilitate/showroom-uri' },
       { icon: Receipt, label: 'Cheltuieli', href: '/cheltuieli' },
       { icon: Settings, label: 'Setări Financiar', href: '/profitabilitate/setari' },

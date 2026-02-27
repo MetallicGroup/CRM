@@ -1,0 +1,217 @@
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useStore, monthToNumber } from "@/lib/store";
+import { MonthSelector } from "@/components/ui/month-selector";
+import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+interface Partner {
+  id: string;
+  nume: string;
+  tipPartener: string;
+}
+
+interface PartnerSaleRow {
+  id: string;
+  nume: string;
+  dataVanzarii: string | null;
+  valoareOferta: string | null;
+  pretAchizitie: string | null;
+  achizitiePartener: string | null;
+}
+
+export default function ParteneriComisionari() {
+  const { selectedMonth, selectedYear } = useStore();
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+
+  const { data: partners = [], isLoading: loadingPartners } = useQuery<Partner[]>({
+    queryKey: ["partners-comisionari"],
+    queryFn: async () => {
+      const res = await fetch("/api/partners?tipPartener=PARTENER_COMISIONAR&activ=true");
+      if (!res.ok) throw new Error("Eroare la încărcarea partenerilor");
+      return res.json();
+    },
+  });
+
+  const partnerId = selectedPartnerId || partners[0]?.id || null;
+
+  const { data: sales = [], isLoading: loadingSales } = useQuery<PartnerSaleRow[]>({
+    queryKey: ["partner-comisionar-sales", partnerId, selectedMonth, selectedYear],
+    queryFn: async () => {
+      if (!partnerId) return [];
+      const luna = monthToNumber(selectedMonth);
+      const params = new URLSearchParams({ luna: luna.toString(), an: selectedYear.toString() });
+      const res = await fetch(`/api/partners/${partnerId}/comisionari-vanzari?` + params.toString());
+      if (!res.ok) throw new Error("Eroare la încărcarea vânzărilor partenerului");
+      return res.json();
+    },
+    enabled: !!partnerId,
+  });
+
+  const metrics = useMemo(() => {
+    let totalValoare = 0;
+    let totalAchizPartner = 0;
+    let totalAchizFurnizor = 0;
+    let totalComision = 0;
+    let totalProfit = 0;
+
+    const rows = sales.map((row) => {
+      const v = row.valoareOferta ? parseFloat(row.valoareOferta) : 0;
+      const achizPart = row.achizitiePartener ? parseFloat(row.achizitiePartener) : 0;
+      const achizFurn = row.pretAchizitie ? parseFloat(row.pretAchizitie) : 0;
+      const tva21 = v * 0.21;
+      const comisionPartener = v - achizPart - tva21;
+      const profit = comisionPartener - achizFurn;
+
+      totalValoare += v;
+      totalAchizPartner += achizPart;
+      totalAchizFurnizor += achizFurn;
+      totalComision += comisionPartener;
+      totalProfit += profit;
+
+      return {
+        ...row,
+        v,
+        achizPart,
+        achizFurn,
+        comisionPartener,
+        profit,
+      };
+    });
+
+    return {
+      rows,
+      totals: {
+        totalValoare,
+        totalAchizPartner,
+        totalAchizFurnizor,
+        totalComision,
+        totalProfit,
+      },
+    };
+  }, [sales]);
+
+  if (loadingPartners) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Parteneri comisionari</h1>
+          <p className="text-slate-400">
+            Analiză vânzări și comision pe partener, pe lună și an.
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <select
+            className="bg-slate-900 border border-slate-700 rounded-md px-3 py-1 text-sm"
+            value={partnerId || ""}
+            onChange={(e) => setSelectedPartnerId(e.target.value || null)}
+          >
+            {partners.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nume}
+              </option>
+            ))}
+          </select>
+          <MonthSelector />
+        </div>
+      </div>
+
+      <Card className="w-full overflow-hidden">
+        <CardHeader>
+          <CardTitle>
+            {partners.find((p) => p.id === partnerId)?.nume || "Niciun partener selectat"} – {selectedMonth} {selectedYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingSales ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : metrics.rows.length === 0 ? (
+            <p className="text-center py-8 text-slate-400">
+              Nu există vânzări pentru acest partener în perioada selectată.
+            </p>
+          ) : (
+            <>
+              <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                <div className="flex w-max space-x-4 p-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Data vânzării</TableHead>
+                        <TableHead className="text-right">Valoare vândută</TableHead>
+                        <TableHead className="text-right">Achiziție partener</TableHead>
+                        <TableHead className="text-right">Achiziție furnizor</TableHead>
+                        <TableHead className="text-right">Comision partener</TableHead>
+                        <TableHead className="text-right">Profit</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {metrics.rows.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell>{row.nume}</TableCell>
+                          <TableCell>
+                            {row.dataVanzarii
+                              ? new Date(row.dataVanzarii).toLocaleDateString("ro-RO")
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {row.v.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {row.achizPart.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {row.achizFurn.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {row.comisionPartener.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {row.profit.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-semibold bg-slate-900/40">
+                        <TableCell colSpan={2}>Total</TableCell>
+                        <TableCell className="text-right">
+                          {metrics.totals.totalValoare.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.totals.totalAchizPartner.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.totals.totalAchizFurnizor.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.totals.totalComision.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {metrics.totals.totalProfit.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+

@@ -122,6 +122,16 @@ export interface IStorage {
   // Centralized Financial Calculation
   getFinancialReport(luna: number, an: number): Promise<any>;
 
+  // Partner comisionari report
+  getPartnerSalesForPeriod(partnerId: string, luna: number, an: number): Promise<{
+    id: string;
+    nume: string;
+    dataVanzarii: Date | null;
+    valoareOferta: string | null;
+    pretAchizitie: string | null;
+    achizitiePartener: string | null;
+  }[]>;
+
   // Dashboard methods
   getActiveAgentsCount(): Promise<number>;
   getAgents(): Promise<SafeUser[]>;
@@ -591,6 +601,7 @@ export class DatabaseStorage implements IStorage {
       comisionOferta: parseDecimal(data.comisionOferta),
       incasat: data.incasat || false,
       pretAchizitie: parseDecimal(data.pretAchizitie),
+      achizitiePartener: parseDecimal((data as any).achizitiePartener),
       ofertaFilename: data.ofertaFilename || null,
       ofertaFilename2: data.ofertaFilename2 || null,
       ofertaFilename3: (data as any).ofertaFilename3 || null,
@@ -681,6 +692,8 @@ export class DatabaseStorage implements IStorage {
     if (data.comisionOferta !== undefined) updateData.comisionOferta = parseDecimal(data.comisionOferta);
     if (data.incasat !== undefined) updateData.incasat = data.incasat;
     if (data.pretAchizitie !== undefined) updateData.pretAchizitie = parseDecimal(data.pretAchizitie);
+    if ((data as any).achizitiePartener !== undefined)
+      updateData.achizitiePartener = parseDecimal((data as any).achizitiePartener);
     if (data.ofertaFilename !== undefined) updateData.ofertaFilename = data.ofertaFilename || null;
     if (data.ofertaFilename2 !== undefined) updateData.ofertaFilename2 = data.ofertaFilename2 || null;
     if ((data as any).ofertaFilename3 !== undefined) updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
@@ -3677,6 +3690,56 @@ export class DatabaseStorage implements IStorage {
         profitGrup
       }
     };
+  }
+
+  async getPartnerSalesForPeriod(
+    partnerId: string,
+    luna: number,
+    an: number
+  ): Promise<{
+    id: string;
+    nume: string;
+    dataVanzarii: Date | null;
+    valoareOferta: string | null;
+    pretAchizitie: string | null;
+    achizitiePartener: string | null;
+  }[]> {
+    const startDate = new Date(an, luna - 1, 1);
+    const endDate = new Date(an, luna, 0, 23, 59, 59);
+
+    const rows = await db
+      .select({
+        id: clients.id,
+        nume: clients.nume,
+        dataVanzarii: clients.dataVanzarii,
+        updatedAt: clients.updatedAt,
+        stadiuOferta: clients.stadiuOferta,
+        valoareOferta: clients.valoareOferta,
+        pretAchizitie: clients.pretAchizitie,
+        achizitiePartener: clients.achizitiePartener,
+        partnerId: clients.partnerId,
+      })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.partnerId, partnerId),
+          eq(clients.stadiuOferta, "VANDUT"),
+          or(
+            and(gte(clients.dataVanzarii, startDate), lte(clients.dataVanzarii, endDate)),
+            and(sql`${clients.dataVanzarii} IS NULL`, gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
+          )
+        )
+      )
+      .orderBy(clients.dataVanzarii);
+
+    return rows.map((r) => ({
+      id: r.id,
+      nume: r.nume,
+      dataVanzarii: r.dataVanzarii,
+      valoareOferta: r.valoareOferta,
+      pretAchizitie: (r as any).pretAchizitie || null,
+      achizitiePartener: (r as any).achizitiePartener || null,
+    }));
   }
 }
 

@@ -2645,6 +2645,32 @@ export async function registerRoutes(
     }
   });
 
+  // ============ PARTENERI COMISIONARI (RAPORT) ============
+
+  app.get("/api/partners/comisionari", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const list = await storage.getAllPartners({ tipPartener: "PARTENER_COMISIONAR", activ: true });
+      res.json(list);
+    } catch (error) {
+      console.error("Get parteneri comisionari error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea partenerilor comisionari" });
+    }
+  });
+
+  app.get("/api/partners/:id/comisionari-vanzari", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const luna = req.query.luna ? parseInt(req.query.luna as string) : new Date().getMonth() + 1;
+      const an = req.query.an ? parseInt(req.query.an as string) : new Date().getFullYear();
+
+      const rows = await storage.getPartnerSalesForPeriod(id, luna, an);
+      res.json(rows);
+    } catch (error) {
+      console.error("Get partner comisionar sales error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea vânzărilor partenerului" });
+    }
+  });
+
   // ============ FINANCIAL REPORT ============
 
   app.get("/api/financial/report", requireAuth, async (req: AuthRequest, res) => {
