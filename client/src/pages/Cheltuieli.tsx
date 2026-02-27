@@ -624,9 +624,9 @@ export default function Cheltuieli() {
 
   const getSediuName = (sediuId: string | null) => {
     if (!sediuId) return "-";
-    const fromNormalized = sediiForSelect.find(s => s.id === sediuId);
+    const fromNormalized = sediiForSelect.find((s) => s.id === sediuId);
     if (fromNormalized) return fromNormalized.nume;
-    const sediu = sedii.find(s => s.id === sediuId);
+    const sediu = sedii.find((s) => s.id === sediuId);
     const name = sediu?.nume || "-";
     if (name === "Sediu central București" || name === "Showroom București") {
       return "Sediu Central (Bucuresti)";
@@ -634,9 +634,61 @@ export default function Cheltuieli() {
     return name;
   };
 
-  const totalAgent = statsAgent?.total || 0;
-  const totalSediu = statsSediu?.total || 0;
-  const totalGeneral = totalAgent + totalSediu;
+  // ID-urile pentru Hala Productie (luăm toate variantele de nume)
+  const halaProductieIds = sedii
+    .filter((s) => {
+      const n = s.nume.toLowerCase();
+      return n.includes("hală producție") || n.includes("hala productie");
+    })
+    .map((s) => s.id);
+
+  // Card 1: Cheltuieli Agent – toate cheltuielile care AU agentId (filtrate deja după lună/an/agent/sediu/firma)
+  const totalAgentCard = cheltuieliAgent.reduce((sum, c) => {
+    if (!c.agentId) return sum;
+    const valoare = parseFloat(c.suma || "0");
+    return sum + (isNaN(valoare) ? 0 : valoare);
+  }, 0);
+
+  // Card 2: Cheltuieli Showroom – cheltuieli cu sediuId setat, dar FĂRĂ Hala Productie
+  const totalShowroomCard =
+    cheltuieliAgent.reduce((sum, c) => {
+      if (!c.sediuId) return sum;
+      if (halaProductieIds.includes(c.sediuId)) return sum;
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0) +
+    cheltuieliSediu.reduce((sum, c) => {
+      if (!c.sediuId) return sum;
+      if (halaProductieIds.includes(c.sediuId)) return sum;
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0);
+
+  // Card 3: Cheltuieli Producție – toate cheltuielile cu sediu = Hala Productie (agent + sediu)
+  const totalProductieCard =
+    cheltuieliAgent.reduce((sum, c) => {
+      if (!c.sediuId) return sum;
+      if (!halaProductieIds.includes(c.sediuId)) return sum;
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0) +
+    cheltuieliSediu.reduce((sum, c) => {
+      if (!c.sediuId) return sum;
+      if (!halaProductieIds.includes(c.sediuId)) return sum;
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0);
+
+  // Card 4: Total Cheltuieli – toate cheltuielile (agent + sediu) pe luna/an selectate
+  const totalGeneralCard =
+    cheltuieliAgent.reduce((sum, c) => {
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0) +
+    cheltuieliSediu.reduce((sum, c) => {
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0);
 
   const MONTHS = [
     { value: "1", label: "Ianuarie" },
@@ -687,7 +739,7 @@ export default function Cheltuieli() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {totalGeneral.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+              {totalGeneralCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
             </div>
           </CardContent>
         </Card>
@@ -698,18 +750,29 @@ export default function Cheltuieli() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {totalAgent.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+              {totalAgentCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cheltuieli Sediu</CardTitle>
+            <CardTitle className="text-sm font-medium">Cheltuieli Showroom</CardTitle>
             <Building2 className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {totalSediu.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+              {totalShowroomCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cheltuieli Producție (Hala Productie)</CardTitle>
+            <Building2 className="h-4 w-4 text-slate-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {totalProductieCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
             </div>
           </CardContent>
         </Card>
