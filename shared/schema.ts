@@ -850,6 +850,7 @@ export const cheltuieliAgent = pgTable("cheltuieli_agent", {
 
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
 
+  createdById: varchar("created_by_id", { length: 36 }).references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -907,6 +908,7 @@ export const cheltuieliSediu = pgTable("cheltuieli_sediu", {
 
   tipCheltuiala: varchar("tip_cheltuiala", { length: 50 }),
 
+  createdById: varchar("created_by_id", { length: 36 }).references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

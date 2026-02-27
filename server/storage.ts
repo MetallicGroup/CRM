@@ -2292,6 +2292,9 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-cota-contabil-jurist", parentId: "cat-cota-parte", name: "Contabil/Jurist", displayOrder: 2 },
         { id: "sub-cota-protectia-medicina-muncii", parentId: "cat-cota-parte", name: "Protecția/Medicina muncii", displayOrder: 3 },
         { id: "sub-cota-abonamente", parentId: "cat-cota-parte", name: "Abonamente", displayOrder: 4 },
+        { id: "sub-cota-salariu", parentId: "cat-cota-parte", name: "Salariu", displayOrder: 5 },
+        { id: "sub-cota-comision", parentId: "cat-cota-parte", name: "Comision", displayOrder: 6 },
+        { id: "sub-cota-bonuri-masa", parentId: "cat-cota-parte", name: "Bonuri de Masa", displayOrder: 7 },
       );
     } else if (parentId === "cat-salarii") {
       subs.push(
@@ -2369,7 +2372,7 @@ export class DatabaseStorage implements IStorage {
     categoryId?: string;
     sediuId?: string;
     firma?: string;
-  }): Promise<CheltuialaAgent[]> {
+  }): Promise<(CheltuialaAgent & { createdByFirstName?: string | null; createdByLastName?: string | null })[]> {
     const conditions = [];
 
     if (filters?.agentId) {
@@ -2391,7 +2394,32 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(cheltuieliAgent.firma, filters.firma));
     }
 
-    let query = db.select().from(cheltuieliAgent);
+    let query = db
+      .select({
+        id: cheltuieliAgent.id,
+        agentId: cheltuieliAgent.agentId,
+        categoryId: cheltuieliAgent.categoryId,
+        subcategoryId: cheltuieliAgent.subcategoryId,
+        detailCategoryId: cheltuieliAgent.detailCategoryId,
+        suma: cheltuieliAgent.suma,
+        descriere: cheltuieliAgent.descriere,
+        dataCheltuiala: cheltuieliAgent.dataCheltuiala,
+        luna: cheltuieliAgent.luna,
+        an: cheltuieliAgent.an,
+        judet: cheltuieliAgent.judet,
+        sediuId: cheltuieliAgent.sediuId,
+        firma: cheltuieliAgent.firma,
+        autoNr: cheltuieliAgent.autoNr,
+        facturaFilename: cheltuieliAgent.facturaFilename,
+        documentUrl: cheltuieliAgent.documentUrl,
+        tipCheltuiala: cheltuieliAgent.tipCheltuiala,
+        createdById: cheltuieliAgent.createdById,
+        createdAt: cheltuieliAgent.createdAt,
+        createdByFirstName: users.firstName,
+        createdByLastName: users.lastName,
+      })
+      .from(cheltuieliAgent)
+      .leftJoin(users, eq(cheltuieliAgent.createdById, users.id));
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
@@ -2399,7 +2427,10 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(cheltuieliAgent.dataCheltuiala));
   }
 
-  async createCheltuialaAgent(data: CreateCheltuialaAgent): Promise<CheltuialaAgent> {
+  async createCheltuialaAgent(
+    data: CreateCheltuialaAgent,
+    createdById?: string,
+  ): Promise<CheltuialaAgent> {
     const dataCheltuiala = new Date(data.dataCheltuiala);
 
     const [cheltuiala] = await db.insert(cheltuieliAgent).values({
@@ -2419,6 +2450,7 @@ export class DatabaseStorage implements IStorage {
       facturaFilename: data.facturaFilename || null,
       documentUrl: data.documentUrl || null,
       tipCheltuiala: data.tipCheltuiala || null,
+      createdById: createdById || null,
     }).returning();
     return cheltuiala;
   }
@@ -2510,7 +2542,7 @@ export class DatabaseStorage implements IStorage {
     an?: number;
     categoryId?: string;
     firma?: string;
-  }): Promise<CheltuialaSediu[]> {
+  }): Promise<(CheltuialaSediu & { createdByFirstName?: string | null; createdByLastName?: string | null })[]> {
     const conditions = [];
 
     if (filters?.sediuId) {
@@ -2529,7 +2561,29 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(cheltuieliSediu.firma, filters.firma));
     }
 
-    let query = db.select().from(cheltuieliSediu);
+    let query = db
+      .select({
+        id: cheltuieliSediu.id,
+        sediuId: cheltuieliSediu.sediuId,
+        categoryId: cheltuieliSediu.categoryId,
+        subcategoryId: cheltuieliSediu.subcategoryId,
+        detailCategoryId: cheltuieliSediu.detailCategoryId,
+        suma: cheltuieliSediu.suma,
+        descriere: cheltuieliSediu.descriere,
+        dataCheltuiala: cheltuieliSediu.dataCheltuiala,
+        luna: cheltuieliSediu.luna,
+        an: cheltuieliSediu.an,
+        firma: cheltuieliSediu.firma,
+        facturaFilename: cheltuieliSediu.facturaFilename,
+        documentUrl: cheltuieliSediu.documentUrl,
+        tipCheltuiala: cheltuieliSediu.tipCheltuiala,
+        createdById: cheltuieliSediu.createdById,
+        createdAt: cheltuieliSediu.createdAt,
+        createdByFirstName: users.firstName,
+        createdByLastName: users.lastName,
+      })
+      .from(cheltuieliSediu)
+      .leftJoin(users, eq(cheltuieliSediu.createdById, users.id));
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
@@ -2537,7 +2591,10 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(cheltuieliSediu.dataCheltuiala));
   }
 
-  async createCheltuialaSediu(data: CreateCheltuialaSediu): Promise<CheltuialaSediu> {
+  async createCheltuialaSediu(
+    data: CreateCheltuialaSediu,
+    createdById?: string,
+  ): Promise<CheltuialaSediu> {
     const dataCheltuiala = new Date(data.dataCheltuiala);
 
     const [cheltuiala] = await db.insert(cheltuieliSediu).values({
@@ -2554,6 +2611,7 @@ export class DatabaseStorage implements IStorage {
       facturaFilename: data.facturaFilename || null,
       documentUrl: (data as any).documentUrl || null,
       tipCheltuiala: data.tipCheltuiala || null,
+      createdById: createdById || null,
     }).returning();
     return cheltuiala;
   }

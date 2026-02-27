@@ -101,6 +101,8 @@ interface CheltuialaAgent {
   facturaFilename: string | null;
   documentUrl: string | null;
   createdAt: string;
+  createdByFirstName?: string | null;
+  createdByLastName?: string | null;
 }
 
 interface CheltuialaSediu {
@@ -118,6 +120,8 @@ interface CheltuialaSediu {
   facturaFilename: string | null;
   documentUrl: string | null;
   createdAt: string;
+  createdByFirstName?: string | null;
+  createdByLastName?: string | null;
 }
 
 const FIRME = [
@@ -285,6 +289,61 @@ export default function Cheltuieli() {
     activeTab === "sediu"
       ? mainCategories.filter((cat) => cat.id === "cat-generale" || cat.id === "cat-cota-parte")
       : mainCategories;
+
+  // Filtrare categorii disponibile în funcție de Sediu (pentru formular)
+  const getSelectedSediuForForm = () => {
+    if (!formData.sediuId) return null;
+    return (
+      sediiForSelect.find((s) => s.id === formData.sediuId) ||
+      sedii.find((s) => s.id === formData.sediuId) ||
+      null
+    );
+  };
+
+  const filterCategoriesBySediu = (
+    categories: ExpenseCategory[],
+  ): ExpenseCategory[] => {
+    const sediu = getSelectedSediuForForm();
+    if (!sediu) return categories;
+
+    const nume = sediu.nume;
+    const lower = nume.toLowerCase();
+
+    const isHala =
+      lower.includes("hală produc") || lower.includes("hala productie");
+    const isCentral =
+      nume === "Sediu Central (Bucuresti)" ||
+      lower.includes("sediu central bucure");
+    const isShowroom = lower.includes("showroom");
+
+    if (isCentral) {
+      // Sediu central → toate categoriile
+      return categories;
+    }
+
+    if (isHala) {
+      // Hală producție → doar Salarii + bonusuri, Cheltuieli generale, Cheltuieli auto
+      const allowed = new Set([
+        "cat-salarii",
+        "cat-generale",
+        "cat-auto",
+      ]);
+      return categories.filter((c) => allowed.has(c.id));
+    }
+
+    if (isShowroom) {
+      // Restul showroom-urilor → toate în afară de Cota parte și Bugete de stat
+      const banned = new Set(["cat-cota-parte", "cat-bugete"]);
+      return categories.filter((c) => !banned.has(c.id));
+    }
+
+    return categories;
+  };
+
+  const availableCategoriesForForm =
+    activeTab === "agent"
+      ? filterCategoriesBySediu(mainCategoriesForForm)
+      : mainCategoriesForForm;
 
   const { data: cheltuieliSediu = [], isLoading: loadingSediu } = useQuery<CheltuialaSediu[]>({
     queryKey: ["cheltuieli-sediu", lunaFilter, anFilter, sediuFilter, categoryFilter, firmaFilter],
@@ -909,6 +968,7 @@ export default function Cheltuieli() {
                       <TableHead>Firmă</TableHead>
                       <TableHead>Nr. Auto</TableHead>
                       <TableHead>Doc</TableHead>
+                      <TableHead>Creat de</TableHead>
                       <TableHead className="text-right">Suma (LEI)</TableHead>
                       {isAdmin && <TableHead className="text-right">Acțiuni</TableHead>}
                     </TableRow>
@@ -948,6 +1008,11 @@ export default function Cheltuieli() {
                               <Download className="h-4 w-4" />
                             </a>
                           ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {c.createdByFirstName
+                            ? `${c.createdByFirstName} ${c.createdByLastName || ""}`.trim()
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-red-600">
                           {parseFloat(c.suma).toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
@@ -1001,6 +1066,7 @@ export default function Cheltuieli() {
                       <TableHead>Firmă</TableHead>
                       <TableHead>Descriere</TableHead>
                       <TableHead>Doc</TableHead>
+                      <TableHead>Creat de</TableHead>
                       <TableHead className="text-right">Suma (LEI)</TableHead>
                       {isAdmin && <TableHead className="text-right">Acțiuni</TableHead>}
                     </TableRow>
@@ -1031,6 +1097,11 @@ export default function Cheltuieli() {
                               <Download className="h-4 w-4" />
                             </a>
                           ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {c.createdByFirstName
+                            ? `${c.createdByFirstName} ${c.createdByLastName || ""}`.trim()
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-red-600">
                           {parseFloat(c.suma).toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
@@ -1111,34 +1182,125 @@ export default function Cheltuieli() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Tip Cheltuială (Categorie) *</Label>
-                <Select
-                  value={selectedCategory}
-                  onValueChange={(val) => {
-                    setSelectedCategory(val);
-                    setSelectedSubcategory("");
-                    setFormData({ ...formData, categoryId: val, subcategoryId: "", detailCategoryId: "" });
-                  }}
-                >
-                  <SelectTrigger data-testid="select-category">
-                    <SelectValue placeholder="Selectează categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mainCategoriesForForm.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* 2. Sediu + Tip Cheltuială */}
+            {activeTab === "agent" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Sediu</Label>
+                  <Select
+                    value={formData.sediuId}
+                    onValueChange={(val) =>
+                      setFormData({
+                        ...formData,
+                        sediuId: val,
+                      })
+                    }
+                  >
+                    <SelectTrigger data-testid="select-sediu">
+                      <SelectValue placeholder="Selectează sediu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sediiForSelect.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.nume}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tip Cheltuială (Categorie) *</Label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={(val) => {
+                      setSelectedCategory(val);
+                      setSelectedSubcategory("");
+                      setFormData({
+                        ...formData,
+                        categoryId: val,
+                        subcategoryId: "",
+                        detailCategoryId: "",
+                      });
+                    }}
+                  >
+                    <SelectTrigger data-testid="select-category">
+                      <SelectValue placeholder="Selectează categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCategoriesForForm.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+            )}
+
+            {activeTab === "sediu" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Sediu *</Label>
+                  <Select
+                    value={formData.sediuId}
+                    onValueChange={(val) => setFormData({ ...formData, sediuId: val })}
+                  >
+                    <SelectTrigger data-testid="select-sediu-form">
+                      <SelectValue placeholder="Selectează sediu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sediiForSelect.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.nume}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tip Cheltuială (Categorie) *</Label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={(val) => {
+                      setSelectedCategory(val);
+                      setSelectedSubcategory("");
+                      setFormData({
+                        ...formData,
+                        categoryId: val,
+                        subcategoryId: "",
+                        detailCategoryId: "",
+                      });
+                    }}
+                  >
+                    <SelectTrigger data-testid="select-category">
+                      <SelectValue placeholder="Selectează categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mainCategoriesForForm.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Subcategorie + Angajat (doar pentru tab Agent) */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Subcategorie *</Label>
                 <Select
                   value={selectedSubcategory}
                   onValueChange={(val) => {
                     setSelectedSubcategory(val);
-                    setFormData({ ...formData, subcategoryId: val, detailCategoryId: "" });
+                    setFormData({
+                      ...formData,
+                      subcategoryId: val,
+                      detailCategoryId: "",
+                    });
                   }}
                   disabled={!selectedCategory}
                 >
@@ -1147,11 +1309,34 @@ export default function Cheltuieli() {
                   </SelectTrigger>
                   <SelectContent>
                     {subcategories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {activeTab === "agent" && (
+                <div className="space-y-2">
+                  <Label>Angajat</Label>
+                  <Select
+                    value={formData.agentId}
+                    onValueChange={(val) => setFormData({ ...formData, agentId: val })}
+                  >
+                    <SelectTrigger data-testid="select-agent">
+                      <SelectValue placeholder="Selectează angajat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.firstName} {a.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             {detailCategories.length > 0 && (
@@ -1173,69 +1358,7 @@ export default function Cheltuieli() {
               </div>
             )}
 
-            {activeTab === "agent" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Agent</Label>
-                  <Select
-                    value={formData.agentId}
-                    onValueChange={(val) => setFormData({ ...formData, agentId: val })}
-                  >
-                    <SelectTrigger data-testid="select-agent">
-                      <SelectValue placeholder="Selectează agent" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {agents.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>{a.firstName} {a.lastName}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Sediu</Label>
-                  <Select
-                    value={formData.sediuId}
-                    onValueChange={(val) =>
-                      setFormData({
-                        ...formData,
-                        sediuId: val,
-                      })
-                    }
-                  >
-                  <SelectTrigger data-testid="select-sediu">
-                    <SelectValue placeholder="Selectează sediu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sediiForSelect.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.nume}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "sediu" && (
-              <div className="space-y-2">
-                <Label>Sediu *</Label>
-                <Select
-                  value={formData.sediuId}
-                  onValueChange={(val) => setFormData({ ...formData, sediuId: val })}
-                >
-                  <SelectTrigger data-testid="select-sediu-form">
-                    <SelectValue placeholder="Selectează sediu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sediiForSelect.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nume}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
+            {/* 4. Firmă + Auto (doar pentru tab Agent la auto) */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Firmă *</Label>

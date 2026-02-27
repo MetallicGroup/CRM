@@ -1629,11 +1629,14 @@ export async function registerRoutes(
           }
 
           created.push(
-            storage.createCheltuialaAgent({
-              ...data,
-              sediuId: s.id,
-              suma: suma.toFixed(2),
-            } as any)
+            storage.createCheltuialaAgent(
+              {
+                ...data,
+                sediuId: s.id,
+                suma: suma.toFixed(2),
+              } as any,
+              req.userId,
+            ),
           );
         });
 
@@ -1641,7 +1644,10 @@ export async function registerRoutes(
         return res.status(201).json(results);
       }
 
-      const cheltuiala = await storage.createCheltuialaAgent(data);
+      const cheltuiala = await storage.createCheltuialaAgent(
+        data,
+        req.userId,
+      );
       res.status(201).json(cheltuiala);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2011,7 +2017,10 @@ export async function registerRoutes(
   app.post("/api/cheltuieli-sediu", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const data = createCheltuialaSediuSchema.parse(req.body);
-      const cheltuiala = await storage.createCheltuialaSediu(data);
+      const cheltuiala = await storage.createCheltuialaSediu(
+        data,
+        req.userId,
+      );
       res.status(201).json(cheltuiala);
     } catch (error) {
       if (error instanceof z.ZodError) {
