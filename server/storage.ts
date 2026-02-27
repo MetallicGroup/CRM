@@ -3730,7 +3730,9 @@ export class DatabaseStorage implements IStorage {
 
       // Comision %: valoare fixă 15% (la cerere)
       const comisionPercent = 15;
-      const comisionValoare = profitOperational * (comisionPercent / 100);
+      // Comision RON se calculează din valoarea absolută a profitului operațional,
+      // astfel încât să fie întotdeauna un cost pozitiv care se SCADĂ.
+      const comisionValoare = Math.abs(profitOperational) * (comisionPercent / 100);
 
       const profitBrut = profitOperational - comisionValoare;
 
@@ -3992,7 +3994,9 @@ export class DatabaseStorage implements IStorage {
 
       const profitOperational = m.adaosTVA - (cheltAgent + cheltShowroom + cheltIndirecte);
       const comisionPercent = m.comisionPercent ?? 0;
-      const comisionValoare = profitOperational * (comisionPercent / 100);
+      // Comision RON se calculează din valoarea absolută a profitului operațional,
+      // astfel încât să fie întotdeauna un cost pozitiv care se SCADĂ.
+      const comisionValoare = Math.abs(profitOperational) * (comisionPercent / 100);
       const profitBrut = profitOperational - comisionValoare;
 
       return {

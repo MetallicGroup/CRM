@@ -125,7 +125,9 @@ export default function Angajati() {
 
         const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
         const comisionPercent = base.comisionPercent || 0;
-        const comisionValoare = profitOperational * (comisionPercent / 100);
+        // Comision RON se calculează din valoarea absolută a profitului operațional,
+        // astfel încât să fie întotdeauna un cost pozitiv care se scade.
+        const comisionValoare = Math.abs(profitOperational) * (comisionPercent / 100);
         const profitBrut = profitOperational - comisionValoare;
 
         return {
