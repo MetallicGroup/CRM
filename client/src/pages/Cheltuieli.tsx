@@ -224,11 +224,36 @@ export default function Cheltuieli() {
         if (nume === "Hală producție" || nume === "Hala Productie") {
           nume = "Hala Productie";
         }
+        if (nume === "Sediu central București" || nume === "Sediu Central (Bucuresti)") {
+          nume = "Sediu Central (Bucuresti)";
+        }
+        if (nume === "Showroom Constanța" || nume === "Showroom Constanta") {
+          nume = "Showroom Constanta";
+        }
+        if (nume === "Showroom TR" || nume === "Showroom Teleorman") {
+          nume = "Showroom Teleorman";
+        }
         if (!byName.has(nume)) {
           byName.set(nume, { ...s, nume });
         }
       });
-    return Array.from(byName.values()).sort((a, b) => a.nume.localeCompare(b.nume));
+
+    const order: string[] = [
+      "Hala Productie",
+      "Sediu Central (Bucuresti)",
+      "Showroom Bragadiru",
+      "Showroom Constanta",
+      "Showroom Giurgiu",
+      "Showroom Teleorman",
+    ];
+    const orderIndex = new Map(order.map((name, idx) => [name, idx]));
+
+    return Array.from(byName.values()).sort((a, b) => {
+      const ai = orderIndex.has(a.nume) ? orderIndex.get(a.nume)! : Number.MAX_SAFE_INTEGER;
+      const bi = orderIndex.has(b.nume) ? orderIndex.get(b.nume)! : Number.MAX_SAFE_INTEGER;
+      if (ai !== bi) return ai - bi;
+      return a.nume.localeCompare(b.nume);
+    });
   })();
 
   const { data: agents = [] } = useQuery<Agent[]>({
@@ -258,7 +283,7 @@ export default function Cheltuieli() {
 
   const mainCategoriesForForm =
     activeTab === "sediu"
-      ? mainCategories.filter((cat) => cat.id === "cat-generale")
+      ? mainCategories.filter((cat) => cat.id === "cat-generale" || cat.id === "cat-cota-parte")
       : mainCategories;
 
   const { data: cheltuieliSediu = [], isLoading: loadingSediu } = useQuery<CheltuialaSediu[]>({
@@ -757,7 +782,7 @@ export default function Cheltuieli() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toate</SelectItem>
-                  {sedii.map(s => (
+                  {sediiForSelect.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.nume}</SelectItem>
                   ))}
                 </SelectContent>
@@ -1108,17 +1133,16 @@ export default function Cheltuieli() {
                       })
                     }
                   >
-                    <SelectTrigger data-testid="select-sediu">
-                      <SelectValue placeholder="Selectează sediu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__ALL_SHOWROOMS__">Toate showroom-urile</SelectItem>
-                      {sediiForSelect.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.nume}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                  <SelectTrigger data-testid="select-sediu">
+                    <SelectValue placeholder="Selectează sediu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sediiForSelect.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.nume}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                   </Select>
                 </div>
               </div>

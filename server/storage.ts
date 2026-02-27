@@ -2050,7 +2050,7 @@ export class DatabaseStorage implements IStorage {
       { nume: "Hală producție", oras: "București", judet: "Ilfov" },
       { nume: "Showroom Bragadiru", oras: "Bragadiru", judet: "Ilfov" },
       { nume: "Showroom Constanța", oras: "Constanța", judet: "Constanța" },
-      { nume: "Showroom TR", oras: "Alexandria", judet: "Teleorman" },
+      { nume: "Showroom Teleorman", oras: "Alexandria", judet: "Teleorman" },
       { nume: "Showroom Giurgiu", oras: "Giurgiu", judet: "Giurgiu" },
     ];
 
@@ -2163,11 +2163,12 @@ export class DatabaseStorage implements IStorage {
         ]);
         rows = rows.filter((r) => !bannedNames.has(r.name));
 
-        // 2) Ne asigurăm că există subcategoriile cerute
+        // 2) Ne asigurăm că există subcategoriile cerute (fără Marketing/Abonamente,
+        // iar „Materie primă și ambalaj” este împărțită în două)
         const requiredNames = [
-          "Abonamente",
           "Consumabile",
-          "Materie primă și ambalaj",
+          "Materie primă",
+          "Ambalaj",
           "Utilități",
           "Chirie",
           "Dezvoltare/Inovatie",
@@ -2212,7 +2213,7 @@ export class DatabaseStorage implements IStorage {
     } else if (parentId === "cat-auto") {
       subs.push(
         { id: "sub-combustibil", parentId: "cat-auto", name: "Combustibil", displayOrder: 1 },
-        { id: "sub-service", parentId: "cat-auto", name: "Service", displayOrder: 2 },
+        { id: "sub-service", parentId: "cat-auto", name: "Revizii/Service", displayOrder: 2 },
         { id: "sub-altele-auto", parentId: "cat-auto", name: "Altele", displayOrder: 3 },
         { id: "sub-asigurari", parentId: "cat-auto", name: "Asigurări", displayOrder: 4 },
         { id: "sub-leasing", parentId: "cat-auto", name: "Leasing", displayOrder: 5 },
@@ -2223,10 +2224,18 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-chirie", parentId: "cat-generale", name: "Chirie", displayOrder: 1 },
         { id: "sub-utilitati", parentId: "cat-generale", name: "Utilități", displayOrder: 2 },
         { id: "sub-consumabile", parentId: "cat-generale", name: "Consumabile", displayOrder: 3 },
-        { id: "sub-securitate", parentId: "cat-generale", name: "Securitate", displayOrder: 4 },
-        { id: "sub-abonamente", parentId: "cat-generale", name: "Abonamente", displayOrder: 5 },
-        { id: "sub-salubritate", parentId: "cat-generale", name: "Salubritate", displayOrder: 6 },
-        { id: "sub-altele-generale", parentId: "cat-generale", name: "Altele", displayOrder: 7 },
+        { id: "sub-materie-prima", parentId: "cat-generale", name: "Materie primă", displayOrder: 4 },
+        { id: "sub-ambalaj", parentId: "cat-generale", name: "Ambalaj", displayOrder: 5 },
+        { id: "sub-securitate", parentId: "cat-generale", name: "Securitate", displayOrder: 6 },
+        { id: "sub-salubritate", parentId: "cat-generale", name: "Salubritate", displayOrder: 7 },
+        { id: "sub-altele-generale", parentId: "cat-generale", name: "Altele", displayOrder: 8 },
+      );
+    } else if (parentId === "cat-cota-parte") {
+      subs.push(
+        { id: "sub-cota-marketing", parentId: "cat-cota-parte", name: "Marketing", displayOrder: 1 },
+        { id: "sub-cota-contabil-jurist", parentId: "cat-cota-parte", name: "Contabil/Jurist", displayOrder: 2 },
+        { id: "sub-cota-protectia-medicina-muncii", parentId: "cat-cota-parte", name: "Protecția/Medicina muncii", displayOrder: 3 },
+        { id: "sub-cota-abonamente", parentId: "cat-cota-parte", name: "Abonamente", displayOrder: 4 },
       );
     } else if (parentId === "cat-salarii") {
       subs.push(

@@ -106,12 +106,14 @@ export default function ShowroomRegional() {
 
   // Doar showroom-urile dorite în pagină
   const ALLOWED_SHOWROOM_NAMES = [
+    "Hala Productie",
+    "Sediu Central (Bucuresti)",
     "Sediu central București",
     "Hală producție",
     "Showroom Bragadiru",
     "Showroom Constanța",
-    "Showroom TR",
     "Showroom Giurgiu",
+    "Showroom Teleorman",
   ];
 
   const filteredSedii = sedii.filter((s) => ALLOWED_SHOWROOM_NAMES.includes(s.nume));

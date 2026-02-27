@@ -11,7 +11,7 @@ async function seed() {
         { nume: 'Hală producție', oras: 'București', judet: 'Ilfov' },
         { nume: 'Showroom Bragadiru', oras: 'Bragadiru', judet: 'Ilfov' },
         { nume: 'Showroom Constanța', oras: 'Constanța', judet: 'Constanța' },
-        { nume: 'Showroom TR', oras: 'Alexandria', judet: 'Teleorman' },
+        { nume: 'Showroom Teleorman', oras: 'Alexandria', judet: 'Teleorman' },
         { nume: 'Showroom Giurgiu', oras: 'Giurgiu', judet: 'Giurgiu' },
     ];
 
@@ -33,6 +33,7 @@ async function seed() {
         { id: 'cat-auto', name: 'Cheltuieli auto', displayOrder: 2 },
         { id: 'cat-generale', name: 'Cheltuieli generale', displayOrder: 3 },
         { id: 'cat-bugete', name: 'Bugete de stat', displayOrder: 4 },
+        { id: 'cat-cota-parte', name: 'Cota parte', displayOrder: 5 },
     ];
 
     for (const cat of mainCats) {
@@ -52,10 +53,10 @@ async function seed() {
         { id: 'sub-bonuri', parentId: 'cat-salarii', name: 'Bonuri de masa', displayOrder: 3 },
     ];
 
-    // Level 2: Sub (Auto) – Service, Altele (în loc de Revizie)
+    // Level 2: Sub (Auto) – Revizii/Service, Altele
     const subAuto = [
         { id: 'sub-combustibil', parentId: 'cat-auto', name: 'Combustibil', displayOrder: 1 },
-        { id: 'sub-service', parentId: 'cat-auto', name: 'Service', displayOrder: 2 },
+        { id: 'sub-service', parentId: 'cat-auto', name: 'Revizii/Service', displayOrder: 2 },
         { id: 'sub-altele-auto', parentId: 'cat-auto', name: 'Altele', displayOrder: 3 },
         { id: 'sub-asigurări', parentId: 'cat-auto', name: 'Asigurări', displayOrder: 4 },
         { id: 'sub-leasing', parentId: 'cat-auto', name: 'Leasing', displayOrder: 5 },
@@ -70,24 +71,31 @@ async function seed() {
         { id: 'sub-esalonari', parentId: 'cat-bugete', name: 'Eșalonări', displayOrder: 4 },
     ];
 
-    // Level 2: Sub (Generale) – chirie, utilități, consumabile, materie primă și ambalaj, securitate, abonamente, salubritate, altele, dezvoltare
+    // Level 2: Sub (Generale) – chirie, utilități, consumabile, materie primă, ambalaj, securitate, salubritate, altele, dezvoltare
     const subGenerale = [
         { id: 'sub-chirie', parentId: 'cat-generale', name: 'Chirie', displayOrder: 1 },
         { id: 'sub-utilitati', parentId: 'cat-generale', name: 'Utilități', displayOrder: 2 },
         { id: 'sub-consumabile', parentId: 'cat-generale', name: 'Consumabile', displayOrder: 3 },
-        { id: 'sub-materie-ambalaj', parentId: 'cat-generale', name: 'Materie primă și ambalaj', displayOrder: 4 },
-        { id: 'sub-securitate', parentId: 'cat-generale', name: 'Securitate', displayOrder: 5 },
-        { id: 'sub-abonamente', parentId: 'cat-generale', name: 'Abonamente', displayOrder: 6 },
+        { id: 'sub-materie-prima', parentId: 'cat-generale', name: 'Materie primă', displayOrder: 4 },
+        { id: 'sub-ambalaj', parentId: 'cat-generale', name: 'Ambalaj', displayOrder: 5 },
+        { id: 'sub-securitate', parentId: 'cat-generale', name: 'Securitate', displayOrder: 6 },
         { id: 'sub-salubritate', parentId: 'cat-generale', name: 'Salubritate', displayOrder: 7 },
         { id: 'sub-altele-generale', parentId: 'cat-generale', name: 'Altele', displayOrder: 8 },
         { id: 'sub-echipament', parentId: 'cat-generale', name: 'Echipament', displayOrder: 9 },
-        { id: 'sub-marketing', parentId: 'cat-generale', name: 'Marketing', displayOrder: 10 },
-        { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 11 },
-        { id: 'sub-dezvoltare-inovatie', parentId: 'cat-generale', name: 'Dezvoltare/Inovatie', displayOrder: 12 },
-        { id: 'sub-dezvoltare-extindere', parentId: 'cat-generale', name: 'Dezvoltare/Extindere', displayOrder: 13 },
+        { id: 'sub-investitii', parentId: 'cat-generale', name: 'Investiții / amenajări showroom', displayOrder: 10 },
+        { id: 'sub-dezvoltare-inovatie', parentId: 'cat-generale', name: 'Dezvoltare/Inovatie', displayOrder: 11 },
+        { id: 'sub-dezvoltare-extindere', parentId: 'cat-generale', name: 'Dezvoltare/Extindere', displayOrder: 12 },
     ];
 
-    const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale];
+    // Level 2: Sub (Cota parte) – marketing, contabil/jurist, protecția/medicina muncii, abonamente
+    const subCotaParte = [
+        { id: 'sub-cota-marketing', parentId: 'cat-cota-parte', name: 'Marketing', displayOrder: 1 },
+        { id: 'sub-cota-contabil-jurist', parentId: 'cat-cota-parte', name: 'Contabil/Jurist', displayOrder: 2 },
+        { id: 'sub-cota-protectia-medicina-muncii', parentId: 'cat-cota-parte', name: 'Protecția/Medicina muncii', displayOrder: 3 },
+        { id: 'sub-cota-abonamente', parentId: 'cat-cota-parte', name: 'Abonamente', displayOrder: 4 },
+    ];
+
+    const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale, ...subCotaParte];
 
     for (const sub of allSubs) {
         await db.insert(expenseCategories).values({
