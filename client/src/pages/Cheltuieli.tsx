@@ -23,6 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -148,7 +156,8 @@ export default function Cheltuieli() {
   const [anFilter, setAnFilter] = useState<string>(String(currentDate.getFullYear()));
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [sediuFilter, setSediuFilter] = useState<string>("all");
+  // Multi-select pentru Sediu: listă de id-uri selectate (gol = Toate)
+  const [sediuFilterIds, setSediuFilterIds] = useState<string[]>([]);
   const [firmaFilter, setFirmaFilter] = useState<string>("all");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -269,15 +278,17 @@ export default function Cheltuieli() {
     },
   });
 
+  const sediuFilterKey = sediuFilterIds.length ? sediuFilterIds.join(",") : "all";
+
   const { data: cheltuieliAgent = [], isLoading: loadingAgent } = useQuery<CheltuialaAgent[]>({
-    queryKey: ["cheltuieli-agent", lunaFilter, anFilter, agentFilter, categoryFilter, sediuFilter, firmaFilter],
+    queryKey: ["cheltuieli-agent", lunaFilter, anFilter, agentFilter, categoryFilter, sediuFilterKey, firmaFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (lunaFilter && lunaFilter !== "all") params.set("luna", lunaFilter);
       if (anFilter && anFilter !== "all") params.set("an", anFilter);
       if (agentFilter && agentFilter !== "all") params.set("agentId", agentFilter);
       if (categoryFilter && categoryFilter !== "all") params.set("categoryId", categoryFilter);
-      if (sediuFilter && sediuFilter !== "all") params.set("sediuId", sediuFilter);
+      // Sediu este filtrat acum pe client, nu mai trimitem sediuId la backend pentru multi-select
       if (firmaFilter && firmaFilter !== "all") params.set("firma", firmaFilter);
       const res = await fetch(`/api/cheltuieli-agent?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea cheltuielilor");
@@ -346,12 +357,12 @@ export default function Cheltuieli() {
       : mainCategoriesForForm;
 
   const { data: cheltuieliSediu = [], isLoading: loadingSediu } = useQuery<CheltuialaSediu[]>({
-    queryKey: ["cheltuieli-sediu", lunaFilter, anFilter, sediuFilter, categoryFilter, firmaFilter],
+    queryKey: ["cheltuieli-sediu", lunaFilter, anFilter, sediuFilterKey, categoryFilter, firmaFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (lunaFilter && lunaFilter !== "all") params.set("luna", lunaFilter);
       if (anFilter && anFilter !== "all") params.set("an", anFilter);
-      if (sediuFilter && sediuFilter !== "all") params.set("sediuId", sediuFilter);
+      // Sediu filtrat pe client pentru multi-select
       if (categoryFilter && categoryFilter !== "all") params.set("categoryId", categoryFilter);
       if (firmaFilter && firmaFilter !== "all") params.set("firma", firmaFilter);
       const res = await fetch(`/api/cheltuieli-sediu?${params}`);
@@ -694,6 +705,19 @@ export default function Cheltuieli() {
     return name;
   };
 
+  // Aplicăm filtrul de sediu (multi-select) pe client
+  const filteredCheltuieliAgent = useMemo(() => {
+    if (!sediuFilterIds.length) return cheltuieliAgent;
+    const set = new Set(sediuFilterIds);
+    return cheltuieliAgent.filter((c) => c.sediuId && set.has(c.sediuId));
+  }, [cheltuieliAgent, sediuFilterIds]);
+
+  const filteredCheltuieliSediu = useMemo(() => {
+    if (!sediuFilterIds.length) return cheltuieliSediu;
+    const set = new Set(sediuFilterIds);
+    return cheltuieliSediu.filter((c) => c.sediuId && set.has(c.sediuId));
+  }, [cheltuieliSediu, sediuFilterIds]);
+
   // ID-urile pentru Hala Productie (luăm toate variantele de nume)
   const halaProductieIds = sedii
     .filter((s) => {
@@ -703,7 +727,7 @@ export default function Cheltuieli() {
     .map((s) => s.id);
 
   // Card 1: Cheltuieli Agent – toate cheltuielile care AU agentId (filtrate deja după lună/an/agent/sediu/firma)
-  const totalAgentCard = cheltuieliAgent.reduce((sum, c) => {
+  const totalAgentCard = filteredCheltuieliAgent.reduce((sum, c) => {
     if (!c.agentId) return sum;
     const valoare = parseFloat(c.suma || "0");
     return sum + (isNaN(valoare) ? 0 : valoare);
@@ -711,13 +735,13 @@ export default function Cheltuieli() {
 
   // Card 2: Cheltuieli Showroom – cheltuieli cu sediuId setat, dar FĂRĂ Hala Productie
   const totalShowroomCard =
-    cheltuieliAgent.reduce((sum, c) => {
+    filteredCheltuieliAgent.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0) +
-    cheltuieliSediu.reduce((sum, c) => {
+    filteredCheltuieliSediu.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
@@ -726,13 +750,13 @@ export default function Cheltuieli() {
 
   // Card 3: Cheltuieli Producție – toate cheltuielile cu sediu = Hala Productie (agent + sediu)
   const totalProductieCard =
-    cheltuieliAgent.reduce((sum, c) => {
+    filteredCheltuieliAgent.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (!halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0) +
-    cheltuieliSediu.reduce((sum, c) => {
+    filteredCheltuieliSediu.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (!halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
@@ -905,17 +929,50 @@ export default function Cheltuieli() {
             </div>
             <div className="space-y-2">
               <Label>Sediu</Label>
-              <Select value={sediuFilter} onValueChange={setSediuFilter}>
-                <SelectTrigger data-testid="select-sediu-filter">
-                  <SelectValue placeholder="Toate" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toate</SelectItem>
-                  {sediiForSelect.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nume}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[200px] justify-between"
+                    data-testid="select-sediu-filter"
+                  >
+                    {sediuFilterIds.length === 0
+                      ? "Toate"
+                      : sediuFilterIds.length === 1
+                      ? sediiForSelect.find((s) => s.id === sediuFilterIds[0])?.nume ?? "Selectează sediu"
+                      : `${sediuFilterIds.length} sedii`}
+                    <Filter className="ml-2 h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Filtru sedii</DropdownMenuLabel>
+                  <DropdownMenuCheckboxItem
+                    checked={sediuFilterIds.length === 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) setSediuFilterIds([]);
+                    }}
+                  >
+                    Toate
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuSeparator />
+                  {sediiForSelect.map((s) => {
+                    const checked = sediuFilterIds.includes(s.id);
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={s.id}
+                        checked={checked}
+                        onCheckedChange={(checked) => {
+                          setSediuFilterIds((prev) =>
+                            checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                          );
+                        }}
+                      >
+                        {s.nume}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="space-y-2">
               <Label>Firmă</Label>
@@ -936,14 +993,14 @@ export default function Cheltuieli() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "agent" | "sediu" | "salarii")}>
-        <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="agent" className="flex items-center gap-2" data-testid="tab-agent">
             <User className="h-4 w-4" />
-            Cheltuieli Agent ({cheltuieliAgent.length})
+            Cheltuieli Agent ({filteredCheltuieliAgent.length})
           </TabsTrigger>
           <TabsTrigger value="sediu" className="flex items-center gap-2" data-testid="tab-sediu">
             <Building2 className="h-4 w-4" />
-            Cheltuieli Sediu ({cheltuieliSediu.length})
+            Cheltuieli Sediu ({filteredCheltuieliSediu.length})
           </TabsTrigger>
           <TabsTrigger value="salarii" className="flex items-center gap-2" data-testid="tab-salarii">
             <Receipt className="h-4 w-4" />
@@ -956,7 +1013,7 @@ export default function Cheltuieli() {
             <CardContent className="pt-6">
               {loadingAgent ? (
                 <p className="text-center py-8 text-slate-400">Se încarcă...</p>
-              ) : cheltuieliAgent.length === 0 ? (
+              ) : filteredCheltuieliAgent.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
@@ -975,7 +1032,7 @@ export default function Cheltuieli() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cheltuieliAgent.map((c) => (
+                    {filteredCheltuieliAgent.map((c) => (
                       <TableRow key={c.id} data-testid={`row-cheltuiala-agent-${c.id}`}>
                         <TableCell>
                           {format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}
@@ -1055,7 +1112,7 @@ export default function Cheltuieli() {
             <CardContent className="pt-6">
               {loadingSediu ? (
                 <p className="text-center py-8 text-slate-400">Se încarcă...</p>
-              ) : cheltuieliSediu.length === 0 ? (
+              ) : filteredCheltuieliSediu.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
@@ -1073,7 +1130,7 @@ export default function Cheltuieli() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cheltuieliSediu.map((c) => (
+                    {filteredCheltuieliSediu.map((c) => (
                       <TableRow key={c.id} data-testid={`row-cheltuiala-sediu-${c.id}`}>
                         <TableCell>
                           {format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}
