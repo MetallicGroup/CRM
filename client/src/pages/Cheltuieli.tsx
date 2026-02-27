@@ -224,7 +224,7 @@ export default function Cheltuieli() {
         if (nume === "Hală producție" || nume === "Hala Productie") {
           nume = "Hala Productie";
         }
-        if (nume === "Sediu central București" || nume === "Sediu Central (Bucuresti)") {
+        if (nume === "Sediu central București" || nume === "Sediu Central (Bucuresti)" || nume === "Showroom București") {
           nume = "Sediu Central (Bucuresti)";
         }
         if (nume === "Showroom Constanța" || nume === "Showroom Constanta") {
@@ -624,8 +624,14 @@ export default function Cheltuieli() {
 
   const getSediuName = (sediuId: string | null) => {
     if (!sediuId) return "-";
+    const fromNormalized = sediiForSelect.find(s => s.id === sediuId);
+    if (fromNormalized) return fromNormalized.nume;
     const sediu = sedii.find(s => s.id === sediuId);
-    return sediu?.nume || "-";
+    const name = sediu?.nume || "-";
+    if (name === "Sediu central București" || name === "Showroom București") {
+      return "Sediu Central (Bucuresti)";
+    }
+    return name;
   };
 
   const totalAgent = statsAgent?.total || 0;
