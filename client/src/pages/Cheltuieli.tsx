@@ -571,12 +571,13 @@ export default function Cheltuieli() {
     setSelectedFile(null);
   };
 
-  const handleOpenDialog = (cheltuiala?: CheltuialaAgent | CheltuialaSediu) => {
+  const handleOpenDialog = (cheltuiala?: CheltuialaAgent | CheltuialaSediu, tab?: "agent" | "sediu") => {
     if (cheltuiala) {
+      if (tab) setActiveTab(tab);
       setEditingCheltuiala(cheltuiala);
       setFormData({
-        agentId: (cheltuiala as CheltuialaAgent).agentId || "",
-        sediuId: (cheltuiala as CheltuialaSediu).sediuId || (cheltuiala as CheltuialaAgent).sediuId || "",
+        agentId: (cheltuiala as CheltuialaAgent).agentId ?? "",
+        sediuId: (cheltuiala as CheltuialaSediu).sediuId ?? (cheltuiala as CheltuialaAgent).sediuId ?? "",
         categoryId: cheltuiala.categoryId || "",
         subcategoryId: cheltuiala.subcategoryId || "",
         detailCategoryId: cheltuiala.detailCategoryId || "",
@@ -1023,7 +1024,7 @@ export default function Cheltuieli() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleOpenDialog(c)}
+                                onClick={() => handleOpenDialog(c, "agent")}
                                 data-testid={`button-edit-agent-${c.id}`}
                               >
                                 <Edit className="h-4 w-4" />
@@ -1112,7 +1113,7 @@ export default function Cheltuieli() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleOpenDialog(c)}
+                                onClick={() => handleOpenDialog(c, "sediu")}
                                 data-testid={`button-edit-sediu-${c.id}`}
                               >
                                 <Edit className="h-4 w-4" />
@@ -1188,11 +1189,11 @@ export default function Cheltuieli() {
                 <div className="space-y-2">
                   <Label>Sediu</Label>
                   <Select
-                    value={formData.sediuId}
+                    value={formData.sediuId || "__none__"}
                     onValueChange={(val) =>
                       setFormData({
                         ...formData,
-                        sediuId: val,
+                        sediuId: val === "__none__" ? "" : val,
                       })
                     }
                   >
@@ -1200,6 +1201,7 @@ export default function Cheltuieli() {
                       <SelectValue placeholder="Selectează sediu" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="__none__">Niciunul</SelectItem>
                       {sediiForSelect.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.nume}
@@ -1321,13 +1323,14 @@ export default function Cheltuieli() {
                 <div className="space-y-2">
                   <Label>Angajat</Label>
                   <Select
-                    value={formData.agentId}
-                    onValueChange={(val) => setFormData({ ...formData, agentId: val })}
+                    value={formData.agentId || "__none__"}
+                    onValueChange={(val) => setFormData({ ...formData, agentId: val === "__none__" ? "" : val })}
                   >
                     <SelectTrigger data-testid="select-agent">
                       <SelectValue placeholder="Selectează angajat" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="__none__">Niciunul</SelectItem>
                       {agents.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.firstName} {a.lastName}

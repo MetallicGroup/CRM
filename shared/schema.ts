@@ -1003,6 +1003,7 @@ export const agentFixedCosts = pgTable("agent_fixed_costs", {
   abonamente: decimal("abonamente", { precision: 12, scale: 2 }).default("0"),
   diurne: decimal("diurne", { precision: 12, scale: 2 }).default("0"),
   alteCheltuieli: decimal("alte_cheltuieli", { precision: 12, scale: 2 }).default("0"),
+  comisionPercent: decimal("comision_percent", { precision: 5, scale: 2 }).default("0"),
 
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

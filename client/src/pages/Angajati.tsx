@@ -12,6 +12,7 @@ import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, 
 import { useStore, monthToNumber } from "@/lib/store";
 import { Employee, EmployeeType, MONTHS, Month } from "@/lib/types";
 import { useState, useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface DbUser {
   id: string;
@@ -73,6 +74,23 @@ export default function Angajati() {
   const agentOptions = dbEmployees.filter(e => e.type === 'AGENT');
   const [selectedAgentId, setSelectedAgentId] = useState<string>('ALL');
   const [productCategoryFilter, setProductCategoryFilter] = useState<'ALL' | 'GARD' | 'ACOPERIS'>('ALL');
+  const queryClient = useQueryClient();
+
+  const saveComisionMutation = useMutation({
+    mutationFn: async ({ agentId, luna, an, comisionPercent }: { agentId: string; luna: number; an: number; comisionPercent: string }) => {
+      const res = await fetch("/api/profitabilitate/cheltuieli-fixe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, luna, an, comisionPercent }),
+      });
+      if (!res.ok) throw new Error("Eroare la salvarea comisionului");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/financial/report"] });
+      refetchReport();
+    },
+  });
   // FIX: Safely initialize totals with defaults to prevent crash
   const rawTotals = financialReport?.totals || {};
   const totals = {
@@ -130,6 +148,7 @@ export default function Angajati() {
 
         return {
           id: agent.id,
+          agentUserId: (base as any)?.id ?? null,
           name: `${agent.firstName} ${agent.lastName}`,
           type: 'AGENT' as EmployeeType,
           showroomId: agent.showroomId || null,
@@ -544,7 +563,30 @@ export default function Angajati() {
                           {isAgent ? m.profitOperational.toFixed(0) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {isAgent ? `${m.comisionPercent.toFixed(2)}%` : "-"}
+                          {isAgent ? (
+                            <Input
+                              key={`comision-${emp.id}-${m.comisionPercent}`}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              className="w-16 h-8 text-right text-sm"
+                              defaultValue={m.comisionPercent}
+                              onBlur={(e) => {
+                                const agentUserId = (emp as any).agentUserId;
+                                if (!agentUserId) return;
+                                const v = e.target.value;
+                                const num = v === "" ? "0" : String(parseFloat(v) || 0);
+                                saveComisionMutation.mutate({
+                                  agentId: agentUserId,
+                                  luna: startMonth,
+                                  an: selectedYear,
+                                  comisionPercent: num,
+                                });
+                              }}
+                              data-testid={`input-comision-${emp.id}`}
+                            />
+                          ) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           {isAgent ? m.comisionValoare.toFixed(0) : "-"}

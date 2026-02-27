@@ -64,7 +64,7 @@ import {
   type CreateDocument,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, ne, isNotNull, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, or, ilike, sql, gte, lte, gt, ne, isNotNull, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -330,6 +330,7 @@ export interface IStorage {
     abonamente?: string;
     diurne?: string;
     alteCheltuieli?: string;
+    comisionPercent?: string;
   }): Promise<AgentFixedCosts>;
 
   // Salarii Neproductivi methods
@@ -553,7 +554,12 @@ export class DatabaseStorage implements IStorage {
 
     const parseDate = (val: string | undefined): Date | null => {
       if (!val || val === "") return null;
-      const date = new Date(val);
+      const [yearStr, monthStr, dayStr] = val.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr);
+      const day = Number(dayStr);
+      if (!year || !month || !day) return null;
+      const date = new Date(year, month - 1, day, 12, 0, 0, 0);
       return isNaN(date.getTime()) ? null : date;
     };
 
@@ -643,7 +649,12 @@ export class DatabaseStorage implements IStorage {
 
     const parseDate = (val: string | undefined): Date | null => {
       if (!val || val === "") return null;
-      const date = new Date(val);
+      const [yearStr, monthStr, dayStr] = val.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr);
+      const day = Number(dayStr);
+      if (!year || !month || !day) return null;
+      const date = new Date(year, month - 1, day, 12, 0, 0, 0);
       return isNaN(date.getTime()) ? null : date;
     };
 
@@ -1508,33 +1519,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAgents(): Promise<SafeUser[]> {
-    // Lista agenților care trebuie să apară în filtre
-    const allowedAgentNames = [
-      { firstName: 'Dragos', lastName: 'Frangache' },
-      { firstName: 'Oana', lastName: 'Frangache' },
-      { firstName: 'Alexandru', lastName: 'Croitoru' },
-      { firstName: 'Marian', lastName: 'Toma' },
-      { firstName: 'Marian', lastName: 'Costache' },
-      { firstName: 'Razvan', lastName: 'Rosu' },
-      { firstName: 'Marcu', lastName: 'Iulian' }
-    ];
-
-    // Construiește condițiile pentru fiecare agent permis
-    const conditions = allowedAgentNames.map(agent => 
-      and(
-        eq(users.firstName, agent.firstName),
-        eq(users.lastName, agent.lastName)
-      )
-    );
-
+    // Toți userii activi cu rol AGENT sau ADMIN (pentru raport profitabilitate și cheltuieli)
     const agents = await db.select().from(users).where(
       and(
         eq(users.active, true),
         or(
           eq(users.role, "AGENT"),
           eq(users.role, "ADMIN")
-        ),
-        or(...conditions)
+        )
       )
     );
     return agents.map(u => {
@@ -2738,15 +2730,33 @@ export class DatabaseStorage implements IStorage {
   // ============ AGENT SALES PROFITABILITY METHODS ============
 
   async recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability> {
-    // Get all VANDUT clients for this agent in the specified month/year
-    const soldClients = await db.select().from(clients).where(
-      and(
-        eq(clients.agentId, agentId),
-        eq(clients.stadiuOferta, "VANDUT"),
-        sql`EXTRACT(MONTH FROM ${clients.dataVanzarii}) = ${luna}`,
-        sql`EXTRACT(YEAR FROM ${clients.dataVanzarii}) = ${an}`
-      )
-    );
+    // Get all VANDUT clients for this agent in the specified month/year.
+    // Include:
+    //  - vânzări directe (fără partnerId)
+    //  - vânzări prin parteneri (distribuitori / colaboratori)
+    // Exclude:
+    //  - vânzările prin parteneri comisionari (partners.tipPartener = PARTENER_COMISIONAR)
+    const soldClients = await db
+      .select({
+        valoareOferta: clients.valoareOferta,
+        pretAchizitie: clients.pretAchizitie,
+        categorieProdus: clients.categorieProdus,
+        comisionOferta: clients.comisionOferta,
+      })
+      .from(clients)
+      .leftJoin(partners, eq(clients.partnerId, partners.id))
+      .where(
+        and(
+          eq(clients.agentId, agentId),
+          eq(clients.stadiuOferta, "VANDUT"),
+          sql`EXTRACT(MONTH FROM ${clients.dataVanzarii}) = ${luna}`,
+          sql`EXTRACT(YEAR FROM ${clients.dataVanzarii}) = ${an}`,
+          or(
+            isNull(clients.partnerId),
+            ne(partners.tipPartener, "PARTENER_COMISIONAR")
+          )
+        )
+      );
 
     // Initialize aggregates
     let venitGard = 0;
@@ -3201,6 +3211,7 @@ export class DatabaseStorage implements IStorage {
     abonamente?: string;
     diurne?: string;
     alteCheltuieli?: string;
+    comisionPercent?: string;
   }): Promise<AgentFixedCosts> {
     const [existing] = await db.select().from(agentFixedCosts).where(
       and(
@@ -3222,6 +3233,7 @@ export class DatabaseStorage implements IStorage {
           abonamente: data.abonamente ?? existing.abonamente,
           diurne: data.diurne ?? existing.diurne,
           alteCheltuieli: data.alteCheltuieli ?? existing.alteCheltuieli,
+          comisionPercent: data.comisionPercent !== undefined ? data.comisionPercent : existing.comisionPercent,
           updatedAt: new Date()
         })
         .where(eq(agentFixedCosts.id, existing.id))
@@ -3241,7 +3253,8 @@ export class DatabaseStorage implements IStorage {
           alteCheltuieliAuto: data.alteCheltuieliAuto ?? "0",
           abonamente: data.abonamente ?? "0",
           diurne: data.diurne ?? "0",
-          alteCheltuieli: data.alteCheltuieli ?? "0"
+          alteCheltuieli: data.alteCheltuieli ?? "0",
+          comisionPercent: data.comisionPercent ?? "0"
         })
         .returning();
       return created;
@@ -3563,6 +3576,16 @@ export class DatabaseStorage implements IStorage {
     const agentsFixedCosts = await db.select().from(agentFixedCosts).where(range(agentFixedCosts));
     const agentsSales = await db.select().from(agentSalesProfitability).where(range(agentSalesProfitability));
 
+    // Sum cheltuieli_agent by agentId for the period (real expenses attributed to each agent)
+    const rawCheltuieliAgentInRange = await db.select().from(cheltuieliAgent).where(range(cheltuieliAgent));
+    const cheltuieliAgentSumByAgentId: Record<string, number> = {};
+    rawCheltuieliAgentInRange.forEach((e) => {
+      const aid = e.agentId as string | null;
+      if (aid) {
+        cheltuieliAgentSumByAgentId[aid] = (cheltuieliAgentSumByAgentId[aid] || 0) + parseFloat(String(e.suma ?? "0"));
+      }
+    });
+
     // For neproductivi totals, we need to sum across the range
     const salariiAcrossRange = await db.select().from(salariiNeproductivi).where(range(salariiNeproductivi));
     const distributorsData = await db.select().from(partnerMonthlyData).where(range(partnerMonthlyData));
@@ -3612,8 +3635,8 @@ export class DatabaseStorage implements IStorage {
         parseFloat(fixed?.diurne || "0") +
         parseFloat(fixed?.alteCheltuieli || "0");
 
-      // Cheltuieli agent = costuri fixe proprii
-      const cheltuieliAgent = totalCostFixed;
+      // Cheltuieli agent = sum of all cheltuieli_agent attributed to this agent in the period (real expenses)
+      const cheltuieliAgent = cheltuieliAgentSumByAgentId[agent.id] ?? 0;
 
       // Cheltuieli showroom pentru acest agent (calculate mai jos, după ce avem showroomTotals)
       // Inițial 0; vom completa după ce construim o hartă sediu -> share per agent
@@ -3624,8 +3647,9 @@ export class DatabaseStorage implements IStorage {
 
       const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
 
-      // Comision % inițial din media de comision a vânzărilor (poate fi ulterior suprascris manual)
-      const comisionPercent = parseFloat(sales?.comisionPercentMediu || "0");
+      // Comision %: manual din agent_fixed_costs dacă e setat, altfel din media vânzărilor
+      const comisionPercent =
+        parseFloat(fixed?.comisionPercent || "0") || parseFloat(sales?.comisionPercentMediu || "0");
       const comisionValoare = profitOperational * (comisionPercent / 100);
 
       const profitBrut = profitOperational - comisionValoare;
@@ -3839,10 +3863,10 @@ export class DatabaseStorage implements IStorage {
 
     // 6. Compute per-agent showroom share and cota parte (indirect) share
 
-    // Număr agenți pe showroom (după sediu normalizat)
+    // Număr agenți pe showroom: folosim agentSediuMap (hardcodat după nume) ca să atribuim corect
     const agentsByShowroom: Record<string, string[]> = {};
     agents.forEach((agent) => {
-      const rawSediuId = (agent as any).sediuId || null;
+      const rawSediuId = agentSediuMap[agent.id] ?? (agent as any).sediuId ?? null;
       const normSediuId = normalizeSediuId(rawSediuId);
       if (!normSediuId) return;
       if (!agentsByShowroom[normSediuId]) agentsByShowroom[normSediuId] = [];

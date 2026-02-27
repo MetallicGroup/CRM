@@ -714,7 +714,7 @@ export async function registerRoutes(
       // Auto-recalculate profitability if client is VANDUT with an agent
       if (client.stadiuOferta === "VANDUT" && client.agentId && client.dataVanzarii) {
         const saleDate = new Date(client.dataVanzarii);
-        const luna = saleDate.getMonth() + 1;
+        const luna = saleDate.getUTCMonth() + 1;
         const an = saleDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(client.agentId, an, luna);
       }
@@ -879,7 +879,7 @@ export async function registerRoutes(
       // Recalculate for old agent/date if it was VANDUT before (to subtract it)
       if (wasVandut && existingClient.agentId && existingClient.dataVanzarii) {
         const oldSaleDate = new Date(existingClient.dataVanzarii);
-        const oldLuna = oldSaleDate.getMonth() + 1;
+        const oldLuna = oldSaleDate.getUTCMonth() + 1;
         const oldAn = oldSaleDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(existingClient.agentId, oldAn, oldLuna);
       }
@@ -887,7 +887,7 @@ export async function registerRoutes(
       // Recalculate for new agent/date if it's VANDUT now (to add it)
       if (isNowVandut && client?.agentId && client?.dataVanzarii) {
         const newSaleDate = new Date(client.dataVanzarii);
-        const newLuna = newSaleDate.getMonth() + 1;
+        const newLuna = newSaleDate.getUTCMonth() + 1;
         const newAn = newSaleDate.getFullYear();
         // Only recalculate if it's different from what we just recalculated
         if (!wasVandut ||
@@ -945,7 +945,7 @@ export async function registerRoutes(
       // Recalculate profitability if deleted client was VANDUT
       if (existingClient?.stadiuOferta === "VANDUT" && existingClient.agentId && existingClient.dataVanzarii) {
         const saleDate = new Date(existingClient.dataVanzarii);
-        const luna = saleDate.getMonth() + 1;
+        const luna = saleDate.getUTCMonth() + 1;
         const an = saleDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(existingClient.agentId, an, luna);
       }
@@ -2294,7 +2294,7 @@ export async function registerRoutes(
   // Upsert fixed costs (create or update)
   app.post("/api/profitabilitate/cheltuieli-fixe", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
-      const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli } = req.body;
+      const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli, comisionPercent } = req.body;
 
       if (!agentId || !luna || !an) {
         return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
@@ -2311,7 +2311,8 @@ export async function registerRoutes(
         alteCheltuieliAuto,
         abonamente,
         diurne,
-        alteCheltuieli
+        alteCheltuieli,
+        comisionPercent
       });
       res.json(result);
     } catch (error) {
