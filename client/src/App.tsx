@@ -10,6 +10,7 @@ import FinancialDashboard from "@/pages/Dashboard";
 import Angajati from "@/pages/Angajati";
 import ShowroomRegional from "@/pages/ShowroomRegional";
 import Distributors from "@/pages/Distributors";
+import ParteneriComisionari from "@/pages/ParteneriComisionari";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import UserManagement from "@/pages/UserManagement";
@@ -144,6 +145,9 @@ function Router() {
       </Route>
       <Route path="/profitabilitate/distribuitori">
         <ProtectedRoute component={Distributors} adminOnly />
+      </Route>
+      <Route path="/profitabilitate/parteneri-comisionari">
+        <ProtectedRoute component={ParteneriComisionari} adminOnly />
       </Route>
       <Route path="/profitabilitate/setari">
         <ProtectedRoute component={Settings} adminOnly />
