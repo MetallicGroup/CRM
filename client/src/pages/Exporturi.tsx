@@ -218,7 +218,7 @@ export default function Exporturi() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={cn("grid gap-4", isAdmin ? "md:grid-cols-5" : "md:grid-cols-3")}>
+          <div className={cn("grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2", isAdmin ? "md:grid-cols-5" : "md:grid-cols-3")}>
             {isAdmin && (
               <>
                 <div className="space-y-2">
@@ -553,7 +553,7 @@ export default function Exporturi() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-2">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-slate-400">Telefon</p>
                   <p className="font-medium">
@@ -568,7 +568,7 @@ export default function Exporturi() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-slate-400">Tip acțiune</p>
                   <p className="font-medium">

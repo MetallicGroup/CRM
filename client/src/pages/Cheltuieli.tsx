@@ -823,26 +823,26 @@ export default function Cheltuieli() {
   }));
 
   return (
-    <div className="container mx-auto py-6 space-y-6" data-testid="page-cheltuieli">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Receipt className="h-8 w-8" />
-            Cheltuieli
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full" data-testid="page-cheltuieli">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2 truncate">
+            <Receipt className="h-6 w-6 sm:h-8 sm:w-8 shrink-0" />
+            <span className="truncate">Cheltuieli</span>
           </h1>
           <p className="text-slate-400 mt-1">
             Gestionează cheltuielile pentru agenți și sedii
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => handleOpenDialog()} data-testid="button-add-cheltuiala">
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={() => handleOpenDialog()} data-testid="button-add-cheltuiala" className="min-h-[44px] w-full sm:w-auto">
+            <Plus className="mr-2 h-4 w-4 shrink-0" />
             Adaugă Cheltuială
           </Button>
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Cheltuieli</CardTitle>
@@ -919,7 +919,7 @@ export default function Cheltuieli() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-7">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-7">
             <div className="space-y-2">
               <Label>Luna</Label>
               <Select value={lunaFilter} onValueChange={setLunaFilter}>
@@ -1029,7 +1029,7 @@ export default function Cheltuieli() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "agent" | "sediu" | "salarii")}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="flex w-full overflow-x-auto gap-1 p-1 rounded-lg sm:grid sm:grid-cols-3 [&>button]:flex-shrink-0">
           <TabsTrigger value="agent" className="flex items-center gap-2" data-testid="tab-agent">
             <User className="h-4 w-4" />
             Cheltuieli Agent ({filteredCheltuieliAgent.length})
@@ -1052,7 +1052,8 @@ export default function Cheltuieli() {
               ) : filteredCheltuieliAgent.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
-                <Table>
+                <div className="overflow-x-auto -mx-1">
+                <Table className="min-w-[700px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
@@ -1138,6 +1139,7 @@ export default function Cheltuieli() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -1151,7 +1153,8 @@ export default function Cheltuieli() {
               ) : filteredCheltuieliSediu.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
-                <Table>
+                <div className="overflow-x-auto -mx-1">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
@@ -1227,6 +1230,7 @@ export default function Cheltuieli() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -1238,7 +1242,7 @@ export default function Cheltuieli() {
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingCheltuiala ? "Editare Cheltuială" : "Adăugare Cheltuială"}
@@ -1250,7 +1254,7 @@ export default function Cheltuieli() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="suma">Suma (LEI) *</Label>
                 <Input
@@ -1278,7 +1282,7 @@ export default function Cheltuieli() {
 
             {/* 2. Sediu + Tip Cheltuială */}
             {activeTab === "agent" && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Sediu</Label>
                   <Select
@@ -1334,7 +1338,7 @@ export default function Cheltuieli() {
             )}
 
             {activeTab === "sediu" && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Sediu *</Label>
                   <Select
@@ -1384,7 +1388,7 @@ export default function Cheltuieli() {
             )}
 
             {/* 3. Subcategorie + Angajat (doar pentru tab Agent) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Subcategorie *</Label>
                 <Select
@@ -1455,7 +1459,7 @@ export default function Cheltuieli() {
             )}
 
             {/* 4. Firmă + Auto (doar pentru tab Agent la auto) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Firmă *</Label>
                 <Select

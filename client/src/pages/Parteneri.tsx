@@ -570,7 +570,7 @@ export default function Parteneri() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingPartner ? "Editează Partener" : "Adaugă Partener Nou"}
@@ -580,7 +580,7 @@ export default function Parteneri() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nume *</Label>
                 <Input
@@ -606,7 +606,7 @@ export default function Parteneri() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CUI</Label>
                 <Input
@@ -626,7 +626,7 @@ export default function Parteneri() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Telefon</Label>
                 <Input
@@ -647,7 +647,7 @@ export default function Parteneri() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Adresa</Label>
                 <Input
@@ -666,7 +666,7 @@ export default function Parteneri() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Status performanță</Label>
                 <Select value={formData.statusPerformanta || "none"} onValueChange={(v) => setFormData({ ...formData, statusPerformanta: v === "none" ? "" : v })}>
@@ -703,7 +703,7 @@ export default function Parteneri() {
                 </label>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Fișier 1</Label>
                 <Input

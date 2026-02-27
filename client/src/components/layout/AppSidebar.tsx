@@ -98,7 +98,12 @@ const menuSections: MenuSection[] = [
   },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AppSidebar({ open = false, onOpenChange }: AppSidebarProps) {
   const [location, setLocation] = useLocation();
   const { user, isAdmin, logout } = useAuth();
   const [openSections, setOpenSections] = useState<string[]>(['CRM']);
@@ -106,6 +111,10 @@ export function AppSidebar() {
 
   const handleEnter = useCallback(() => setIsExpanded(true), []);
   const handleLeave = useCallback(() => setIsExpanded(false), []);
+
+  const closeMobile = useCallback(() => {
+    onOpenChange?.(false);
+  }, [onOpenChange]);
 
   const toggleSection = (title: string) => {
     setOpenSections(prev =>
@@ -117,6 +126,7 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
+      closeMobile();
       await logout();
       setLocation('/login');
     } catch (error) {
@@ -138,22 +148,23 @@ export function AppSidebar() {
     <aside
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
-      onClick={() => setIsExpanded(true)}
+      onClick={() => !onOpenChange && setIsExpanded(true)}
       className={cn(
         "flex h-full flex-col flex-shrink-0 border-r border-[#1f2933] bg-gradient-to-b from-[#050608] via-[#070910] to-[#050608] text-slate-200 overflow-hidden",
-        "transition-[width] duration-300 ease-in-out",
-        isExpanded ? "w-64" : "w-16"
+        "fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out md:relative md:w-16 md:transition-[width]",
+        open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        isExpanded && "md:w-64"
       )}
     >
       {/* Logo */}
       <div className={cn(
         "flex h-16 items-center border-b border-[#111827] flex-shrink-0",
-        isExpanded ? "px-3" : "justify-center px-2"
+        (isExpanded || open) ? "px-3" : "justify-center px-2"
       )}>
         <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#fbbf24]/20 flex-shrink-0">
           <span className="text-lg font-bold text-[#fbbf24]">M</span>
         </div>
-        {isExpanded && (
+        {(isExpanded || open) && (
           <div className="flex flex-col ml-3 overflow-hidden">
             <span className="text-xs font-semibold tracking-widest text-[#6b7280] uppercase truncate">
               Metallic Group
@@ -163,9 +174,9 @@ export function AppSidebar() {
         )}
       </div>
 
-      {/* Nav */}
+      {/* Nav: expanded when hover (desktop) or when drawer open (mobile) */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-4">
-        {isExpanded ? (
+        {(isExpanded || open) ? (
           <nav className="space-y-3 px-3">
             {filteredSections.map((section) => {
               const isOpen = openSections.includes(section.title);
@@ -206,7 +217,7 @@ export function AppSidebar() {
                         location === item.href ||
                         (item.href !== "/" && location.startsWith(item.href));
                       return (
-                        <Link key={item.href} href={item.href}>
+                        <Link key={item.href} href={item.href} onClick={closeMobile}>
                           <div
                             className={cn(
                               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer transition-all duration-200",
@@ -236,7 +247,7 @@ export function AppSidebar() {
                 location === item.href ||
                 (item.href !== "/" && location.startsWith(item.href));
               return (
-                <Link key={item.href} href={item.href} title={item.label}>
+                <Link key={item.href} href={item.href} title={item.label} onClick={closeMobile}>
                   <div
                     className={cn(
                       "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200",
@@ -261,16 +272,16 @@ export function AppSidebar() {
       <div className="border-t border-[#111827] p-3 flex-shrink-0">
         <div className={cn(
           "flex items-center gap-2",
-          isExpanded ? "justify-between" : "justify-center"
+          (isExpanded || open) ? "justify-between" : "justify-center"
         )}>
           <div className={cn(
             "flex items-center gap-3 min-w-0",
-            isExpanded && "flex-1"
+            (isExpanded || open) && "flex-1"
           )}>
             <div className="h-8 w-8 rounded-full bg-[#fbbf24]/20 flex-shrink-0 flex items-center justify-center text-[#fbbf24] text-xs font-bold">
               {getInitials()}
             </div>
-            {isExpanded && (
+            {(isExpanded || open) && (
               <div className="flex flex-col min-w-0 overflow-hidden">
                 <span className="text-sm font-medium truncate">
                   {user ? `${user.firstName} ${user.lastName}` : 'Utilizator'}

@@ -348,9 +348,9 @@ export default function Angajati() {
       </Card>
 
       {/* Filters and Add buttons */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
         <Select value={filterType} onValueChange={(v) => setFilterType(v as EmployeeType | 'ALL')}>
-          <SelectTrigger className="w-48" data-testid="select-filter-type">
+          <SelectTrigger className="w-full sm:w-48 min-h-[44px]" data-testid="select-filter-type">
             <SelectValue placeholder="Filtrează după tip" />
           </SelectTrigger>
           <SelectContent>
@@ -362,7 +362,7 @@ export default function Angajati() {
         </Select>
 
         <Select value={selectedAgentId} onValueChange={(v) => setSelectedAgentId(v)}>
-          <SelectTrigger className="w-56" data-testid="select-filter-agent">
+          <SelectTrigger className="w-full sm:w-56 min-h-[44px]" data-testid="select-filter-agent">
             <SelectValue placeholder="Filtru Angajat" />
           </SelectTrigger>
           <SelectContent>
@@ -379,7 +379,7 @@ export default function Angajati() {
           value={productCategoryFilter}
           onValueChange={(v) => setProductCategoryFilter(v as any)}
         >
-          <SelectTrigger className="w-48" data-testid="select-filter-product">
+          <SelectTrigger className="w-full sm:w-48 min-h-[44px]" data-testid="select-filter-product">
             <SelectValue placeholder="Categorie produs" />
           </SelectTrigger>
           <SelectContent>
@@ -389,21 +389,21 @@ export default function Angajati() {
           </SelectContent>
         </Select>
 
-        <div className="flex gap-2 ml-auto">
-          <Button onClick={() => handleAddEmployee('AGENT')} size="sm" variant="default" data-testid="button-add-agent">
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <Button onClick={() => handleAddEmployee('AGENT')} size="sm" variant="default" className="min-h-[44px]" data-testid="button-add-agent">
             <Plus className="mr-1 h-4 w-4" /> Agent
           </Button>
-          <Button onClick={() => handleAddEmployee('PRODUCTIE')} size="sm" variant="outline" data-testid="button-add-production">
+          <Button onClick={() => handleAddEmployee('PRODUCTIE')} size="sm" variant="outline" className="min-h-[44px]" data-testid="button-add-production">
             <Plus className="mr-1 h-4 w-4" /> Producție
           </Button>
-          <Button onClick={() => handleAddEmployee('INDIRECT')} size="sm" variant="outline" data-testid="button-add-indirect">
+          <Button onClick={() => handleAddEmployee('INDIRECT')} size="sm" variant="outline" className="min-h-[44px]" data-testid="button-add-indirect">
             <Plus className="mr-1 h-4 w-4" /> Indirect
           </Button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Vânzări Totale</CardTitle>

@@ -727,31 +727,31 @@ export default function Clienti() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-100 rounded-lg">
-            <Users className="h-8 w-8 text-blue-600" />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="p-2 sm:p-3 bg-blue-100 rounded-lg self-start">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Clienți</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Clienți</h1>
             <p className="text-slate-400">
               Gestionează baza de date cu clienți și oferte
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isAdmin && (
-            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2" data-testid="button-import-clients">
-              <Upload className="h-4 w-4" />
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2 min-h-[44px]" data-testid="button-import-clients">
+              <Upload className="h-4 w-4 shrink-0" />
               Import CSV
             </Button>
           )}
-          <Button variant="outline" onClick={() => setIsSyncDialogOpen(true)} className="gap-2 text-green-700 border-green-200 hover:bg-green-50" data-testid="button-google-sync">
-            <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
-            Sincronizează Google Sheets
+          <Button variant="outline" onClick={() => setIsSyncDialogOpen(true)} className="gap-2 text-green-700 border-green-200 hover:bg-green-50 min-h-[44px]" data-testid="button-google-sync">
+            <RefreshCw className={cn("h-4 w-4 shrink-0", isSyncing && "animate-spin")} />
+            Sincronizează Google
           </Button>
-          <Button onClick={openCreateDialog} className="gap-2" data-testid="button-add-client">
-            <Plus className="h-4 w-4" />
+          <Button onClick={openCreateDialog} className="gap-2 min-h-[44px]" data-testid="button-add-client">
+            <Plus className="h-4 w-4 shrink-0" />
             Adaugă Client
           </Button>
         </div>
@@ -873,7 +873,8 @@ export default function Clienti() {
               )}
             </div>
           ) : (
-            <Table className="table-fixed w-full">
+            <div className="overflow-x-auto -mx-px">
+            <Table className="table-fixed w-full min-w-[800px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[5%]">Nr.</TableHead>
@@ -1077,12 +1078,13 @@ export default function Clienti() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[90vh] overflow-y-auto sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? "Editează Client" : "Adaugă Client Nou"}
@@ -1094,7 +1096,7 @@ export default function Clienti() {
 
           <form onSubmit={handleSubmit}>
             <Tabs defaultValue="contact" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="flex w-full overflow-x-auto gap-1 p-1 rounded-lg sm:grid sm:grid-cols-5 [&>button]:flex-shrink-0 [&>button]:min-w-0 sm:[&>button]:min-w-[unset]">
                 <TabsTrigger value="contact" className="gap-2">
                   <Phone className="h-4 w-4" />
                   Contact
@@ -1118,7 +1120,7 @@ export default function Clienti() {
               </TabsList>
 
               <TabsContent value="contact" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nume">Nume *</Label>
                     <Input
@@ -1218,7 +1220,7 @@ export default function Clienti() {
                     />
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="judet">Județ</Label>
                     <Select
@@ -1248,7 +1250,7 @@ export default function Clienti() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="sursa">Sursă</Label>
                     <Select
@@ -1341,7 +1343,7 @@ export default function Clienti() {
               </TabsContent>
 
               <TabsContent value="product" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="categorieProdus">Categorie Produs</Label>
                     <Select
@@ -1381,7 +1383,7 @@ export default function Clienti() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="model">Model</Label>
                     <Select
@@ -1425,7 +1427,7 @@ export default function Clienti() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="culoare">Culoare</Label>
                     <Select
@@ -1484,7 +1486,7 @@ export default function Clienti() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="mlRulouProd">ML Rulou Producție</Label>
                     <Input
@@ -1509,7 +1511,7 @@ export default function Clienti() {
               </TabsContent>
 
               <TabsContent value="offer" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="stadiuOferta">Stadiu Ofertă</Label>
                     <Select
@@ -1545,7 +1547,7 @@ export default function Clienti() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dataOfertarii">Data Ofertării</Label>
                     <Input
@@ -1625,7 +1627,7 @@ export default function Clienti() {
                     </>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dataVanzarii">Data Vânzării</Label>
                     <Input
@@ -1647,7 +1649,7 @@ export default function Clienti() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="venitProductie">Venit productie</Label>
                     <Input
@@ -1700,7 +1702,7 @@ export default function Clienti() {
                   />
                   <Label htmlFor="incasat">Încasat</Label>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="ofertaFilename">Fișier Ofertă 1</Label>
                     <div className="flex items-center gap-2">
@@ -1809,7 +1811,7 @@ export default function Clienti() {
               <TabsContent value="followup" className="space-y-6 mt-4">
                 <div className="p-4 border rounded-lg space-y-4">
                   <h4 className="font-medium">Follow-up 1</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="dataRevenire1">Data Revenire</Label>
                       <Input
@@ -1844,7 +1846,7 @@ export default function Clienti() {
 
                 <div className="p-4 border rounded-lg space-y-4">
                   <h4 className="font-medium">Follow-up 2</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="dataRevenire2">Data Revenire</Label>
                       <Input
@@ -1879,7 +1881,7 @@ export default function Clienti() {
 
                 <div className="p-4 border rounded-lg space-y-4">
                   <h4 className="font-medium">Follow-up 3</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="dataRevenire3">Data Revenire</Label>
                       <Input
@@ -1999,7 +2001,7 @@ export default function Clienti() {
 
           {viewClient && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-400">Telefon</p>
                   {viewClient.telefon ? (
@@ -2048,7 +2050,7 @@ export default function Clienti() {
 
               <div className="border-t pt-4">
                 <h4 className="font-medium mb-3">Detalii Produs</h4>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-slate-400">Categorie</p>
                     <p className="font-medium">
@@ -2084,7 +2086,7 @@ export default function Clienti() {
 
               <div className="border-t pt-4">
                 <h4 className="font-medium mb-3">Ofertă</h4>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-slate-400">Stadiu Ofertă</p>
                     {getOfferStatusBadge(viewClient.stadiuOferta)}

@@ -185,7 +185,7 @@ export default function CRMDashboard() {
           onValueChange={setSelectedAgent}
           disabled={!isAdmin && isProfitAgent}
         >
-          <SelectTrigger className="w-[220px]" data-testid="select-agent-filter">
+          <SelectTrigger className="w-full sm:w-[220px] min-h-[44px]" data-testid="select-agent-filter">
             <SelectValue placeholder="Selectează agent" />
           </SelectTrigger>
           <SelectContent>
@@ -200,7 +200,7 @@ export default function CRMDashboard() {
       </div>
 
       {/* Statistici azi */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card, index) => (
           <Card key={index} className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
             <CardContent className="pt-6">
@@ -222,7 +222,7 @@ export default function CRMDashboard() {
 
       {/* Carduri Cheltuieli + Comision + Leaderboard (doar pentru cei 4 agenți) */}
       {showProfitCards && (cardAgentMetrics || leaderboardOrdered.length > 0) && (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           <Card className="border-[#4b5563] bg-black/40 shadow-md shadow-yellow-500/10">
             <CardContent className="pt-6">
               <p className="text-sm text-slate-400 mb-1">Cheltuieli</p>

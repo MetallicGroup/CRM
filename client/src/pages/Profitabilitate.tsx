@@ -64,7 +64,7 @@ export default function Profitabilitate() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (
           <Link key={module.href} href={module.href}>
             <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
@@ -91,7 +91,7 @@ export default function Profitabilitate() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="p-3 bg-white rounded-lg">
               <p className="font-medium text-blue-800">Adaos fără TVA</p>
               <p className="text-slate-400">= Adaos cu TVA × 79%</p>
