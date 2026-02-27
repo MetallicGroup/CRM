@@ -34,6 +34,7 @@ async function seed() {
         { id: 'cat-generale', name: 'Cheltuieli generale', displayOrder: 3 },
         { id: 'cat-bugete', name: 'Bugete de stat', displayOrder: 4 },
         { id: 'cat-cota-parte', name: 'Cota parte', displayOrder: 5 },
+        { id: 'cat-transport-marfa', name: 'Transport marfă', displayOrder: 6 },
     ];
 
     for (const cat of mainCats) {
@@ -98,7 +99,13 @@ async function seed() {
         { id: 'sub-cota-bonuri-masa', parentId: 'cat-cota-parte', name: 'Bonuri de masa', displayOrder: 7 },
     ];
 
-    const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale, ...subCotaParte];
+    // Level 2: Sub (Transport marfă) – flota auto, curier
+    const subTransport = [
+        { id: 'sub-transport-flota-auto', parentId: 'cat-transport-marfa', name: 'Flota auto', displayOrder: 1 },
+        { id: 'sub-transport-curier', parentId: 'cat-transport-marfa', name: 'Curier', displayOrder: 2 },
+    ];
+
+    const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale, ...subCotaParte, ...subTransport];
 
     for (const sub of allSubs) {
         await db.insert(expenseCategories).values({

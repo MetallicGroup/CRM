@@ -2129,7 +2129,7 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(expenseCategories.displayOrder);
 
-    // Asigurăm existența tuturor categoriilor principale standard (inclusiv „Cota parte”)
+    // Asigurăm existența tuturor categoriilor principale standard (inclusiv „Cota parte”, „Transport marfă”)
     if (level === "main") {
       const defaultMain = [
         { id: "cat-salarii", name: "Salarii + bonusuri", displayOrder: 1 },
@@ -2137,6 +2137,7 @@ export class DatabaseStorage implements IStorage {
         { id: "cat-generale", name: "Cheltuieli generale", displayOrder: 3 },
         { id: "cat-bugete", name: "Bugete de stat", displayOrder: 4 },
         { id: "cat-cota-parte", name: "Cota parte", displayOrder: 5 },
+        { id: "cat-transport-marfa", name: "Transport marfă", displayOrder: 6 },
       ];
 
       const existingIds = new Set(rows.map((r) => r.id));
@@ -2281,6 +2282,39 @@ export class DatabaseStorage implements IStorage {
         }
 
         rows.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+      } else if (parentId === "cat-transport-marfa") {
+        // Asigurăm subcategoriile pentru „Transport marfă”
+        const required = [
+          { id: "sub-transport-flota-auto", name: "Flota auto" },
+          { id: "sub-transport-curier", name: "Curier" },
+        ];
+
+        const existingById = new Set(rows.map((r) => r.id));
+        const existingByName = new Set(rows.map((r) => r.name));
+        let displayOrderStart =
+          rows.length > 0 ? Math.max(...rows.map((r) => r.displayOrder ?? 0)) + 1 : 1;
+
+        for (const def of required) {
+          if (!existingById.has(def.id) && !existingByName.has(def.name)) {
+            const [inserted] = await db
+              .insert(expenseCategories)
+              .values({
+                id: def.id,
+                parentId,
+                name: def.name,
+                level: "sub",
+                displayOrder: displayOrderStart++,
+                active: true,
+              } as any)
+              .onConflictDoNothing()
+              .returning();
+            if (inserted) {
+              rows.push(inserted);
+            }
+          }
+        }
+
+        rows.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
       }
 
       return rows;
@@ -2330,6 +2364,11 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-salariu-brut", parentId: "cat-salarii", name: "Salariu brut", displayOrder: 1 },
         { id: "sub-comision", parentId: "cat-salarii", name: "Comision", displayOrder: 2 },
         { id: "sub-bonuri", parentId: "cat-salarii", name: "Bonuri de masa", displayOrder: 3 },
+      );
+    } else if (parentId === "cat-transport-marfa") {
+      subs.push(
+        { id: "sub-transport-flota-auto", parentId: "cat-transport-marfa", name: "Flota auto", displayOrder: 1 },
+        { id: "sub-transport-curier", parentId: "cat-transport-marfa", name: "Curier", displayOrder: 2 },
       );
     }
 
