@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -150,6 +150,7 @@ export default function Cheltuieli() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sediuFilter, setSediuFilter] = useState<string>("all");
   const [firmaFilter, setFirmaFilter] = useState<string>("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string>("all");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCheltuiala, setEditingCheltuiala] = useState<CheltuialaAgent | CheltuialaSediu | null>(null);
@@ -194,6 +195,18 @@ export default function Cheltuieli() {
       return res.json();
     },
     enabled: !!selectedCategory,
+  });
+
+  // Subcategorii pentru filtrul de sus (în funcție de categoria selectată în filtre)
+  const { data: filterSubcategories = [] } = useQuery<ExpenseCategory[]>({
+    queryKey: ["expense-categories-sub-filter", categoryFilter],
+    queryFn: async () => {
+      if (!categoryFilter || categoryFilter === "all") return [];
+      const res = await fetch(`/api/expense-categories/sub/${categoryFilter}`);
+      if (!res.ok) throw new Error("Eroare la încărcarea subcategoriilor pentru filtru");
+      return res.json();
+    },
+    enabled: !!categoryFilter && categoryFilter !== "all",
   });
 
   const { data: detailCategories = [] } = useQuery<ExpenseCategory[]>({
@@ -383,6 +396,11 @@ export default function Cheltuieli() {
       return res.json();
     },
   });
+
+  // Resetăm subcategoria atunci când se schimbă categoria din filtre
+  useEffect(() => {
+    setSubcategoryFilter("all");
+  }, [categoryFilter]);
 
   const createAgentMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -702,8 +720,19 @@ export default function Cheltuieli() {
     })
     .map((s) => s.id);
 
+  // Aplicăm filtrul de subcategorie pe client (pentru că backend-ul nu filtrează după subcategoryId)
+  const filteredCheltuieliAgent = useMemo(() => {
+    if (subcategoryFilter === "all") return cheltuieliAgent;
+    return cheltuieliAgent.filter((c) => c.subcategoryId === subcategoryFilter);
+  }, [cheltuieliAgent, subcategoryFilter]);
+
+  const filteredCheltuieliSediu = useMemo(() => {
+    if (subcategoryFilter === "all") return cheltuieliSediu;
+    return cheltuieliSediu.filter((c) => c.subcategoryId === subcategoryFilter);
+  }, [cheltuieliSediu, subcategoryFilter]);
+
   // Card 1: Cheltuieli Agent – toate cheltuielile care AU agentId (filtrate deja după lună/an/agent/sediu/firma)
-  const totalAgentCard = cheltuieliAgent.reduce((sum, c) => {
+  const totalAgentCard = filteredCheltuieliAgent.reduce((sum, c) => {
     if (!c.agentId) return sum;
     const valoare = parseFloat(c.suma || "0");
     return sum + (isNaN(valoare) ? 0 : valoare);
@@ -711,13 +740,13 @@ export default function Cheltuieli() {
 
   // Card 2: Cheltuieli Showroom – cheltuieli cu sediuId setat, dar FĂRĂ Hala Productie
   const totalShowroomCard =
-    cheltuieliAgent.reduce((sum, c) => {
+    filteredCheltuieliAgent.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0) +
-    cheltuieliSediu.reduce((sum, c) => {
+    filteredCheltuieliSediu.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
@@ -726,13 +755,13 @@ export default function Cheltuieli() {
 
   // Card 3: Cheltuieli Producție – toate cheltuielile cu sediu = Hala Productie (agent + sediu)
   const totalProductieCard =
-    cheltuieliAgent.reduce((sum, c) => {
+    filteredCheltuieliAgent.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (!halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0) +
-    cheltuieliSediu.reduce((sum, c) => {
+    filteredCheltuieliSediu.reduce((sum, c) => {
       if (!c.sediuId) return sum;
       if (!halaProductieIds.includes(c.sediuId)) return sum;
       const valoare = parseFloat(c.suma || "0");
@@ -846,7 +875,7 @@ export default function Cheltuieli() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-6">
+          <div className="grid gap-4 md:grid-cols-7">
             <div className="space-y-2">
               <Label>Luna</Label>
               <Select value={lunaFilter} onValueChange={setLunaFilter}>
@@ -904,6 +933,26 @@ export default function Cheltuieli() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Subcategorie</Label>
+              <Select
+                value={subcategoryFilter}
+                onValueChange={setSubcategoryFilter}
+                disabled={categoryFilter === "all" || filterSubcategories.length === 0}
+              >
+                <SelectTrigger data-testid="select-subcategory-filter">
+                  <SelectValue placeholder={categoryFilter === "all" ? "Alege categorie" : "Toate"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate</SelectItem>
+                  {filterSubcategories.map((sc) => (
+                    <SelectItem key={sc.id} value={sc.id}>
+                      {sc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Sediu</Label>
               <Select value={sediuFilter} onValueChange={setSediuFilter}>
                 <SelectTrigger data-testid="select-sediu-filter">
@@ -939,11 +988,11 @@ export default function Cheltuieli() {
             <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="agent" className="flex items-center gap-2" data-testid="tab-agent">
             <User className="h-4 w-4" />
-            Cheltuieli Agent ({cheltuieliAgent.length})
+            Cheltuieli Agent ({filteredCheltuieliAgent.length})
           </TabsTrigger>
           <TabsTrigger value="sediu" className="flex items-center gap-2" data-testid="tab-sediu">
             <Building2 className="h-4 w-4" />
-            Cheltuieli Sediu ({cheltuieliSediu.length})
+            Cheltuieli Sediu ({filteredCheltuieliSediu.length})
           </TabsTrigger>
           <TabsTrigger value="salarii" className="flex items-center gap-2" data-testid="tab-salarii">
             <Receipt className="h-4 w-4" />
@@ -956,7 +1005,7 @@ export default function Cheltuieli() {
             <CardContent className="pt-6">
               {loadingAgent ? (
                 <p className="text-center py-8 text-slate-400">Se încarcă...</p>
-              ) : cheltuieliAgent.length === 0 ? (
+              ) : filteredCheltuieliAgent.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
@@ -975,7 +1024,7 @@ export default function Cheltuieli() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cheltuieliAgent.map((c) => (
+                    {filteredCheltuieliAgent.map((c) => (
                       <TableRow key={c.id} data-testid={`row-cheltuiala-agent-${c.id}`}>
                         <TableCell>
                           {format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}
@@ -1055,7 +1104,7 @@ export default function Cheltuieli() {
             <CardContent className="pt-6">
               {loadingSediu ? (
                 <p className="text-center py-8 text-slate-400">Se încarcă...</p>
-              ) : cheltuieliSediu.length === 0 ? (
+              ) : filteredCheltuieliSediu.length === 0 ? (
                 <p className="text-center py-8 text-slate-400">Nu există cheltuieli înregistrate</p>
               ) : (
                 <Table>
@@ -1073,7 +1122,7 @@ export default function Cheltuieli() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cheltuieliSediu.map((c) => (
+                    {filteredCheltuieliSediu.map((c) => (
                       <TableRow key={c.id} data-testid={`row-cheltuiala-sediu-${c.id}`}>
                         <TableCell>
                           {format(new Date(c.dataCheltuiala), "dd/MM/yyyy")}
