@@ -2197,7 +2197,7 @@ export class DatabaseStorage implements IStorage {
       // Ajustări speciale pentru Cheltuieli generale:
       if (parentId === "cat-generale") {
         // 1) Scoatem subcategoriile vechi nedorite și cele mutate la „Cota parte”
-        const bannedNames = new Set([
+        const bannedExactNames = new Set([
           "Cota parte showroom",
           "Cota parte generale",
           "Angajați neproductivi",
@@ -2205,8 +2205,19 @@ export class DatabaseStorage implements IStorage {
           "Contabil/Jurist",
           "Protecția/Medicina muncii",
           "Abonamente",
+          "Materie primă și ambalaj",
         ]);
-        rows = rows.filter((r) => !bannedNames.has(r.name));
+        rows = rows.filter((r) => {
+          if (bannedExactNames.has(r.name)) return false;
+          const n = (r.name || "").toLowerCase();
+          // În caz că în DB există variante puțin diferite
+          if (n.includes("marketing")) return false;
+          if (n.includes("contabil") || n.includes("jurist")) return false;
+          if (n.includes("protectia") || n.includes("protecția") || n.includes("medicina muncii")) return false;
+          if (n.includes("abonament")) return false;
+          if (n.includes("materie prim") && n.includes("ambalaj")) return false;
+          return true;
+        });
 
         // 2) Ne asigurăm că există subcategoriile cerute (fără Marketing/Abonamente,
         // iar „Materie primă și ambalaj” este împărțită în două)
