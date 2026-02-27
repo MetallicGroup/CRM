@@ -2294,7 +2294,7 @@ export async function registerRoutes(
   // Upsert fixed costs (create or update)
   app.post("/api/profitabilitate/cheltuieli-fixe", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
-      const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli, comisionPercent } = req.body;
+      const { agentId, luna, an, salariu, amortizareAuto, combustibil, revizii, alteCheltuieliAuto, abonamente, diurne, alteCheltuieli } = req.body;
 
       if (!agentId || !luna || !an) {
         return res.status(400).json({ message: "agentId, luna și an sunt obligatorii" });
@@ -2311,8 +2311,7 @@ export async function registerRoutes(
         alteCheltuieliAuto,
         abonamente,
         diurne,
-        alteCheltuieli,
-        comisionPercent
+        alteCheltuieli
       });
       res.json(result);
     } catch (error) {

@@ -330,7 +330,6 @@ export interface IStorage {
     abonamente?: string;
     diurne?: string;
     alteCheltuieli?: string;
-    comisionPercent?: string;
   }): Promise<AgentFixedCosts>;
 
   // Salarii Neproductivi methods
@@ -3253,7 +3252,6 @@ export class DatabaseStorage implements IStorage {
     abonamente?: string;
     diurne?: string;
     alteCheltuieli?: string;
-    comisionPercent?: string;
   }): Promise<AgentFixedCosts> {
     const [existing] = await db.select().from(agentFixedCosts).where(
       and(
@@ -3275,7 +3273,6 @@ export class DatabaseStorage implements IStorage {
           abonamente: data.abonamente ?? existing.abonamente,
           diurne: data.diurne ?? existing.diurne,
           alteCheltuieli: data.alteCheltuieli ?? existing.alteCheltuieli,
-          comisionPercent: data.comisionPercent !== undefined ? data.comisionPercent : existing.comisionPercent,
           updatedAt: new Date()
         })
         .where(eq(agentFixedCosts.id, existing.id))
@@ -3295,8 +3292,7 @@ export class DatabaseStorage implements IStorage {
           alteCheltuieliAuto: data.alteCheltuieliAuto ?? "0",
           abonamente: data.abonamente ?? "0",
           diurne: data.diurne ?? "0",
-          alteCheltuieli: data.alteCheltuieli ?? "0",
-          comisionPercent: data.comisionPercent ?? "0"
+          alteCheltuieli: data.alteCheltuieli ?? "0"
         })
         .returning();
       return created;
@@ -3689,9 +3685,8 @@ export class DatabaseStorage implements IStorage {
 
       const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
 
-      // Comision %: manual din agent_fixed_costs dacă e setat, altfel din media vânzărilor
-      const comisionPercent =
-        parseFloat(fixed?.comisionPercent || "0") || parseFloat(sales?.comisionPercentMediu || "0");
+      // Comision %: valoare fixă 15% (la cerere)
+      const comisionPercent = 15;
       const comisionValoare = profitOperational * (comisionPercent / 100);
 
       const profitBrut = profitOperational - comisionValoare;
