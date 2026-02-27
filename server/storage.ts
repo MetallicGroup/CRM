@@ -3940,13 +3940,37 @@ export class DatabaseStorage implements IStorage {
       }
     });
 
-    const numAgents = agents.length || 1;
-    const cheltIndirectPerAgent = totalCotaParte / numAgents;
+    // Cheltuielile „Cota parte” se împart doar între agenții activi de vânzări:
+    // Dragos Frangache, Oana Frangache, Marian Costache, Razvan Rosu, Alexandru Croitoru
+    const cotaParteAgentsNames = new Set(
+      [
+        "dragos frangache",
+        "oana frangache",
+        "marian costache",
+        "razvan rosu",
+        "alexandru croitoru",
+      ].map((n) => n.toLowerCase()),
+    );
+
+    const cotaParteAgentIds: string[] = [];
+    agents.forEach((a) => {
+      const fullName = `${a.firstName} ${a.lastName}`.toLowerCase();
+      if (cotaParteAgentsNames.has(fullName)) {
+        cotaParteAgentIds.push(a.id);
+      }
+    });
+
+    const numAgentsCota = cotaParteAgentIds.length || 1;
+    const shareIndirect = totalCotaParte / numAgentsCota;
+    const cheltIndirectPerAgentMap: Record<string, number> = {};
+    cotaParteAgentIds.forEach((id) => {
+      cheltIndirectPerAgentMap[id] = shareIndirect;
+    });
 
     // Actualizăm metricii agenților cu cheltuieli showroom + indirecte + profit recalculat
     const agentsMetricsWithCosts = agentsMetrics.map((m) => {
       const cheltShowroom = cheltShowroomPerAgent[m.id] || 0;
-      const cheltIndirecte = cheltIndirectPerAgent;
+      const cheltIndirecte = cheltIndirectPerAgentMap[m.id] || 0;
       const cheltAgent = m.cheltuieliAgent ?? m.totalCostFixed ?? 0;
 
       const profitOperational = m.adaosTVA - (cheltAgent + cheltShowroom + cheltIndirecte);
