@@ -2787,6 +2787,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.agentId, agentId),
           eq(clients.stadiuOferta, "VANDUT"),
+          eq(clients.incasat, true),
           // Interval lună: folosim COALESCE(dataVanzarii, updatedAt),
           // exact cum se face și în alte statistici (ca să prindem vânzările fără dată setată)
           sql`EXTRACT(MONTH FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${luna}`,
