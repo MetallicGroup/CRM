@@ -1458,6 +1458,17 @@ export async function registerRoutes(
     }
   });
 
+  // Get all subcategories (level 2) – pentru filtru subcategorie independent de categorie
+  app.get("/api/expense-categories/sub", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const categories = await storage.getExpenseCategoriesByLevel("sub");
+      res.json(categories);
+    } catch (error) {
+      console.error("Get all subcategories error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea subcategoriilor" });
+    }
+  });
+
   // Get subcategories by parent (level 2)
   app.get("/api/expense-categories/sub/:parentId", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

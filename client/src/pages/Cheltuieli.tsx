@@ -197,16 +197,20 @@ export default function Cheltuieli() {
     enabled: !!selectedCategory,
   });
 
-  // Subcategorii pentru filtrul de sus (în funcție de categoria selectată în filtre)
+  // Subcategorii pentru filtrul de sus: toate când Categorie = Toate, altfel doar subcategoriile categoriei alese
   const { data: filterSubcategories = [] } = useQuery<ExpenseCategory[]>({
     queryKey: ["expense-categories-sub-filter", categoryFilter],
     queryFn: async () => {
-      if (!categoryFilter || categoryFilter === "all") return [];
-      const res = await fetch(`/api/expense-categories/sub/${categoryFilter}`);
-      if (!res.ok) throw new Error("Eroare la încărcarea subcategoriilor pentru filtru");
+      if (categoryFilter && categoryFilter !== "all") {
+        const res = await fetch(`/api/expense-categories/sub/${categoryFilter}`);
+        if (!res.ok) throw new Error("Eroare la încărcarea subcategoriilor pentru filtru");
+        return res.json();
+      }
+      const res = await fetch("/api/expense-categories/sub");
+      if (!res.ok) throw new Error("Eroare la încărcarea subcategoriilor");
       return res.json();
     },
-    enabled: !!categoryFilter && categoryFilter !== "all",
+    enabled: true,
   });
 
   const { data: detailCategories = [] } = useQuery<ExpenseCategory[]>({
@@ -779,6 +783,24 @@ export default function Cheltuieli() {
       return sum + (isNaN(valoare) ? 0 : valoare);
     }, 0);
 
+  // Card 5: Investiții / amenajări showroom (subcategoria sub-investitii)
+  const totalInvestitiiCard =
+    filteredCheltuieliAgent
+      .filter((c) => c.subcategoryId === "sub-investitii")
+      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0) +
+    filteredCheltuieliSediu
+      .filter((c) => c.subcategoryId === "sub-investitii")
+      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0);
+
+  // Card 6: Dezvoltare/Inovatie (subcategoria sub-dezvoltare-inovatie)
+  const totalDezvoltareInovatieCard =
+    filteredCheltuieliAgent
+      .filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie")
+      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0) +
+    filteredCheltuieliSediu
+      .filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie")
+      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0);
+
   const MONTHS = [
     { value: "1", label: "Ianuarie" },
     { value: "2", label: "Februarie" },
@@ -865,6 +887,28 @@ export default function Cheltuieli() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Investiții / amenajări showroom</CardTitle>
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-600">
+              {totalInvestitiiCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dezvoltare/Inovatie</CardTitle>
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-teal-600">
+              {totalDezvoltareInovatieCard.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} LEI
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -937,10 +981,10 @@ export default function Cheltuieli() {
               <Select
                 value={subcategoryFilter}
                 onValueChange={setSubcategoryFilter}
-                disabled={categoryFilter === "all" || filterSubcategories.length === 0}
+                disabled={filterSubcategories.length === 0}
               >
                 <SelectTrigger data-testid="select-subcategory-filter">
-                  <SelectValue placeholder={categoryFilter === "all" ? "Alege categorie" : "Toate"} />
+                  <SelectValue placeholder="Toate" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toate</SelectItem>
