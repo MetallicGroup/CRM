@@ -2815,11 +2815,17 @@ export class DatabaseStorage implements IStorage {
     let totalComisionOferta = 0;
 
     // Aggregate sales by category
-    // NOTE: Clients without commission (comisionOferta = null/0) are included in revenue totals
-    // but excluded from commission calculations (per user request - can't calculate expense from 0)
+    // NOTE:
+    // - includem DOAR clienții care au Achiziție furnizor (pretAchizitie) setată (> 0),
+    //   astfel încât „Venit total” din raport să fie bazat doar pe clienți cu achiziție completă.
+    // - clienții fără comision (comisionOferta = null/0) sunt incluși în venit și achiziție,
+    //   dar excluși din calculul procentului de comision mediu.
     for (const client of soldClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
+
+      // Sărim clienții fără Achiziție furnizor (RON)
+      if (!achizitie || isNaN(achizitie)) continue;
 
       // Only use comisionOferta - clients without it are excluded from commission totals
       // They are still included in revenue (valoare) and achizitie calculations
