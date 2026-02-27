@@ -121,8 +121,14 @@ async function ensureClientFileColumns() {
       ALTER TABLE clients
       ADD COLUMN IF NOT EXISTS oferta_filename_3 VARCHAR(255);
     `);
+
+    // Coloana pentru achiziția partenerului (achizitie_partener) – folosită în raportul parteneri comisionari
+    await pool.query(`
+      ALTER TABLE clients
+      ADD COLUMN IF NOT EXISTS achizitie_partener DECIMAL(12,2);
+    `);
   } catch (err) {
-    console.error("Failed to ensure clients table has oferta_filename_3 column:", err);
+    console.error("Failed to ensure clients table has required extra client columns:", err);
   }
 }
 
