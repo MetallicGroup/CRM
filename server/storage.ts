@@ -3845,56 +3845,29 @@ export class DatabaseStorage implements IStorage {
       };
     });
 
+    // Pentru raportul de profitabilitate, „Cheltuieli showroom” trebuie să fie doar Cheltuieli generale
+    // atribuite showroom-ului (categoria `cat-generale`), împărțite egal între oamenii din acel showroom.
+    // Construim o hartă showroomId -> total cheltuieli generale (din cheltuieli_sediu + cheltuieli_agent).
     const showroomTotals = sediiList.map(s => {
-      const expenses = cheltuieliSediuList.filter(c => c.sediuId === s.id);
-      const agentExps = cheltuieliAgentList.filter(c => c.sediuId === s.id);
+      const expenses = cheltuieliSediuList.filter(
+        c => c.sediuId === s.id && c.categoryId === "cat-generale",
+      );
+      const agentExps = cheltuieliAgentList.filter(
+        c => c.sediuId === s.id && c.categoryId === "cat-generale",
+      );
 
-      const totalsByCat = {
-        chirie: 0,
-        utilitati: 0,
-        marketing: 0,
-        consumabile: 0,
-        investitii: 0,
-        alte: 0,
-        salarii: 0,
-        combustibil: 0,
-        auto: 0,
-        alteCheltuieliAgenti: 0,
-        cheltuieliAgenti: 0
-      };
-
+      let totalGenerale = 0;
       expenses.forEach(e => {
-        const suma = parseFloat(e.suma);
-        const desc = e.descriere?.toLowerCase() || "";
-        if (e.subcategoryId === "c3b11246-7867-40f5-ba0b-511dad776321") totalsByCat.chirie += suma;
-        else if (desc.includes("utilit") || e.subcategoryId === "sub-alte" && desc.includes("utilit")) totalsByCat.utilitati += suma;
-        else if (e.subcategoryId === "eb6d1178-49ee-43ee-8d27-3c704182cb0f") totalsByCat.marketing += suma;
-        else if (e.subcategoryId === "sub-materiale" || desc.includes("consumabile")) totalsByCat.consumabile += suma;
-        else if (e.subcategoryId === "aec333c7-bb7a-4854-b029-7cd83be18a3a") totalsByCat.investitii += suma;
-        else totalsByCat.alte += suma;
+        totalGenerale += parseFloat(e.suma);
       });
-
       agentExps.forEach(e => {
-        const suma = parseFloat(e.suma);
-        totalsByCat.cheltuieliAgenti += suma;
-
-        // Categorization for agents (simplified matching from getShowroomProfitabilityCosts)
-        const desc = e.descriere?.toLowerCase() || "";
-        if (desc.includes("salar") || desc.includes("comision")) totalsByCat.salarii += suma;
-        else if (desc.includes("combustibil")) totalsByCat.combustibil += suma;
-        else if (desc.includes("leasing") || desc.includes("asigur") || desc.includes("revizi")) totalsByCat.auto += suma;
-        else totalsByCat.alteCheltuieliAgenti += suma;
+        totalGenerale += parseFloat(e.suma);
       });
-
-      const total = totalsByCat.chirie + totalsByCat.utilitati + totalsByCat.marketing +
-        totalsByCat.consumabile + totalsByCat.investitii + totalsByCat.alte +
-        totalsByCat.cheltuieliAgenti;
 
       return {
         id: s.id,
         name: s.nume,
-        ...totalsByCat,
-        total
+        totalGenerale,
       };
     });
 
@@ -3910,10 +3883,10 @@ export class DatabaseStorage implements IStorage {
       agentsByShowroom[normSediuId].push(agent.id);
     });
 
-    // Map showroomId -> total cheltuieli showroom (din showroomTotals.total)
+    // Map showroomId -> total cheltuieli showroom (doar Cheltuieli generale)
     const showroomTotalMap: Record<string, number> = {};
     showroomTotals.forEach((st) => {
-      showroomTotalMap[st.id] = st.total;
+      showroomTotalMap[st.id] = st.totalGenerale;
     });
 
     // Cheltuieli showroom per agent: total showroom / număr agenți în acel showroom
