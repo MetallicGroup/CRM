@@ -63,7 +63,13 @@ export default function Angajati() {
   );
 
   const isLoadingData = loadingEmployees || loadingReport;
-  const metricsMap = new Map(financialReport?.agentsMetrics?.map((m: any) => [m.id, m]));
+  // Mapăm metricile după numele complet al agentului (ca să corespundă cu employees)
+  const metricsMap = new Map(
+    (financialReport?.agentsMetrics || []).map((m: any) => [
+      `${(m.name || "").toLowerCase()}`,
+      m,
+    ]),
+  );
   const agentOptions = dbEmployees.filter(e => e.type === 'AGENT');
   const [selectedAgentId, setSelectedAgentId] = useState<string>('ALL');
   const [productCategoryFilter, setProductCategoryFilter] = useState<'ALL' | 'GARD' | 'ACOPERIS'>('ALL');
@@ -83,7 +89,8 @@ export default function Angajati() {
     return dbEmployees
       .filter(e => e.type === 'AGENT')
       .map(agent => {
-        const base = (metricsMap.get(agent.id) || {
+        const nameKey = `${agent.firstName} ${agent.lastName}`.toLowerCase();
+        const base = (metricsMap.get(nameKey) || {
           venitGard: 0,
           venitAcoperis: 0,
           achizitieGard: 0,
