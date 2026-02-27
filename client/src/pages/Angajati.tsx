@@ -456,40 +456,40 @@ export default function Angajati() {
               <Table className="border border-slate-800 text-slate-100">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[140px] sticky left-0 bg-background z-10">Angajat</TableHead>
-                    <TableHead className="w-[100px]">Tip</TableHead>
-                    <TableHead className="w-[130px]">Showroom</TableHead>
+                    <TableHead className="w-[140px] sticky left-0 z-10 !bg-slate-800 !text-white">Angajat</TableHead>
+                    <TableHead className="w-[100px] !bg-slate-800 !text-white">Tip</TableHead>
+                    <TableHead className="w-[130px] !bg-slate-800 !text-white">Showroom</TableHead>
 
-                    <TableHead className="min-w-[120px] bg-blue-50 dark:bg-blue-950 border-l-2 border-blue-500">
+                    <TableHead className="min-w-[120px] !bg-blue-900 !text-white border-l-2 border-blue-500">
                       Venit total
                     </TableHead>
-                    <TableHead className="min-w-[120px] bg-blue-50 dark:bg-blue-950">
+                    <TableHead className="min-w-[120px] !bg-blue-900 !text-white">
                       Achiz. totală
                     </TableHead>
-                    <TableHead className="min-w-[120px] bg-blue-100 dark:bg-blue-900 font-bold">
+                    <TableHead className="min-w-[120px] !bg-blue-800 !text-white font-bold">
                       Adaos TVA
                     </TableHead>
 
-                    <TableHead className="min-w-[120px] bg-red-50 dark:bg-red-950 border-l-2 border-red-500">
+                    <TableHead className="min-w-[120px] !bg-red-900 !text-white border-l-2 border-red-500">
                       Cheltuieli agent
                     </TableHead>
-                    <TableHead className="min-w-[140px] bg-red-50 dark:bg-red-950">
+                    <TableHead className="min-w-[140px] !bg-red-900 !text-white">
                       Cheltuieli showroom
                     </TableHead>
-                    <TableHead className="min-w-[140px] bg-red-50 dark:bg-red-950">
+                    <TableHead className="min-w-[140px] !bg-red-900 !text-white">
                       Cheltuieli indirecte
                     </TableHead>
 
-                    <TableHead className="min-w-[140px] bg-emerald-50 dark:bg-emerald-950 border-l-2 border-emerald-500">
+                    <TableHead className="min-w-[140px] !bg-emerald-900 !text-white border-l-2 border-emerald-500">
                       Profit operațional
                     </TableHead>
-                    <TableHead className="min-w-[80px] bg-green-50 dark:bg-green-950">
+                    <TableHead className="min-w-[80px] !bg-green-900 !text-white">
                       Comision %
                     </TableHead>
-                    <TableHead className="min-w-[120px] bg-green-50 dark:bg-green-950">
+                    <TableHead className="min-w-[120px] !bg-green-900 !text-white">
                       Comision RON
                     </TableHead>
-                    <TableHead className="min-w-[120px] bg-green-50 dark:bg-green-950">
+                    <TableHead className="min-w-[120px] !bg-green-900 !text-white">
                       Profit brut
                     </TableHead>
                     <TableHead className="w-[50px]"></TableHead>
