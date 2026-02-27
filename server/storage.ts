@@ -3587,9 +3587,13 @@ export class DatabaseStorage implements IStorage {
       const sales = agentsSalesMap.get(agent.id);
       const fixed = agentsFixedCostsMap.get(agent.id);
 
-      const adaosGard = parseFloat(sales?.adaosGard || "0");
-      const adaosAcoperis = parseFloat(sales?.adaosAcoperis || "0");
-      const totalAdaos = adaosGard + adaosAcoperis;
+      const venitGard = parseFloat(sales?.venitGard || "0");
+      const venitAcoperis = parseFloat(sales?.venitAcoperis || "0");
+      const achizitieGard = parseFloat(sales?.achizitieGard || "0");
+      const achizitieAcoperis = parseFloat(sales?.achizitieAcoperis || "0");
+      const venitTotal = venitGard + venitAcoperis;
+      const achizitieTotal = achizitieGard + achizitieAcoperis;
+      const adaosTVA = venitTotal - achizitieTotal;
 
       const totalCostFixed = parseFloat(fixed?.salariu || "0") +
         parseFloat(fixed?.amortizareAuto || "0") +
@@ -3600,14 +3604,47 @@ export class DatabaseStorage implements IStorage {
         parseFloat(fixed?.diurne || "0") +
         parseFloat(fixed?.alteCheltuieli || "0");
 
-      const profitNet = totalAdaos - (totalAdaos * 0.21) - totalCostFixed; // Simplified for now
+      // Cheltuieli agent = costuri fixe proprii
+      const cheltuieliAgent = totalCostFixed;
+
+      // Cheltuieli showroom pentru acest agent (calculate mai jos, după ce avem showroomTotals)
+      // Inițial 0; vom completa după ce construim o hartă sediu -> share per agent
+      const cheltuieliShowroom = 0;
+
+      // Cheltuieli indirecte (Cota parte) per agent – vom calcula o valoare comună ulterior
+      const cheltuieliIndirecte = 0;
+
+      const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
+
+      // Comision % inițial din media de comision a vânzărilor (poate fi ulterior suprascris manual)
+      const comisionPercent = parseFloat(sales?.comisionPercentMediu || "0");
+      const comisionValoare = profitOperational * (comisionPercent / 100);
+
+      const profitBrut = profitOperational - comisionValoare;
+
+      const totalAdaos = venitTotal - achizitieTotal;
+      const profitNet = profitBrut;
 
       return {
         id: agent.id,
         name: `${agent.firstName} ${agent.lastName}`,
+        venitGard,
+        venitAcoperis,
+        achizitieGard,
+        achizitieAcoperis,
+        venitTotal,
+        achizitieTotal,
+        adaosTVA,
         totalAdaos,
         totalCostFixed,
-        profitNet
+        cheltuieliAgent,
+        cheltuieliShowroom,
+        cheltuieliIndirecte,
+        profitOperational,
+        comisionPercent,
+        comisionValoare,
+        profitBrut,
+        profitNet,
       };
     });
 
@@ -3731,7 +3768,75 @@ export class DatabaseStorage implements IStorage {
       };
     });
 
-    // 6. Aggregate totals
+    // 6. Compute per-agent showroom share and cota parte (indirect) share
+
+    // Număr agenți pe showroom (după sediu normalizat)
+    const agentsByShowroom: Record<string, string[]> = {};
+    agents.forEach((agent) => {
+      const rawSediuId = (agent as any).sediuId || null;
+      const normSediuId = normalizeSediuId(rawSediuId);
+      if (!normSediuId) return;
+      if (!agentsByShowroom[normSediuId]) agentsByShowroom[normSediuId] = [];
+      agentsByShowroom[normSediuId].push(agent.id);
+    });
+
+    // Map showroomId -> total cheltuieli showroom (din showroomTotals.total)
+    const showroomTotalMap: Record<string, number> = {};
+    showroomTotals.forEach((st) => {
+      showroomTotalMap[st.id] = st.total;
+    });
+
+    // Cheltuieli showroom per agent: total showroom / număr agenți în acel showroom
+    const cheltShowroomPerAgent: Record<string, number> = {};
+    Object.entries(agentsByShowroom).forEach(([sediuId, agentIds]) => {
+      const total = showroomTotalMap[sediuId] || 0;
+      if (!total || agentIds.length === 0) return;
+      const share = total / agentIds.length;
+      agentIds.forEach((aid) => {
+        cheltShowroomPerAgent[aid] = share;
+      });
+    });
+
+    // Cheltuieli Cota parte totale în interval (atât de sediu, cât și de agent)
+    let totalCotaParte = 0;
+    cheltuieliSediuList.forEach((e) => {
+      if (e.categoryId === "cat-cota-parte") {
+        totalCotaParte += parseFloat((e as any).suma || "0");
+      }
+    });
+    cheltuieliAgentList.forEach((e) => {
+      if (e.categoryId === "cat-cota-parte") {
+        totalCotaParte += parseFloat((e as any).suma || "0");
+      }
+    });
+
+    const numAgents = agents.length || 1;
+    const cheltIndirectPerAgent = totalCotaParte / numAgents;
+
+    // Actualizăm metricii agenților cu cheltuieli showroom + indirecte + profit recalculat
+    const agentsMetricsWithCosts = agentsMetrics.map((m) => {
+      const cheltShowroom = cheltShowroomPerAgent[m.id] || 0;
+      const cheltIndirecte = cheltIndirectPerAgent;
+      const cheltAgent = m.cheltuieliAgent ?? m.totalCostFixed ?? 0;
+
+      const profitOperational = m.adaosTVA - (cheltAgent + cheltShowroom + cheltIndirecte);
+      const comisionPercent = m.comisionPercent ?? 0;
+      const comisionValoare = profitOperational * (comisionPercent / 100);
+      const profitBrut = profitOperational - comisionValoare;
+
+      return {
+        ...m,
+        cheltuieliShowroom: cheltShowroom,
+        cheltuieliIndirecte: cheltIndirecte,
+        profitOperational,
+        comisionPercent,
+        comisionValoare,
+        profitBrut,
+        profitNet: profitBrut,
+      };
+    });
+
+    // 7. Aggregate totals
     let totalCostProductie = 0;
     let totalCostIndirect = 0;
     salariiAcrossRange.forEach(s => {
@@ -3740,7 +3845,7 @@ export class DatabaseStorage implements IStorage {
       else if (s.tipAngajat === "INDIRECT") totalCostIndirect += cost;
     });
 
-    const totalProfitAgents = agentsMetrics.reduce((sum, a) => sum + a.profitNet, 0);
+    const totalProfitAgents = agentsMetricsWithCosts.reduce((sum, a) => sum + (a.profitNet || 0), 0);
     const totalProfitDistributors = distributorsMetrics.reduce((sum, d) => sum + d.profitNet, 0);
 
     const profitGrup = totalProfitAgents + totalProfitDistributors - totalCostIndirect - totalCostProductie;
@@ -3749,7 +3854,7 @@ export class DatabaseStorage implements IStorage {
       startMonth,
       endMonth,
       an,
-      agentsMetrics,
+      agentsMetrics: agentsMetricsWithCosts,
       distributorsMetrics,
       showroomTotals,
       totals: {

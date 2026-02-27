@@ -64,6 +64,9 @@ export default function Angajati() {
 
   const isLoadingData = loadingEmployees || loadingReport;
   const metricsMap = new Map(financialReport?.agentsMetrics?.map((m: any) => [m.id, m]));
+  const agentOptions = dbEmployees.filter(e => e.type === 'AGENT');
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('ALL');
+  const [productCategoryFilter, setProductCategoryFilter] = useState<'ALL' | 'GARD' | 'ACOPERIS'>('ALL');
   // FIX: Safely initialize totals with defaults to prevent crash
   const rawTotals = financialReport?.totals || {};
   const totals = {
@@ -80,32 +83,43 @@ export default function Angajati() {
     return dbEmployees
       .filter(e => e.type === 'AGENT')
       .map(agent => {
-        const metrics = (metricsMap.get(agent.id) || {
-          totalAdaos: 0,
-          totalCostFixed: 0,
-          profitNet: 0,
+        const base = (metricsMap.get(agent.id) || {
           venitGard: 0,
-          achizitieGard: 0,
-          adaosTVAGard: 0,
           venitAcoperis: 0,
+          achizitieGard: 0,
           achizitieAcoperis: 0,
-          adaosTVAAcoperis: 0,
-          adaosFaraTVA: 0,
-          venitTVA: 0,
+          venitTotal: 0,
+          achizitieTotal: 0,
+          adaosTVA: 0,
+          cheltuieliAgent: 0,
+          cheltuieliShowroom: 0,
+          cheltuieliIndirecte: 0,
+          profitOperational: 0,
           comisionPercent: 0,
-          valoareComision: 0,
-          salariu: 0,
-          amortizareAuto: 0,
-          combustibil: 0,
-          revizii: 0,
-          alteCheltuieliAuto: 0,
-          abonamente: 0,
-          diurne: 0,
-          alteCheltuieli: 0,
-          costShowroom: 0,
-          costProductie: 0,
-          costIndirecte: 0,
+          comisionValoare: 0,
+          profitBrut: 0,
         }) as any;
+
+        let venitTotal = base.venitTotal || 0;
+        let achizitieTotal = base.achizitieTotal || 0;
+
+        if (productCategoryFilter === 'GARD') {
+          venitTotal = base.venitGard || 0;
+          achizitieTotal = base.achizitieGard || 0;
+        } else if (productCategoryFilter === 'ACOPERIS') {
+          venitTotal = base.venitAcoperis || 0;
+          achizitieTotal = base.achizitieAcoperis || 0;
+        }
+
+        const adaosTVA = venitTotal - achizitieTotal;
+        const cheltuieliAgent = base.cheltuieliAgent || 0;
+        const cheltuieliShowroom = base.cheltuieliShowroom || 0;
+        const cheltuieliIndirecte = base.cheltuieliIndirecte || 0;
+
+        const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
+        const comisionPercent = base.comisionPercent || 0;
+        const comisionValoare = profitOperational * (comisionPercent / 100);
+        const profitBrut = profitOperational - comisionValoare;
 
         return {
           id: agent.id,
@@ -113,37 +127,21 @@ export default function Angajati() {
           type: 'AGENT' as EmployeeType,
           showroomId: agent.showroomId || null,
           aggregatedMetrics: {
-            ...metrics,
-            // Fallback for fields not yet in report if needed
-            venitGard: metrics.venitGard,
-            achizitieGard: metrics.achizitieGard,
-            adaosTVAGard: metrics.adaosTVAGard,
-            venitAcoperis: metrics.venitAcoperis,
-            achizitieAcoperis: metrics.achizitieAcoperis,
-            adaosTVAAcoperis: metrics.adaosTVAAcoperis,
-            adaosTotalCuTVA: metrics.totalAdaos,
-            adaosFaraTVA: metrics.totalAdaos * 0.79,
-            venitTVA: metrics.totalAdaos,
-            comisionPercent: metrics.comisionPercent,
-            valoareComision: metrics.valoareComision,
-            salariu: metrics.salariu,
-            amortizareAuto: metrics.amortizareAuto,
-            combustibil: metrics.combustibil,
-            revizii: metrics.revizii,
-            alteCheltuieliAuto: metrics.alteCheltuieliAuto,
-            abonamente: metrics.abonamente,
-            diurne: metrics.diurne,
-            alteCheltuieli: metrics.alteCheltuieli,
-            costuriProprii: metrics.totalCostFixed,
-            costShowroom: metrics.costShowroom,
-            costProductie: metrics.costProductie,
-            costIndirecte: metrics.costIndirecte,
-            profitFinal: metrics.profitNet,
-            contributionType: 'AGENT' as EmployeeType
-          }
+            venitTotal,
+            achizitieTotal,
+            adaosTVA,
+            cheltuieliAgent,
+            cheltuieliShowroom,
+            cheltuieliIndirecte,
+            profitOperational,
+            comisionPercent,
+            comisionValoare,
+            profitBrut,
+            contributionType: 'AGENT' as EmployeeType,
+          },
         };
       });
-  }, [dbEmployees, metricsMap]);
+  }, [dbEmployees, metricsMap, productCategoryFilter]);
 
   // Combine production and indirect employees for display
   const otherEmployeesForDisplay = useMemo(() => {
@@ -155,25 +153,51 @@ export default function Angajati() {
         type: emp.type,
         showroomId: emp.showroomId,
         aggregatedMetrics: {
-          venitGard: 0, achizitieGard: 0, adaosTVAGard: 0,
-          venitAcoperis: 0, achizitieAcoperis: 0, adaosTVAAcoperis: 0,
-          adaosTotalCuTVA: 0, adaosFaraTVA: 0, venitTVA: 0,
-          comisionPercent: 0, valoareComision: 0,
-          salariu: 0, amortizareAuto: 0, combustibil: 0, revizii: 0,
-          alteCheltuieliAuto: 0, abonamente: 0, diurne: 0, alteCheltuieli: 0,
-          costuriProprii: 0,
-          costShowroom: 0, costProductie: 0, costIndirecte: 0, profitFinal: 0,
-          contributionType: emp.type
-        }
+          venitTotal: 0,
+          achizitieTotal: 0,
+          adaosTVA: 0,
+          cheltuieliAgent: 0,
+          cheltuieliShowroom: 0,
+          cheltuieliIndirecte: 0,
+          profitOperational: 0,
+          comisionPercent: 0,
+          comisionValoare: 0,
+          profitBrut: 0,
+          contributionType: emp.type,
+        },
       }));
   }, [dbEmployees]);
 
   // Combined filtered list based on filter type
   const filteredEmployees = useMemo(() => {
-    const all = [...agentsWithMetrics, ...otherEmployeesForDisplay];
-    if (filterType === 'ALL') return all;
-    return all.filter(e => e.type === filterType);
-  }, [agentsWithMetrics, otherEmployeesForDisplay, filterType]);
+    let all = [...agentsWithMetrics, ...otherEmployeesForDisplay];
+    if (filterType !== 'ALL') {
+      all = all.filter(e => e.type === filterType);
+    }
+    if (selectedAgentId !== 'ALL') {
+      all = all.filter(e => e.id === selectedAgentId);
+    }
+    return all;
+  }, [agentsWithMetrics, otherEmployeesForDisplay, filterType, selectedAgentId]);
+
+  // Summary totals (respectă filtrele curente și filtrul de produs)
+  const agentsForSummary = filteredEmployees.filter(e => e.type === 'AGENT');
+  const summaryTotals = useMemo(() => {
+    let totalVanzari = 0;
+    let totalAdaos = 0;
+    let totalCheltuieli = 0;
+    let totalProfitBrut = 0;
+
+    agentsForSummary.forEach(emp => {
+      const m = emp.aggregatedMetrics as any;
+      totalVanzari += m.venitTotal || 0;
+      totalAdaos += m.adaosTVA || 0;
+      totalCheltuieli += (m.cheltuieliAgent || 0) + (m.cheltuieliShowroom || 0) + (m.cheltuieliIndirecte || 0);
+      totalProfitBrut += m.profitBrut || 0;
+    });
+
+    return { totalVanzari, totalAdaos, totalCheltuieli, totalProfitBrut };
+  }, [agentsForSummary]);
 
   const handleRefreshData = () => {
     refetchReport();
@@ -314,7 +338,7 @@ export default function Angajati() {
       </Card>
 
       {/* Filters and Add buttons */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Select value={filterType} onValueChange={(v) => setFilterType(v as EmployeeType | 'ALL')}>
           <SelectTrigger className="w-48" data-testid="select-filter-type">
             <SelectValue placeholder="Filtrează după tip" />
@@ -324,6 +348,34 @@ export default function Angajati() {
             <SelectItem value="AGENT">Doar Agenți</SelectItem>
             <SelectItem value="PRODUCTIE">Doar Producție</SelectItem>
             <SelectItem value="INDIRECT">Doar Indirect/HQ</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedAgentId} onValueChange={(v) => setSelectedAgentId(v)}>
+          <SelectTrigger className="w-56" data-testid="select-filter-agent">
+            <SelectValue placeholder="Filtru Angajat" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Toți agenții</SelectItem>
+            {agentOptions.map(a => (
+              <SelectItem key={a.id} value={a.id}>
+                {a.firstName} {a.lastName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={productCategoryFilter}
+          onValueChange={(v) => setProductCategoryFilter(v as any)}
+        >
+          <SelectTrigger className="w-48" data-testid="select-filter-product">
+            <SelectValue placeholder="Categorie produs" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Toate produsele</SelectItem>
+            <SelectItem value="GARD">Garduri</SelectItem>
+            <SelectItem value="ACOPERIS">Acoperișuri</SelectItem>
           </SelectContent>
         </Select>
 
@@ -344,36 +396,42 @@ export default function Angajati() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Costuri Producție</CardTitle>
+            <CardTitle className="text-sm font-medium">Vânzări Totale</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{totals.totalProductionCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-slate-400">Se distribuie celor cu Venit Gard</p>
+            <div className="text-2xl font-bold text-blue-500">
+              {summaryTotals.totalVanzari.toLocaleString('ro-RO')} RON
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Costuri Indirecte</CardTitle>
+            <CardTitle className="text-sm font-medium">Adaos Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{totals.totalIndirectCosts.toLocaleString('ro-RO')} RON</div>
-            <p className="text-xs text-slate-400">Include 80% București</p>
+            <div className="text-2xl font-bold text-emerald-500">
+              {summaryTotals.totalAdaos.toLocaleString('ro-RO')} RON
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Venit Total Firmă</CardTitle>
+            <CardTitle className="text-sm font-medium">Cheltuieli Totale</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totals.totalVenitFirma.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold text-red-500">
+              {summaryTotals.totalCheltuieli.toLocaleString('ro-RO')} RON
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Venit Garduri Firmă</CardTitle>
+            <CardTitle className="text-sm font-medium">Profit Brut</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totals.totalVenitGardFirma.toLocaleString('ro-RO')} RON</div>
+            <div className="text-2xl font-bold">
+              {summaryTotals.totalProfitBrut.toLocaleString('ro-RO')} RON
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -392,41 +450,38 @@ export default function Angajati() {
                     <TableHead className="w-[100px]">Tip</TableHead>
                     <TableHead className="w-[130px]">Showroom</TableHead>
 
-                    {/* GARDURI */}
-                    <TableHead className="min-w-[100px] bg-blue-50 dark:bg-blue-950 border-l-2 border-blue-500">Venit Gard</TableHead>
-                    <TableHead className="min-w-[100px] bg-blue-50 dark:bg-blue-950">Achiz. Gard</TableHead>
-                    <TableHead className="min-w-[100px] bg-blue-100 dark:bg-blue-900 font-bold">Adaos Gard</TableHead>
+                    <TableHead className="min-w-[120px] bg-blue-50 dark:bg-blue-950 border-l-2 border-blue-500">
+                      Venit total
+                    </TableHead>
+                    <TableHead className="min-w-[120px] bg-blue-50 dark:bg-blue-950">
+                      Achiz. totală
+                    </TableHead>
+                    <TableHead className="min-w-[120px] bg-blue-100 dark:bg-blue-900 font-bold">
+                      Adaos TVA
+                    </TableHead>
 
-                    {/* ACOPERISURI */}
-                    <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950 border-l-2 border-amber-500">Venit Acop</TableHead>
-                    <TableHead className="min-w-[100px] bg-amber-50 dark:bg-amber-950">Achiz. Acop</TableHead>
-                    <TableHead className="min-w-[100px] bg-amber-100 dark:bg-amber-900 font-bold">Adaos Acop</TableHead>
+                    <TableHead className="min-w-[120px] bg-red-50 dark:bg-red-950 border-l-2 border-red-500">
+                      Cheltuieli agent
+                    </TableHead>
+                    <TableHead className="min-w-[140px] bg-red-50 dark:bg-red-950">
+                      Cheltuieli showroom
+                    </TableHead>
+                    <TableHead className="min-w-[140px] bg-red-50 dark:bg-red-950">
+                      Cheltuieli indirecte
+                    </TableHead>
 
-                    {/* ADAOS CU TVA și FĂRĂ TVA */}
-                    <TableHead className="min-w-[120px] bg-indigo-100 dark:bg-indigo-900 font-bold border-l-2 border-indigo-500">ADAOS CU TVA</TableHead>
-                    <TableHead className="min-w-[130px] bg-purple-200 dark:bg-purple-800 font-bold">ADAOS FĂRĂ TVA</TableHead>
-
-                    <TableHead className="min-w-[100px]">Venit TVA</TableHead>
-                    <TableHead className="min-w-[70px] bg-green-50 dark:bg-green-950">Com %</TableHead>
-                    <TableHead className="min-w-[100px] bg-green-50 dark:bg-green-950">Val. Com.</TableHead>
-
-                    {/* Cheltuieli Proprii */}
-                    <TableHead className="min-w-[90px] bg-red-50 dark:bg-red-950 border-l-2 border-red-500">Salariu</TableHead>
-                    <TableHead className="min-w-[90px] bg-red-50 dark:bg-red-950">Amort. Auto</TableHead>
-                    <TableHead className="min-w-[90px] bg-red-50 dark:bg-red-950">Combustibil</TableHead>
-                    <TableHead className="min-w-[80px] bg-red-50 dark:bg-red-950">Revizii</TableHead>
-                    <TableHead className="min-w-[80px] bg-red-50 dark:bg-red-950">Alte Ch.</TableHead>
-                    <TableHead className="min-w-[80px] bg-red-50 dark:bg-red-950">Abon.</TableHead>
-                    <TableHead className="min-w-[80px] bg-red-50 dark:bg-red-950">Diurne</TableHead>
-                    <TableHead className="min-w-[100px] bg-red-100 dark:bg-red-900 font-bold">Total Ch.</TableHead>
-
-                    {/* Costuri Distribuite - doar pentru AGENT */}
-                    <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-800 border-l-2">Cost Show.</TableHead>
-                    <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-800">Cost Prod.</TableHead>
-                    <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-800">Cost Indir.</TableHead>
-
-                    {/* Profit Final */}
-                    <TableHead className="min-w-[120px] bg-emerald-200 dark:bg-emerald-800 font-bold text-lg border-l-4 border-emerald-500">PROFIT</TableHead>
+                    <TableHead className="min-w-[140px] bg-emerald-50 dark:bg-emerald-950 border-l-2 border-emerald-500">
+                      Profit operațional
+                    </TableHead>
+                    <TableHead className="min-w-[80px] bg-green-50 dark:bg-green-950">
+                      Comision %
+                    </TableHead>
+                    <TableHead className="min-w-[120px] bg-green-50 dark:bg-green-950">
+                      Comision RON
+                    </TableHead>
+                    <TableHead className="min-w-[120px] bg-green-50 dark:bg-green-950">
+                      Profit brut
+                    </TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -458,69 +513,43 @@ export default function Angajati() {
                           </span>
                         </TableCell>
 
-                        {/* GARDURI */}
-                        <TableCell className="font-semibold text-blue-400 text-right">{isAgent ? m.venitGard.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="text-right">{isAgent ? m.achizitieGard.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold text-right">{isAgent ? m.adaosTVAGard.toFixed(0) : '-'}</TableCell>
-
-                        {/* ACOPERISURI */}
-                        <TableCell className="font-semibold text-amber-400 text-right">{isAgent ? m.venitAcoperis.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="text-right">{isAgent ? m.achizitieAcoperis.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold text-right">{isAgent ? m.adaosTVAAcoperis.toFixed(0) : '-'}</TableCell>
-
-                        {/* ADAOS CU TVA și FĂRĂ TVA */}
-                        <TableCell className="font-bold text-indigo-300 bg-indigo-950 text-right">{isAgent ? m.adaosTotalCuTVA.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="font-bold text-purple-300 bg-purple-900 text-right">{isAgent ? m.adaosFaraTVA.toFixed(0) : '-'}</TableCell>
-
-                        <TableCell className="bg-blue-950 text-right">
-                          {isAgent ? (
-                            <span className="font-semibold text-blue-600" data-testid={`text-venit-tva-${emp.id}`}>
-                              {m.venitTVA.toFixed(0)}
-                            </span>
-                          ) : <span className="text-slate-400">-</span>}
-                        </TableCell>
-
-                        {/* Comision */}
-                        <TableCell className="bg-green-950 text-right">
-                          {isAgent ? (
-                            <span className="font-semibold text-green-600" data-testid={`text-comision-${emp.id}`}>
-                              {m.comisionPercent.toFixed(2)}%
-                            </span>
-                          ) : <span className="text-slate-400">-</span>}
-                        </TableCell>
-                        <TableCell className="font-bold text-green-600">{isAgent ? m.valoareComision.toFixed(0) : '-'}</TableCell>
-
-                        {/* Cheltuieli Proprii - read-only pentru AGENT (vin din Cheltuieli), editabile pentru PRODUCTIE/INDIRECT */}
-                        <TableCell className="text-right">
-                          <span>{m.salariu.toFixed(0)}</span>
+                        <TableCell className="font-semibold text-blue-400 text-right">
+                          {isAgent ? m.venitTotal.toFixed(0) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span>{m.amortizareAuto.toFixed(0)}</span>
+                          {isAgent ? m.achizitieTotal.toFixed(0) : "-"}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <span>{m.combustibil.toFixed(0)}</span>
+                        <TableCell className="font-bold text-right">
+                          {isAgent ? m.adaosTVA.toFixed(0) : "-"}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <span>{m.revizii.toFixed(0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span>{m.alteCheltuieliAuto.toFixed(0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span>{m.abonamente.toFixed(0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span>{m.diurne.toFixed(0)}</span>
-                        </TableCell>
-                        <TableCell className="font-bold text-red-400 text-right">{m.costuriProprii.toFixed(0)}</TableCell>
 
-                        {/* Distributed Costs (Read Only) - doar pentru AGENT */}
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costShowroom.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costProductie.toFixed(0) : '-'}</TableCell>
-                        <TableCell className="bg-gray-50 dark:bg-gray-900">{isAgent ? m.costIndirecte.toFixed(0) : '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {isAgent ? m.cheltuieliAgent.toFixed(0) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isAgent ? m.cheltuieliShowroom.toFixed(0) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isAgent ? m.cheltuieliIndirecte.toFixed(0) : "-"}
+                        </TableCell>
 
-                        <TableCell className={`font-bold text-lg border-l-4 ${isAgent ? (m.profitFinal >= 0 ? "text-emerald-600 border-emerald-500" : "text-red-600 border-red-500") : 'text-slate-400 border-gray-300'}`}>
-                          {isAgent ? m.profitFinal.toFixed(0) : '-'}
+                        <TableCell className="font-bold text-emerald-400 text-right">
+                          {isAgent ? m.profitOperational.toFixed(0) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isAgent ? `${m.comisionPercent.toFixed(2)}%` : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isAgent ? m.comisionValoare.toFixed(0) : "-"}
+                        </TableCell>
+                        <TableCell className={`font-bold text-lg border-l-4 ${
+                          isAgent
+                            ? m.profitBrut >= 0
+                              ? "text-emerald-600 border-emerald-500"
+                              : "text-red-600 border-red-500"
+                            : "text-slate-400 border-gray-300"
+                        }`}>
+                          {isAgent ? m.profitBrut.toFixed(0) : "-"}
                         </TableCell>
 
                         <TableCell>
