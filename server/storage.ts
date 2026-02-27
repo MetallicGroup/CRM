@@ -3846,16 +3846,22 @@ export class DatabaseStorage implements IStorage {
       };
     });
 
-    // Pentru raportul de profitabilitate, „Cheltuieli showroom” trebuie să fie doar Cheltuieli generale
-    // atribuite showroom-ului (categoria `cat-generale`) din CHELTUIELI SEDIU, împărțite egal între oamenii
-    // din acel showroom. Cheltuielile generale puse pe agenți rămân în „Cheltuieli agent”, nu intră aici.
+    // Pentru raportul de profitabilitate, „Cheltuieli showroom” trebuie să fie toate Cheltuielile generale
+    // (categoria `cat-generale`) atribuite showroom-ului, indiferent dacă sunt în CHELTUIELI SEDIU sau
+    // CHELTUIELI AGENT. Suma aceasta se împarte egal între oamenii din showroom-ul respectiv.
     const showroomTotals = sediiList.map(s => {
       const expenses = cheltuieliSediuList.filter(
+        c => c.sediuId === s.id && c.categoryId === "cat-generale",
+      );
+      const agentExps = cheltuieliAgentList.filter(
         c => c.sediuId === s.id && c.categoryId === "cat-generale",
       );
 
       let totalGenerale = 0;
       expenses.forEach(e => {
+        totalGenerale += parseFloat(e.suma);
+      });
+      agentExps.forEach(e => {
         totalGenerale += parseFloat(e.suma);
       });
 
