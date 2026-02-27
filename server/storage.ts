@@ -3664,7 +3664,10 @@ export class DatabaseStorage implements IStorage {
       .from(clients)
       .where(
         and(
-          eq(clients.stadiuComanda, "PRODUS"),
+          or(
+            eq(clients.stadiuComanda, "PRODUS"),
+            eq(clients.stadiuComanda, "LIVRAT")
+          ),
           isNotNull(clients.procentComision),
           sql`TRIM(COALESCE(${clients.procentComision}, '')) != ''`,
           sql`EXTRACT(YEAR FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${an}`,
