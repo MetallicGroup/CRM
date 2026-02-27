@@ -2775,9 +2775,6 @@ export class DatabaseStorage implements IStorage {
     // Exclude:
     //  - vânzările prin parteneri comisionari (partners.tipPartener = PARTENER_COMISIONAR)
     // Calculăm intervalul exact al lunii (folosind date locale) ca să nu existe decalaje de o zi
-    const startDate = new Date(an, luna - 1, 1, 0, 0, 0, 0);
-    const endDate = new Date(an, luna, 0, 23, 59, 59, 999);
-
     const soldClients = await db
       .select({
         valoareOferta: clients.valoareOferta,
@@ -2791,19 +2788,10 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.agentId, agentId),
           eq(clients.stadiuOferta, "VANDUT"),
-          // Interval lună: folosim dataVanzarii dacă există, altfel updatedAt (similar cu alte statistici)
-          or(
-            and(
-              isNotNull(clients.dataVanzarii),
-              gte(clients.dataVanzarii, startDate),
-              lte(clients.dataVanzarii, endDate)
-            ),
-            and(
-              isNull(clients.dataVanzarii),
-              gte(clients.updatedAt, startDate),
-              lte(clients.updatedAt, endDate)
-            )
-          ),
+          // Interval lună: folosim COALESCE(dataVanzarii, updatedAt),
+          // exact cum se face și în alte statistici (ca să prindem vânzările fără dată setată)
+          sql`EXTRACT(MONTH FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${luna}`,
+          sql`EXTRACT(YEAR FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${an}`,
           // Excludem doar partenerii comisionari
           or(
             isNull(clients.partnerId),
