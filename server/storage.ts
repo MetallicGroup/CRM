@@ -2292,9 +2292,9 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-cota-contabil-jurist", parentId: "cat-cota-parte", name: "Contabil/Jurist", displayOrder: 2 },
         { id: "sub-cota-protectia-medicina-muncii", parentId: "cat-cota-parte", name: "Protecția/Medicina muncii", displayOrder: 3 },
         { id: "sub-cota-abonamente", parentId: "cat-cota-parte", name: "Abonamente", displayOrder: 4 },
-        { id: "sub-cota-salariu", parentId: "cat-cota-parte", name: "Salariu", displayOrder: 5 },
+        { id: "sub-cota-salariu", parentId: "cat-cota-parte", name: "Salariu brut", displayOrder: 5 },
         { id: "sub-cota-comision", parentId: "cat-cota-parte", name: "Comision", displayOrder: 6 },
-        { id: "sub-cota-bonuri-masa", parentId: "cat-cota-parte", name: "Bonuri de Masa", displayOrder: 7 },
+        { id: "sub-cota-bonuri-masa", parentId: "cat-cota-parte", name: "Bonuri de masa", displayOrder: 7 },
       );
     } else if (parentId === "cat-salarii") {
       subs.push(
@@ -3551,6 +3551,14 @@ export class DatabaseStorage implements IStorage {
       gte(table.luna, startMonth),
       lte(table.luna, endMonth)
     );
+
+    // Ensure agentSalesProfitability is up to date for all agents and all months in interval,
+    // by recomputing direct din clients (folosind recomputeAgentMonthlyProfit).
+    for (let month = startMonth; month <= endMonth; month++) {
+      for (const agent of agents) {
+        await this.recomputeAgentMonthlyProfit(agent.id, an, month);
+      }
+    }
 
     const agentsFixedCosts = await db.select().from(agentFixedCosts).where(range(agentFixedCosts));
     const agentsSales = await db.select().from(agentSalesProfitability).where(range(agentSalesProfitability));

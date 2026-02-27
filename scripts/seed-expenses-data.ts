@@ -87,15 +87,15 @@ async function seed() {
         { id: 'sub-dezvoltare-extindere', parentId: 'cat-generale', name: 'Dezvoltare/Extindere', displayOrder: 12 },
     ];
 
-    // Level 2: Sub (Cota parte) – marketing, contabil/jurist, protecția/medicina muncii, abonamente, salariu, comision, bonuri de masa
+    // Level 2: Sub (Cota parte) – marketing, contabil/jurist, protecția/medicina muncii, abonamente, salariu brut, comision, bonuri de masa
     const subCotaParte = [
         { id: 'sub-cota-marketing', parentId: 'cat-cota-parte', name: 'Marketing', displayOrder: 1 },
         { id: 'sub-cota-contabil-jurist', parentId: 'cat-cota-parte', name: 'Contabil/Jurist', displayOrder: 2 },
         { id: 'sub-cota-protectia-medicina-muncii', parentId: 'cat-cota-parte', name: 'Protecția/Medicina muncii', displayOrder: 3 },
         { id: 'sub-cota-abonamente', parentId: 'cat-cota-parte', name: 'Abonamente', displayOrder: 4 },
-        { id: 'sub-cota-salariu', parentId: 'cat-cota-parte', name: 'Salariu', displayOrder: 5 },
+        { id: 'sub-cota-salariu', parentId: 'cat-cota-parte', name: 'Salariu brut', displayOrder: 5 },
         { id: 'sub-cota-comision', parentId: 'cat-cota-parte', name: 'Comision', displayOrder: 6 },
-        { id: 'sub-cota-bonuri-masa', parentId: 'cat-cota-parte', name: 'Bonuri de Masa', displayOrder: 7 },
+        { id: 'sub-cota-bonuri-masa', parentId: 'cat-cota-parte', name: 'Bonuri de masa', displayOrder: 7 },
     ];
 
     const allSubs = [...subSalarii, ...subAuto, ...subBugete, ...subGenerale, ...subCotaParte];
