@@ -602,7 +602,7 @@ export class DatabaseStorage implements IStorage {
       stadiuComanda: data.stadiuComanda || null,
       dataVanzarii: parseDate(data.dataVanzarii),
       dataLivrarii: parseDate(data.dataLivrarii),
-      procentComision: parseDecimal(data.procentComision),
+      procentComision: data.procentComision !== undefined && data.procentComision !== "" ? String(data.procentComision).trim() : null,
       comisionOferta: parseDecimal(data.comisionOferta),
       incasat: data.incasat || false,
       pretAchizitie: parseDecimal(data.pretAchizitie),
@@ -698,7 +698,7 @@ export class DatabaseStorage implements IStorage {
     if (data.stadiuComanda !== undefined) updateData.stadiuComanda = data.stadiuComanda || null;
     if (data.dataVanzarii !== undefined) updateData.dataVanzarii = parseDate(data.dataVanzarii);
     if (data.dataLivrarii !== undefined) updateData.dataLivrarii = parseDate(data.dataLivrarii);
-    if (data.procentComision !== undefined) updateData.procentComision = parseDecimal(data.procentComision);
+    if (data.procentComision !== undefined) updateData.procentComision = data.procentComision !== "" ? String(data.procentComision).trim() : null;
     if (data.comisionOferta !== undefined) updateData.comisionOferta = parseDecimal(data.comisionOferta);
     if (data.incasat !== undefined) updateData.incasat = data.incasat;
     if (data.pretAchizitie !== undefined) updateData.pretAchizitie = parseDecimal(data.pretAchizitie);

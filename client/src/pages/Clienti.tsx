@@ -81,7 +81,6 @@ import type {
   Thickness,
   FinishType,
   Brand,
-  CommissionPercent
 } from "@shared/schema";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
@@ -327,12 +326,6 @@ const getAvailableModels = (
   return LEGACY_MODEL_OPTIONS;
 };
 
-const COMMISSION_OPTIONS: { value: CommissionPercent; label: string }[] = [
-  { value: "1", label: "1%" },
-  { value: "2", label: "2%" },
-  { value: "3", label: "3%" },
-];
-
 const JUDETE = [
   "Alba", "Arad", "Argeș", "Bacău", "Bihor", "Bistrița-Năsăud", "Botoșani",
   "Brașov", "Brăila", "București", "Buzău", "Caraș-Severin", "Călărași",
@@ -379,7 +372,7 @@ const defaultFormData: Partial<CreateClient> = {
   stadiuComanda: undefined,
   dataVanzarii: "",
   dataLivrarii: "",
-  procentComision: undefined,
+  procentComision: "",
   comisionOferta: "",
   achizitiePartener: "" as any,
   incasat: false,
@@ -676,7 +669,7 @@ export default function Clienti() {
       stadiuComanda: client.stadiuComanda || undefined,
       dataVanzarii: client.dataVanzarii ? format(new Date(client.dataVanzarii), "yyyy-MM-dd") : "",
       dataLivrarii: client.dataLivrarii ? format(new Date(client.dataLivrarii), "yyyy-MM-dd") : "",
-      procentComision: client.procentComision || undefined,
+      procentComision: client.procentComision ?? "",
       comisionOferta: client.comisionOferta || "",
       achizitiePartener: (client as any).achizitiePartener || "",
       incasat: client.incasat || false,
@@ -1656,28 +1649,20 @@ export default function Clienti() {
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="procentComision">Procent Comision</Label>
-                    <Select
-                      value={formData.procentComision || "none"}
-                      onValueChange={(value) =>
+                    <Label htmlFor="venitProductie">Venit productie</Label>
+                    <Input
+                      id="venitProductie"
+                      type="text"
+                      value={formData.procentComision ?? ""}
+                      onChange={(e) =>
                         setFormData({
                           ...formData,
-                          procentComision: value === "none" ? undefined : (value as CommissionPercent),
+                          procentComision: e.target.value,
                         })
                       }
-                    >
-                      <SelectTrigger data-testid="select-procent-comision">
-                        <SelectValue placeholder="Selectează" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Neselectat</SelectItem>
-                        {COMMISSION_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Venit productie"
+                      data-testid="input-venit-productie"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="achizitiePartener">Achiziție partener (RON)</Label>

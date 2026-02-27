@@ -78,7 +78,7 @@ const CLIENT_FIELDS = [
   { key: "stadiuComanda", label: "Stadiu Comandă", required: false },
   { key: "dataLivrarii", label: "Data Livrării", required: false },
   { key: "incasat", label: "Încasat", required: false },
-  { key: "procentComision", label: "Procent Comision", required: false },
+  { key: "procentComision", label: "Venit productie", required: false },
   { key: "observatiiClient", label: "Observații", required: false },
   { key: "dataAdaugare", label: "Data Adăugare", required: false },
 ];
