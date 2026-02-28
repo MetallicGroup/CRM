@@ -2223,6 +2223,7 @@ export class DatabaseStorage implements IStorage {
           "Chirie",
           "Dezvoltare/Inovatie",
           "Dezvoltare/Extindere",
+          "Prestări servicii",
         ];
 
         const existingNames = new Set(rows.map((r) => r.name));
@@ -2355,6 +2356,7 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-securitate", parentId: "cat-generale", name: "Securitate", displayOrder: 6 },
         { id: "sub-salubritate", parentId: "cat-generale", name: "Salubritate", displayOrder: 7 },
         { id: "sub-altele-generale", parentId: "cat-generale", name: "Altele", displayOrder: 8 },
+        { id: "sub-prestari-servicii", parentId: "cat-generale", name: "Prestări servicii", displayOrder: 9 },
       );
     } else if (parentId === "cat-cota-parte") {
       subs.push(
