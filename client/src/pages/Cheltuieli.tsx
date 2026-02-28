@@ -735,71 +735,43 @@ export default function Cheltuieli() {
     return cheltuieliSediu.filter((c) => c.subcategoryId === subcategoryFilter);
   }, [cheltuieliSediu, subcategoryFilter]);
 
+  // Helper: sumă cu deduplicare după id (evită dublarea accidentală a aceleiași cheltuieli)
+  const sumUnique = <T extends { id?: string | null; suma?: string | null }>(items: T[], filter?: (c: T) => boolean) => {
+    const seen = new Set<string>();
+    return items.reduce((sum, c) => {
+      if (filter && !filter(c)) return sum;
+      if (c.id && seen.has(c.id)) return sum;
+      if (c.id) seen.add(c.id);
+      const valoare = parseFloat(c.suma || "0");
+      return sum + (isNaN(valoare) ? 0 : valoare);
+    }, 0);
+  };
+
   // Card 1: Cheltuieli Agent – toate cheltuielile care AU agentId (filtrate deja după lună/an/agent/sediu/firma)
-  const totalAgentCard = filteredCheltuieliAgent.reduce((sum, c) => {
-    if (!c.agentId) return sum;
-    const valoare = parseFloat(c.suma || "0");
-    return sum + (isNaN(valoare) ? 0 : valoare);
-  }, 0);
+  const totalAgentCard = sumUnique(filteredCheltuieliAgent, (c) => !!c.agentId);
 
   // Card 2: Cheltuieli Showroom – cheltuieli cu sediuId setat, dar FĂRĂ Hala Productie
   const totalShowroomCard =
-    filteredCheltuieliAgent.reduce((sum, c) => {
-      if (!c.sediuId) return sum;
-      if (halaProductieIds.includes(c.sediuId)) return sum;
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0) +
-    filteredCheltuieliSediu.reduce((sum, c) => {
-      if (!c.sediuId) return sum;
-      if (halaProductieIds.includes(c.sediuId)) return sum;
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0);
+    sumUnique(filteredCheltuieliAgent, (c) => !!c.sediuId && !halaProductieIds.includes(c.sediuId!)) +
+    sumUnique(filteredCheltuieliSediu, (c) => !!c.sediuId && !halaProductieIds.includes(c.sediuId!));
 
   // Card 3: Cheltuieli Producție – toate cheltuielile cu sediu = Hala Productie (agent + sediu)
   const totalProductieCard =
-    filteredCheltuieliAgent.reduce((sum, c) => {
-      if (!c.sediuId) return sum;
-      if (!halaProductieIds.includes(c.sediuId)) return sum;
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0) +
-    filteredCheltuieliSediu.reduce((sum, c) => {
-      if (!c.sediuId) return sum;
-      if (!halaProductieIds.includes(c.sediuId)) return sum;
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0);
+    sumUnique(filteredCheltuieliAgent, (c) => !!c.sediuId && halaProductieIds.includes(c.sediuId!)) +
+    sumUnique(filteredCheltuieliSediu, (c) => !!c.sediuId && halaProductieIds.includes(c.sediuId!));
 
-  // Card 4: Total Cheltuieli – toate cheltuielile (agent + sediu) după toate filtrele (inclusiv Subcategorie)
-  const totalGeneralCard =
-    filteredCheltuieliAgent.reduce((sum, c) => {
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0) +
-    filteredCheltuieliSediu.reduce((sum, c) => {
-      const valoare = parseFloat(c.suma || "0");
-      return sum + (isNaN(valoare) ? 0 : valoare);
-    }, 0);
+  // Card 4: Total Cheltuieli – toate cheltuielile (agent + sediu), fiecare numărată o singură dată
+  const totalGeneralCard = sumUnique(filteredCheltuieliAgent) + sumUnique(filteredCheltuieliSediu);
 
   // Card 5: Investiții / amenajări showroom (subcategoria sub-investitii)
   const totalInvestitiiCard =
-    filteredCheltuieliAgent
-      .filter((c) => c.subcategoryId === "sub-investitii")
-      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0) +
-    filteredCheltuieliSediu
-      .filter((c) => c.subcategoryId === "sub-investitii")
-      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0);
+    sumUnique(filteredCheltuieliAgent.filter((c) => c.subcategoryId === "sub-investitii")) +
+    sumUnique(filteredCheltuieliSediu.filter((c) => c.subcategoryId === "sub-investitii"));
 
   // Card 6: Dezvoltare/Inovatie (subcategoria sub-dezvoltare-inovatie)
   const totalDezvoltareInovatieCard =
-    filteredCheltuieliAgent
-      .filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie")
-      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0) +
-    filteredCheltuieliSediu
-      .filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie")
-      .reduce((sum, c) => sum + (parseFloat(c.suma || "0") || 0), 0);
+    sumUnique(filteredCheltuieliAgent.filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie")) +
+    sumUnique(filteredCheltuieliSediu.filter((c) => c.subcategoryId === "sub-dezvoltare-inovatie"));
 
   const MONTHS = [
     { value: "1", label: "Ianuarie" },
