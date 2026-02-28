@@ -1390,30 +1390,36 @@ export default function Cheltuieli() {
             {/* 3. Subcategorie + Angajat (doar pentru tab Agent) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Subcategorie *</Label>
-                <Select
-                  value={selectedSubcategory}
-                  onValueChange={(val) => {
-                    setSelectedSubcategory(val);
-                    setFormData({
-                      ...formData,
-                      subcategoryId: val,
-                      detailCategoryId: "",
-                    });
-                  }}
-                  disabled={!selectedCategory}
-                >
-                  <SelectTrigger data-testid="select-subcategory">
-                    <SelectValue placeholder="Selectează subcategoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subcategories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>{subcategories.length > 0 ? "Subcategorie *" : "Subcategorie"}</Label>
+                {subcategories.length > 0 ? (
+                  <Select
+                    value={selectedSubcategory}
+                    onValueChange={(val) => {
+                      setSelectedSubcategory(val);
+                      setFormData({
+                        ...formData,
+                        subcategoryId: val,
+                        detailCategoryId: "",
+                      });
+                    }}
+                    disabled={!selectedCategory}
+                  >
+                    <SelectTrigger data-testid="select-subcategory">
+                      <SelectValue placeholder="Selectează subcategoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex h-10 items-center rounded-md border border-input bg-muted/50 px-3 text-muted-foreground text-sm">
+                    —
+                  </div>
+                )}
               </div>
 
               {activeTab === "agent" && (

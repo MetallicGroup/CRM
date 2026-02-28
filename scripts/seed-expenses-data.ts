@@ -35,6 +35,8 @@ async function seed() {
         { id: 'cat-bugete', name: 'Bugete de stat', displayOrder: 4 },
         { id: 'cat-cota-parte', name: 'Cota parte', displayOrder: 5 },
         { id: 'cat-transport-marfa', name: 'Transport marfă', displayOrder: 6 },
+        { id: 'cat-vara', name: 'Cheltuiala Vara', displayOrder: 7 },
+        { id: 'cat-iarna', name: 'Cheltuiala Iarna', displayOrder: 8 },
     ];
 
     for (const cat of mainCats) {

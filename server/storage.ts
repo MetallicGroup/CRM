@@ -2138,6 +2138,8 @@ export class DatabaseStorage implements IStorage {
         { id: "cat-bugete", name: "Bugete de stat", displayOrder: 4 },
         { id: "cat-cota-parte", name: "Cota parte", displayOrder: 5 },
         { id: "cat-transport-marfa", name: "Transport marfă", displayOrder: 6 },
+        { id: "cat-vara", name: "Cheltuiala Vara", displayOrder: 7 },
+        { id: "cat-iarna", name: "Cheltuiala Iarna", displayOrder: 8 },
       ];
 
       const existingIds = new Set(rows.map((r) => r.id));
@@ -2320,6 +2322,11 @@ export class DatabaseStorage implements IStorage {
       return rows;
     }
 
+    // Categorii fără subcategorii (doar tip principal)
+    if (parentId === "cat-vara" || parentId === "cat-iarna") {
+      return [];
+    }
+
     // Auto-seed subcategorii implicite dacă lipsesc complet
     const subs: { id: string; name: string; displayOrder: number }[] = [];
     if (parentId === "cat-bugete") {
@@ -2477,7 +2484,7 @@ export class DatabaseStorage implements IStorage {
     const [cheltuiala] = await db.insert(cheltuieliAgent).values({
       agentId: data.agentId || null,
       categoryId: data.categoryId,
-      subcategoryId: data.subcategoryId,
+      subcategoryId: (data.subcategoryId && data.subcategoryId.trim()) ? data.subcategoryId : null,
       detailCategoryId: data.detailCategoryId || null,
       suma: data.suma,
       descriere: data.descriere || null,
@@ -2500,7 +2507,7 @@ export class DatabaseStorage implements IStorage {
 
     if (data.agentId !== undefined) updateData.agentId = data.agentId || null;
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
-    if (data.subcategoryId !== undefined) updateData.subcategoryId = data.subcategoryId;
+    if (data.subcategoryId !== undefined) updateData.subcategoryId = (data.subcategoryId && data.subcategoryId.trim()) ? data.subcategoryId : null;
     if (data.detailCategoryId !== undefined) updateData.detailCategoryId = data.detailCategoryId || null;
     if (data.suma !== undefined) updateData.suma = data.suma;
     if (data.descriere !== undefined) updateData.descriere = data.descriere || null;

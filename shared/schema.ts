@@ -860,7 +860,7 @@ export const insertCheltuialaAgentSchema = createInsertSchema(cheltuieliAgent).o
 export const createCheltuialaAgentSchema = z.object({
   agentId: z.string().optional().nullable(),
   categoryId: z.string().min(1, "Categoria este obligatorie"),
-  subcategoryId: z.string().min(1, "Subcategoria este obligatorie"),
+  subcategoryId: z.string().optional().nullable(), // opțional pentru categorii fără subcategorii (ex. Cheltuiala Vara, Cheltuiala Iarna)
   detailCategoryId: z.string().optional().nullable(),
   suma: z.string().min(1, "Suma este obligatorie"),
   descriere: z.string().optional(),
