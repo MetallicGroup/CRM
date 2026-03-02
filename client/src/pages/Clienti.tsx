@@ -105,6 +105,12 @@ const PRIORITATE_OPTIONS: { value: "" | "URGENT" | "CALDUT" | "RECE"; label: str
   { value: "RECE", label: "Rece", color: "bg-sky-300 ring-2 ring-sky-300/40", title: "Rece" },
 ];
 
+type TransportTip = "FLOTA_AUTO" | "CURIER";
+type ExtendedCreateClient = CreateClient & {
+  transportTip?: TransportTip;
+  transportSuma?: string;
+};
+
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "CUSTODIE", label: "Custodie" },
   { value: "COMANDAT", label: "Comandat" },
@@ -345,7 +351,7 @@ function getOfferStatusBadge(status: OfferStatus | null) {
   );
 }
 
-const defaultFormData: Partial<CreateClient> = {
+const defaultFormData: Partial<ExtendedCreateClient> = {
   nume: "",
   telefon: "",
   email: "",
@@ -377,6 +383,9 @@ const defaultFormData: Partial<CreateClient> = {
   achizitiePartener: "" as any,
   incasat: false,
   pretAchizitie: "",
+  // transport marfă (opțional, doar pentru admini)
+  transportTip: undefined,
+  transportSuma: "",
   ofertaFilename: "",
   ofertaFilename2: "",
   ofertaFilename3: "" as any,
@@ -429,7 +438,7 @@ export default function Clienti() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState<Partial<CreateClient>>(defaultFormData);
+  const [formData, setFormData] = useState<Partial<ExtendedCreateClient>>(defaultFormData);
   const [pendingFiles, setPendingFiles] = useState<{ oferta1?: File; oferta2?: File; oferta3?: File }>({});
   const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false);
   const [sheetId, setSheetId] = useState("");
@@ -547,6 +556,53 @@ export default function Clienti() {
       } else {
         toast.success("Client creat cu succes");
       }
+
+      // Dacă adminul a completat transport marfă, creăm automat o cheltuială (Transport marfă)
+      try {
+        if (isAdmin && formData.transportTip && formData.transportSuma) {
+          const amount = parseFloat(formData.transportSuma || "0");
+          if (!isNaN(amount) && amount > 0 && newClient.agentId) {
+            const dateStr =
+              formData.dataVanzarii ||
+              newClient.dataVanzarii ||
+              new Date().toISOString().slice(0, 10);
+            const date = new Date(dateStr);
+            const luna = date.getMonth() + 1;
+            const an = date.getFullYear();
+            const subcategoryId =
+              formData.transportTip === "FLOTA_AUTO"
+                ? "sub-transport-flota-auto"
+                : "sub-transport-curier";
+            const firmaBase = `Transport client ${newClient.nume || ""}`.trim();
+            const firma = firmaBase.slice(0, 100) || "Transport marfă client";
+
+            await fetch("/api/cheltuieli-agent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                agentId: newClient.agentId,
+                categoryId: "cat-transport-marfa",
+                subcategoryId,
+                suma: amount.toFixed(2),
+                descriere: `Transport marfă pentru client ${newClient.nume || ""}`.trim(),
+                dataCheltuiala: date.toISOString(),
+                luna,
+                an,
+                judet: newClient.judet || formData.judet || undefined,
+                sediuId: null,
+                firma,
+                autoNr: undefined,
+                facturaFilename: "",
+                documentUrl: "",
+                tipCheltuiala: "TRANSPORT_MARFA",
+              }),
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Eroare la crearea cheltuielii de transport marfă:", err);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       closeDialog();
     },
@@ -1627,6 +1683,49 @@ export default function Clienti() {
                     </>
                   )}
                 </div>
+
+                {isAdmin && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="transportTip">Transport marfă</Label>
+                      <Select
+                        value={formData.transportTip || ""}
+                        onValueChange={(val) =>
+                          setFormData({
+                            ...formData,
+                            transportTip: val as TransportTip,
+                          })
+                        }
+                      >
+                        <SelectTrigger data-testid="select-transport-tip">
+                          <SelectValue placeholder="Fără transport" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FLOTA_AUTO">Flota auto</SelectItem>
+                          <SelectItem value="CURIER">Curier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {formData.transportTip && (
+                      <div className="space-y-2">
+                        <Label htmlFor="transportSuma">Suma transport (RON)</Label>
+                        <Input
+                          id="transportSuma"
+                          type="number"
+                          step="0.01"
+                          value={formData.transportSuma || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              transportSuma: e.target.value,
+                            })
+                          }
+                          data-testid="input-transport-suma"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dataVanzarii">Data Vânzării</Label>
