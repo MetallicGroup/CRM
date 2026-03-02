@@ -1666,7 +1666,7 @@ export default function Clienti() {
                       data-testid="input-venit-productie"
                     />
                   </div>
-                  {(isAdmin || isOana) && (
+                  {isAdmin && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="achizitiePartener">Achiziție partener (RON)</Label>
