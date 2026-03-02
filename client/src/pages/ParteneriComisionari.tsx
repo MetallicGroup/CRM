@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 interface Partner {
   id: string;
@@ -28,6 +29,12 @@ export default function ParteneriComisionari() {
   const { selectedMonth, selectedYear } = useStore();
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const { isAdmin, user } = useAuth();
+  const isOana =
+    !!user &&
+    (user.email?.toLowerCase().includes("oana") || user.firstName?.toLowerCase().includes("oana"));
+  const canSeeAchizitii = isAdmin || isOana;
 
   const { data: partners = [], isLoading: loadingPartners } = useQuery<Partner[]>({
     queryKey: ["partners-comisionari"],
@@ -177,8 +184,12 @@ export default function ParteneriComisionari() {
                         <TableHead>Client</TableHead>
                         <TableHead>Data vânzării</TableHead>
                         <TableHead className="text-right">Valoare vândută</TableHead>
-                        <TableHead className="text-right">Achiziție partener</TableHead>
-                        <TableHead className="text-right">Achiziție furnizor</TableHead>
+                        {canSeeAchizitii && (
+                          <>
+                            <TableHead className="text-right">Achiziție partener</TableHead>
+                            <TableHead className="text-right">Achiziție furnizor</TableHead>
+                          </>
+                        )}
                         <TableHead className="text-right">Comision partener</TableHead>
                         <TableHead className="text-right">Profit</TableHead>
                       </TableRow>
@@ -195,21 +206,25 @@ export default function ParteneriComisionari() {
                           <TableCell className="text-right">
                             {row.v.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
                           </TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              className="w-28 h-8 text-right"
-                              defaultValue={row.achizPart || ""}
-                              onBlur={(e) => {
-                                const val = parseFloat(e.target.value || "0");
-                                const ach = isNaN(val) ? 0 : val;
-                                updateAchizitieMutation.mutate({ id: row.id, achizitiePartener: ach });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {row.achizFurn.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                          </TableCell>
+                          {canSeeAchizitii && (
+                            <>
+                              <TableCell className="text-right">
+                                <Input
+                                  type="number"
+                                  className="w-28 h-8 text-right"
+                                  defaultValue={row.achizPart || ""}
+                                  onBlur={(e) => {
+                                    const val = parseFloat(e.target.value || "0");
+                                    const ach = isNaN(val) ? 0 : val;
+                                    updateAchizitieMutation.mutate({ id: row.id, achizitiePartener: ach });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {row.achizFurn.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                              </TableCell>
+                            </>
+                          )}
                           <TableCell className="text-right">
                             {row.comisionPartener.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
                           </TableCell>
@@ -223,12 +238,16 @@ export default function ParteneriComisionari() {
                         <TableCell className="text-right">
                           {metrics.totals.totalValoare.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {metrics.totals.totalAchizPartner.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {metrics.totals.totalAchizFurnizor.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                        </TableCell>
+                        {canSeeAchizitii && (
+                          <>
+                            <TableCell className="text-right">
+                              {metrics.totals.totalAchizPartner.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {metrics.totals.totalAchizFurnizor.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </>
+                        )}
                         <TableCell className="text-right">
                           {metrics.totals.totalComision.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
                         </TableCell>

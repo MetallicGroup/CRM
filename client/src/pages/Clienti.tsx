@@ -1607,7 +1607,7 @@ export default function Clienti() {
                             setFormData({ ...formData, avansIncasat: !!checked })
                           }
                           data-testid="checkbox-avans-incasat"
-                          disabled={!isAdmin}
+                          disabled={!(isAdmin || isOana)}
                         />
                         <Label htmlFor="avansIncasat" className="text-sm font-normal cursor-pointer">
                           Avans încasat
@@ -1666,32 +1666,36 @@ export default function Clienti() {
                       data-testid="input-venit-productie"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="achizitiePartener">Achiziție partener (RON)</Label>
-                    <Input
-                      id="achizitiePartener"
-                      type="number"
-                      step="0.01"
-                      value={(formData as any).achizitiePartener || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          achizitiePartener: e.target.value,
-                        } as any)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pretAchizitie">Achiziție furnizor (RON)</Label>
-                    <Input
-                      id="pretAchizitie"
-                      type="number"
-                      step="0.01"
-                      value={formData.pretAchizitie}
-                      onChange={(e) => setFormData({ ...formData, pretAchizitie: e.target.value })}
-                      data-testid="input-pret-achizitie"
-                    />
-                  </div>
+                  {(isAdmin || isOana) && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="achizitiePartener">Achiziție partener (RON)</Label>
+                        <Input
+                          id="achizitiePartener"
+                          type="number"
+                          step="0.01"
+                          value={(formData as any).achizitiePartener || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              achizitiePartener: e.target.value,
+                            } as any)
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pretAchizitie">Achiziție furnizor (RON)</Label>
+                        <Input
+                          id="pretAchizitie"
+                          type="number"
+                          step="0.01"
+                          value={formData.pretAchizitie}
+                          onChange={(e) => setFormData({ ...formData, pretAchizitie: e.target.value })}
+                          data-testid="input-pret-achizitie"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox

