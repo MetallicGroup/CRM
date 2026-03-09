@@ -649,7 +649,21 @@ export async function registerRoutes(
         filterAgentId = undefined;
       }
 
-      const targetDate = date ? new Date(date as string) : new Date();
+      const parseYmd = (v: string): Date | null => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+        if (!m) return null;
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        if (!y || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+        const dt = new Date(y, mo - 1, d, 12, 0, 0, 0);
+        return isNaN(dt.getTime()) ? null : dt;
+      };
+
+      const dateStr = (date as string | undefined) || "";
+      const targetDate = date
+        ? (parseYmd(dateStr) || new Date(dateStr))
+        : new Date();
       if (isNaN(targetDate.getTime())) {
         return res.status(400).json({ message: "Dată invalidă" });
       }

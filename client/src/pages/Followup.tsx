@@ -50,7 +50,8 @@ export default function Followup() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedDate) {
-        params.set("date", selectedDate.toISOString());
+        // Trimitem data ca YYYY-MM-DD (fără UTC) ca să nu apară decalaj de o zi
+        params.set("date", format(selectedDate, "yyyy-MM-dd"));
       }
       if (isAdmin && selectedAgent && selectedAgent !== "all") {
         params.set("agentId", selectedAgent);
