@@ -1159,7 +1159,9 @@ export default function Clienti() {
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[90vh] overflow-y-auto sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
-              {editingClient ? "Editează Client" : "Adaugă Client Nou"}
+              {editingClient
+                ? `Editează Client ${editingClient.nume || ""}`.trim()
+                : "Adaugă Client Nou"}
             </DialogTitle>
             <DialogDescription>
               {editingClient ? "Modifică datele clientului" : "Completează datele noului client"}
