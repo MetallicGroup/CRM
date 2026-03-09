@@ -110,6 +110,11 @@ type ExtendedCreateClient = CreateClient & {
   transportTip?: TransportTip;
   transportSuma?: string;
 };
+type TransportTip = "FLOTA_AUTO" | "CURIER";
+type ExtendedCreateClient = CreateClient & {
+  transportTip?: TransportTip;
+  transportSuma?: string;
+};
 
 const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: "CUSTODIE", label: "Custodie" },
@@ -522,6 +527,58 @@ export default function Clienti() {
     retry: false,
   });
 
+  const createTransportCheltuiala = async (client: Client, currentForm: Partial<ExtendedCreateClient>) => {
+    if (!isAdmin) return;
+    if (!currentForm.transportTip || !currentForm.transportSuma) return;
+    const amount = parseFloat(currentForm.transportSuma || "0");
+    if (isNaN(amount) || amount <= 0) return;
+    if (!client.agentId) return;
+
+    const dateStr =
+      currentForm.dataVanzarii ||
+      client.dataVanzarii ||
+      new Date().toISOString().slice(0, 10);
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return;
+
+    const luna = date.getMonth() + 1;
+    const an = date.getFullYear();
+    const subcategoryId =
+      currentForm.transportTip === "FLOTA_AUTO"
+        ? "sub-transport-flota-auto"
+        : "sub-transport-curier";
+    const firmaBase = `Transport client ${client.nume || ""}`.trim();
+    const firma = firmaBase.slice(0, 100) || "Transport marfă client";
+
+    const res = await fetch("/api/cheltuieli-agent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        agentId: client.agentId,
+        categoryId: "cat-transport-marfa",
+        subcategoryId,
+        suma: amount.toFixed(2),
+        descriere: `Transport marfă pentru client ${client.nume || ""}`.trim(),
+        dataCheltuiala: date.toISOString(),
+        luna,
+        an,
+        judet: client.judet || currentForm.judet || undefined,
+        sediuId: null,
+        firma,
+        autoNr: undefined,
+        facturaFilename: "",
+        documentUrl: "",
+        tipCheltuiala: "TRANSPORT_MARFA",
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Eroare la crearea cheltuielii de transport marfă:", err);
+      // nu blocăm salvarea clientului, doar logăm
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: CreateClient) => {
       const res = await fetch("/api/clients", {
@@ -535,7 +592,7 @@ export default function Clienti() {
       }
       return res.json();
     },
-    onSuccess: async (newClient) => {
+    onSuccess: async (newClient: Client) => {
       if (pendingFiles.oferta1 || pendingFiles.oferta2 || pendingFiles.oferta3) {
         try {
           if (pendingFiles.oferta1) {
@@ -558,50 +615,7 @@ export default function Clienti() {
       }
 
       // Dacă adminul a completat transport marfă, creăm automat o cheltuială (Transport marfă)
-      try {
-        if (isAdmin && formData.transportTip && formData.transportSuma) {
-          const amount = parseFloat(formData.transportSuma || "0");
-          if (!isNaN(amount) && amount > 0 && newClient.agentId) {
-            const dateStr =
-              formData.dataVanzarii ||
-              newClient.dataVanzarii ||
-              new Date().toISOString().slice(0, 10);
-            const date = new Date(dateStr);
-            const luna = date.getMonth() + 1;
-            const an = date.getFullYear();
-            const subcategoryId =
-              formData.transportTip === "FLOTA_AUTO"
-                ? "sub-transport-flota-auto"
-                : "sub-transport-curier";
-            const firmaBase = `Transport client ${newClient.nume || ""}`.trim();
-            const firma = firmaBase.slice(0, 100) || "Transport marfă client";
-
-            await fetch("/api/cheltuieli-agent", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                agentId: newClient.agentId,
-                categoryId: "cat-transport-marfa",
-                subcategoryId,
-                suma: amount.toFixed(2),
-                descriere: `Transport marfă pentru client ${newClient.nume || ""}`.trim(),
-                dataCheltuiala: date.toISOString(),
-                luna,
-                an,
-                judet: newClient.judet || formData.judet || undefined,
-                sediuId: null,
-                firma,
-                autoNr: undefined,
-                facturaFilename: "",
-                documentUrl: "",
-                tipCheltuiala: "TRANSPORT_MARFA",
-              }),
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Eroare la crearea cheltuielii de transport marfă:", err);
-      }
+      await createTransportCheltuiala(newClient, formData);
 
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       closeDialog();
@@ -624,7 +638,9 @@ export default function Clienti() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async (updatedClient: Client) => {
+      // Creăm cheltuiala de transport și la editare, dacă a fost completată
+      await createTransportCheltuiala(updatedClient, formData);
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       toast.success("Client actualizat cu succes");
       closeDialog();
