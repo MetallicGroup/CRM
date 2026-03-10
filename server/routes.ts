@@ -54,9 +54,12 @@ async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) 
   }
 }
 
+function isAdminOrOana(req: AuthRequest): boolean {
+  return req.userRole === "ADMIN" || (req.userRole === "SPECIAL" && req.specialKey === "OANA");
+}
+
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  const isOanaSpecial = req.userRole === "SPECIAL" && req.specialKey === "OANA";
-  if (req.userRole !== "ADMIN" && !isOanaSpecial) {
+  if (!isAdminOrOana(req)) {
     return res.status(403).json({ message: "Acces interzis - doar administratorii" });
   }
   next();
@@ -338,7 +341,7 @@ export async function registerRoutes(
   // Get dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const agentId = !isAdminOrOana(req) ? req.userId : (req.query.agentId as string | undefined);
       const dateFrom = req.query.dateFrom as string | undefined;
       const dateTo = req.query.dateTo as string | undefined;
       const [clientStats, activeAgentsCount] = await Promise.all([
@@ -359,7 +362,7 @@ export async function registerRoutes(
   // Dashboard stats for today only (ziua curentă, actualizare în timp real)
   app.get("/api/dashboard/today", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const agentId = !isAdminOrOana(req) ? req.userId : (req.query.agentId as string | undefined);
       const now = new Date();
       const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -375,7 +378,7 @@ export async function registerRoutes(
   app.get("/api/dashboard/agents", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       // Non-admins can only see themselves
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         const user = await storage.getUser(req.userId!);
         if (user) {
           const { passwordHash, ...safeUser } = user;
@@ -406,7 +409,7 @@ export async function registerRoutes(
       const all = (report?.agentsMetrics || []) as { id: string; name: string; profitOperational: number; comisionValoare: number }[];
       const agents = all.filter((m) => isDashboardProfitAgent(m.name));
 
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         const user = await storage.getUser(req.userId!);
         if (!user) return res.status(403).json({ message: "Acces interzis" });
         const fullName = `${(user.firstName || "").trim()} ${(user.lastName || "").trim()}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -425,7 +428,7 @@ export async function registerRoutes(
   app.get("/api/chat/conversations", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.userId!;
-      if (req.userRole === "ADMIN" && req.query.all === "1") {
+      if (isAdminOrOana(req) && req.query.all === "1") {
         const list = await storage.getAllConversationsAdmin();
         return res.json(list);
       }
@@ -443,7 +446,7 @@ export async function registerRoutes(
       const withUserId = req.query.withUserId as string;
       const user1 = req.query.user1 as string;
       const user2 = req.query.user2 as string;
-      if (req.userRole === "ADMIN" && user1 && user2) {
+      if (isAdminOrOana(req) && user1 && user2) {
         const messages = await storage.getCrmMessagesBetween(user1, user2);
         return res.json(messages);
       }
@@ -512,7 +515,7 @@ export async function registerRoutes(
 
       // Non-admins can only see their own activity
       let filterAgentId = agentId as string | undefined;
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filterAgentId = req.userId;
       }
 
@@ -554,7 +557,7 @@ export async function registerRoutes(
 
       // Non-admins can only see propriile lor activități
       let filterAgentId = agentId as string | undefined;
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filterAgentId = req.userId;
       }
 
@@ -602,7 +605,7 @@ export async function registerRoutes(
       // Non-admins pot vedea doar propriii clienți,
       // cu excepția lui Razvan (poate filtra Alexandru) și Oana (poate filtra orice agent).
       let filterAgentId = requestedAgentId;
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         const isRazvan =
           !!req.userEmail?.toLowerCase().includes("razvan") ||
           !!req.userFirstName?.toLowerCase().includes("razvan");
@@ -643,7 +646,7 @@ export async function registerRoutes(
       const { agentId, date } = req.query;
 
       let filterAgentId = agentId as string | undefined;
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filterAgentId = req.userId;
       } else if (filterAgentId === "all") {
         filterAgentId = undefined;
@@ -679,7 +682,7 @@ export async function registerRoutes(
   // Get client stats
   app.get("/api/clients/stats", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const agentId = req.userRole !== "ADMIN" ? req.userId : (req.query.agentId as string | undefined);
+      const agentId = !isAdminOrOana(req) ? req.userId : (req.query.agentId as string | undefined);
       const stats = await storage.getClientStats(agentId);
       res.json(stats);
     } catch (error) {
@@ -698,7 +701,7 @@ export async function registerRoutes(
       }
 
       // Non-admins can only see their own clients
-      if (req.userRole !== "ADMIN" && client.agentId !== req.userId) {
+      if (!isAdminOrOana(req) && client.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la acest client" });
       }
 
@@ -731,7 +734,7 @@ export async function registerRoutes(
       const data = createClientSchema.parse(req.body);
 
       // RBAC: Non-admins can only create clients assigned to themselves
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         data.agentId = req.userId;
       } else if (!data.agentId) {
         // Admin creates without agent - leave unassigned
@@ -853,14 +856,14 @@ export async function registerRoutes(
 
       // Non-admins pot modifica doar propriii clienți,
       // cu excepția lui Razvan și Oana care pot edita orice client.
-      if (req.userRole !== "ADMIN" && !isRazvan && !isOana && existingClient.agentId !== req.userId) {
+      if (!isAdminOrOana(req) && !isRazvan && !isOana && existingClient.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest client" });
       }
 
       const data = updateClientSchema.parse(req.body);
 
       // RBAC: Non-admins cannot change the agent assignment
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         delete data.agentId;
       }
 
@@ -1128,7 +1131,7 @@ export async function registerRoutes(
 
   app.get("/api/documente", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const isAdmin = req.userRole === "ADMIN";
+      const isAdmin = isAdminOrOana(req);
       let categorie = req.query.categorie as string | undefined;
       // Non-admin: acces doar la Fișă tehnică
       if (!isAdmin) {
@@ -1178,7 +1181,7 @@ export async function registerRoutes(
 
       // Non-admins can only see their own targets
       const filters: any = {};
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filters.agentId = req.userId;
       } else if (agentId) {
         filters.agentId = agentId as string;
@@ -1201,7 +1204,7 @@ export async function registerRoutes(
       const { agentId, luna, an } = req.query;
 
       // Non-admins can ONLY see their own progress - ignore agentId parameter
-      const targetAgentId = req.userRole !== "ADMIN" ? req.userId! : (agentId as string || req.userId!);
+      const targetAgentId = !isAdminOrOana(req) ? req.userId! : (agentId as string || req.userId!);
       const targetLuna = parseInt(luna as string) || new Date().getMonth() + 1;
       const targetAn = parseInt(an as string) || new Date().getFullYear();
 
@@ -1218,7 +1221,7 @@ export async function registerRoutes(
     try {
       const { agentId, luna, an } = req.query;
       const filters: { agentId?: string; luna?: number; an?: number } = {};
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filters.agentId = req.userId!;
       } else if (agentId && agentId !== "all") {
         filters.agentId = agentId as string;
@@ -1257,7 +1260,7 @@ export async function registerRoutes(
       if (!detailed.target) {
         return res.status(404).json({ message: "Target negăsit" });
       }
-      if (req.userRole !== "ADMIN" && detailed.target.agentId !== req.userId) {
+      if (!isAdminOrOana(req) && detailed.target.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la acest target" });
       }
       res.json(detailed);
@@ -1360,7 +1363,7 @@ export async function registerRoutes(
   app.post("/api/partners", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const data = createPartnerSchema.parse(req.body);
-      const isAdmin = req.userRole === "ADMIN";
+      const isAdmin = isAdminOrOana(req);
 
       const partner = await storage.createPartner({
         ...data,
@@ -1594,7 +1597,7 @@ export async function registerRoutes(
 
       // Non-admins can only see their own expenses
       const filters: any = {};
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filters.agentId = req.userId;
       } else if (agentId) {
         filters.agentId = agentId as string;
@@ -1620,7 +1623,7 @@ export async function registerRoutes(
       const { agentId, luna, an } = req.query;
 
       const filters: any = {};
-      if (req.userRole !== "ADMIN") {
+      if (!isAdminOrOana(req)) {
         filters.agentId = req.userId;
       } else if (agentId) {
         filters.agentId = agentId as string;
@@ -1645,7 +1648,7 @@ export async function registerRoutes(
       }
 
       // Non-admins can only see their own expenses
-      if (req.userRole !== "ADMIN" && cheltuiala.agentId !== req.userId) {
+      if (!isAdminOrOana(req) && cheltuiala.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la această cheltuială" });
       }
 
