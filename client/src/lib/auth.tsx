@@ -105,9 +105,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const user = data?.user ?? null;
   const isAuthenticated = !!user;
+  const isOanaByIdentity =
+    !!user &&
+    (user.email?.toLowerCase().includes("oana") ||
+      user.firstName?.toLowerCase().includes("oana"));
   const isAdmin =
     user?.role === "ADMIN" ||
-    (user?.role === "SPECIAL" && user?.specialKey === "OANA");
+    (user?.role === "SPECIAL" && user?.specialKey === "OANA") ||
+    isOanaByIdentity;
   const isAgent = user?.role === "AGENT";
 
   const hasPermission = (permission: string): boolean => {
