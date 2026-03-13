@@ -155,6 +155,7 @@ const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
   { value: "FERESTRE_MANSARDA", label: "Ferestre mansardă" },
   { value: "SCARI_ACCES", label: "Scări acces" },
   { value: "ACCESORII_FERESTRE", label: "Accesorii ferestre/usi" },
+  { value: "VENTILATII", label: "Ventilatie" },
   { value: "SCULE", label: "Scule" },
 ];
 
