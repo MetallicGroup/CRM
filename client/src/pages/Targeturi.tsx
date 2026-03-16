@@ -424,7 +424,7 @@ export default function Targeturi() {
                   <TableHead>Agent</TableHead>
                   <TableHead>Target RON</TableHead>
                   <TableHead>Target Clienți</TableHead>
-                  <TableHead>% îndeplinit (RON)</TableHead>
+                  <TableHead>% îndeplinit</TableHead>
                   <TableHead className="w-[100px]">Detalii</TableHead>
                   {isAdmin && <TableHead className="w-[100px]">Acțiuni</TableHead>}
                 </TableRow>
@@ -446,11 +446,11 @@ export default function Targeturi() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Progress
-                          value={target.progressSummary.percentVanzari}
+                          value={target.progressSummary.percentTotal}
                           className="h-2 w-24"
                         />
                         <span className="text-sm font-medium tabular-nums">
-                          {target.progressSummary.percentVanzari}%
+                          {target.progressSummary.percentTotal}%
                         </span>
                       </div>
                     </TableCell>

@@ -1235,12 +1235,87 @@ export async function registerRoutes(
           const { target, progress } = await storage.getTargetDetailedProgress(t.id);
           const targetVanzari = target ? parseFloat(target.targetVanzari) : 0;
           const percentVanzari = targetVanzari > 0 ? Math.min(100, Math.round((progress.realizedValue / targetVanzari) * 1000) / 10) : 0;
+
+          // Calculăm un procent total agregat pe toți indicatorii nenuli ai targetului
+          let sumPercents = 0;
+          let countPercents = 0;
+
+          // 1) Vânzări RON
+          if (targetVanzari > 0) {
+            sumPercents += percentVanzari;
+            countPercents += 1;
+          }
+
+          // 2) Număr clienți
+          if (target && target.targetClienti > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedVanzariNr || 0) / target.targetClienti) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          // 3) Oferte transmise
+          if (target && target.targetOferteTransmise > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedOferteTransmise || 0) / target.targetOferteTransmise) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          // 4) Follow-up-uri
+          if (target && target.targetFollowUp > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedFollowUp || 0) / target.targetFollowUp) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          // 5) Clienți noi
+          if (target && target.targetClientiNoi > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedClientiNoi || 0) / target.targetClientiNoi) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          // 6) Colaboratori noi
+          if (target && target.targetColaboratoriNoi > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedColaboratoriNoi || 0) / target.targetColaboratoriNoi) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          // 7) Partener activ
+          if (target && target.targetPartenerActiv > 0) {
+            const pct = Math.min(
+              100,
+              Math.round(((progress.realizedPartenerActiv || 0) / target.targetPartenerActiv) * 1000) / 10
+            );
+            sumPercents += pct;
+            countPercents += 1;
+          }
+
+          const percentTotal =
+            countPercents > 0 ? Math.min(100, Math.round((sumPercents / countPercents) * 10) / 10) : 0;
+
           return {
             ...t,
             progressSummary: {
               realizedValue: progress.realizedValue,
               targetVanzari,
               percentVanzari,
+              percentTotal,
             },
           };
         })
