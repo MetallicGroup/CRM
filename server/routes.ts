@@ -1234,87 +1234,82 @@ export async function registerRoutes(
         list.map(async (t) => {
           const { target, progress } = await storage.getTargetDetailedProgress(t.id);
           const targetVanzari = target ? parseFloat(target.targetVanzari) : 0;
-          const percentVanzari = targetVanzari > 0 ? Math.min(100, Math.round((progress.realizedValue / targetVanzari) * 1000) / 10) : 0;
 
-          // Calculăm un procent total agregat pe toți indicatorii nenuli ai targetului
-          const percents: number[] = [];
+          // 1) Vânzări RON – procent brut, fără rotunjire intermediară, doar limitat la 100
+          const pctVanzari =
+            targetVanzari > 0 ? Math.min(100, (progress.realizedValue / targetVanzari) * 100) : 0;
 
-          // 1) Vânzări RON (dacă targetVanzari = 0, considerăm 0% realizat)
-          percents.push(percentVanzari);
+          // 2) Clienți
+          const pctClienti =
+            target && target.targetClienti > 0
+              ? Math.min(100, ((progress.realizedVanzariNr || 0) / target.targetClienti) * 100)
+              : 0;
 
-          // 2) Număr clienți
-          if (target) {
-            const pctClienti =
-              target.targetClienti > 0
-                ? Math.min(
-                    100,
-                    Math.round(((progress.realizedVanzariNr || 0) / target.targetClienti) * 1000) / 10
-                  )
-                : 0;
-            percents.push(pctClienti);
+          // 3) Oferte transmise
+          const pctOferte =
+            target && target.targetOferteTransmise > 0
+              ? Math.min(
+                  100,
+                  ((progress.realizedOferteTransmise || 0) / target.targetOferteTransmise) * 100
+                )
+              : 0;
 
-            // 3) Oferte transmise
-            const pctOferte =
-              target.targetOferteTransmise > 0
-                ? Math.min(
-                    100,
-                    Math.round(
-                      ((progress.realizedOferteTransmise || 0) / target.targetOferteTransmise) * 1000
-                    ) / 10
-                  )
-                : 0;
-            percents.push(pctOferte);
+          // 4) Follow-up-uri
+          const pctFollowUp =
+            target && target.targetFollowUp > 0
+              ? Math.min(100, ((progress.realizedFollowUp || 0) / target.targetFollowUp) * 100)
+              : 0;
 
-            // 4) Follow-up-uri
-            const pctFollowUp =
-              target.targetFollowUp > 0
-                ? Math.min(
-                    100,
-                    Math.round(((progress.realizedFollowUp || 0) / target.targetFollowUp) * 1000) / 10
-                  )
-                : 0;
-            percents.push(pctFollowUp);
+          // 5) Clienți noi
+          const pctClientiNoi =
+            target && target.targetClientiNoi > 0
+              ? Math.min(100, ((progress.realizedClientiNoi || 0) / target.targetClientiNoi) * 100)
+              : 0;
 
-            // 5) Clienți noi
-            const pctClientiNoi =
-              target.targetClientiNoi > 0
-                ? Math.min(
-                    100,
-                    Math.round(
-                      ((progress.realizedClientiNoi || 0) / target.targetClientiNoi) * 1000
-                    ) / 10
-                  )
-                : 0;
-            percents.push(pctClientiNoi);
+          // 6) Colaboratori noi
+          const pctColaboratoriNoi =
+            target && target.targetColaboratoriNoi > 0
+              ? Math.min(
+                  100,
+                  ((progress.realizedColaboratoriNoi || 0) / target.targetColaboratoriNoi) * 100
+                )
+              : 0;
 
-            // 6) Colaboratori noi
-            const pctColaboratoriNoi =
-              target.targetColaboratoriNoi > 0
-                ? Math.min(
-                    100,
-                    Math.round(
-                      ((progress.realizedColaboratoriNoi || 0) / target.targetColaboratoriNoi) * 1000
-                    ) / 10
-                  )
-                : 0;
-            percents.push(pctColaboratoriNoi);
+          // 7) Partener activ
+          const pctPartenerActiv =
+            target && target.targetPartenerActiv > 0
+              ? Math.min(
+                  100,
+                  ((progress.realizedPartenerActiv || 0) / target.targetPartenerActiv) * 100
+                )
+              : 0;
 
-            // 7) Partener activ
-            const pctPartenerActiv =
-              target.targetPartenerActiv > 0
-                ? Math.min(
-                    100,
-                    Math.round(
-                      ((progress.realizedPartenerActiv || 0) / target.targetPartenerActiv) * 1000
-                    ) / 10
-                  )
-                : 0;
-            percents.push(pctPartenerActiv);
-          }
+          // 8) Conversie (%)
+          const targetConversie =
+            target && target.targetConversie ? parseFloat(target.targetConversie) : 0;
+          const realizedConversie = progress.realizedConversie ?? 0;
+          const pctConversie =
+            targetConversie > 0
+              ? Math.min(100, (realizedConversie / targetConversie) * 100)
+              : 0;
 
-          const validPercents = percents.length ? percents : [0];
+          const percents = [
+            pctVanzari,
+            pctClienti,
+            pctOferte,
+            pctFollowUp,
+            pctClientiNoi,
+            pctColaboratoriNoi,
+            pctPartenerActiv,
+            pctConversie,
+          ];
+
           const avg =
-            validPercents.reduce((sum, v) => sum + v, 0) / validPercents.length;
+            percents.reduce((sum, v) => sum + v, 0) / (percents.length || 1);
+
+          // Păstrăm o singură rotunjire finală pentru afișare (1 zecimală)
+          const percentVanzariDisplay =
+            targetVanzari > 0 ? Math.min(100, Math.round(pctVanzari * 10) / 10) : 0;
           const percentTotal = Math.min(100, Math.round(avg * 10) / 10);
 
           return {
@@ -1322,7 +1317,7 @@ export async function registerRoutes(
             progressSummary: {
               realizedValue: progress.realizedValue,
               targetVanzari,
-              percentVanzari,
+              percentVanzari: percentVanzariDisplay,
               percentTotal,
             },
           };
