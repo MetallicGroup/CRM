@@ -1825,7 +1825,7 @@ export default function Clienti() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="ofertaFilename">Fișier Ofertă 1</Label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                       {formData.ofertaFilename ? (
                         <>
                           <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
@@ -1876,7 +1876,7 @@ export default function Clienti() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ofertaFilename2">Fișier Ofertă 2</Label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                       {formData.ofertaFilename2 ? (
                         <>
                           <div className="flex-1 flex items-center gap-2 p-2 border rounded-md bg-muted/50">
