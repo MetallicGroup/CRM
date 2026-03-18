@@ -2140,6 +2140,7 @@ export class DatabaseStorage implements IStorage {
         { id: "cat-transport-marfa", name: "Transport marfă", displayOrder: 6 },
         { id: "cat-vara", name: "Cheltuiala Vara", displayOrder: 7 },
         { id: "cat-iarna", name: "Cheltuiala Iarna", displayOrder: 8 },
+        { id: "cat-nedeductibile", name: "Cheltuieli nedeductibile", displayOrder: 9 },
       ];
 
       const existingIds = new Set(rows.map((r) => r.id));
