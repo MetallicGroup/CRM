@@ -3647,8 +3647,39 @@ export class DatabaseStorage implements IStorage {
     const endMonth = endLuna || luna;
 
     // 1. Fetch all necessary data
-    const agents = await this.getAgents();
+    let agents = await this.getAgents();
     const partners = await this.getAllPartners({ tipPartener: "DISTRIBUITOR", activ: true });
+
+    // IMPORTANT:
+    // În calculele de profitabilitate vrem să împărțim cheltuieli doar între conturile reale de agenți.
+    // În prezent există și conturi tehnice (admin/debug/api) care intră în getAgents().
+    // Le filtrăm aici ca să nu influențeze denominatori (showroom/cota parte) și să nu primească metrici.
+    const normalizeForEligibility = (n: string) =>
+      (n || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    const eligibleAgentNames = new Set(
+      [
+        // cei pe care îi vrei tu
+        "daniel daniel",
+        "dana dana",
+        "dragos frangache",
+        "iulian iulian",
+        "madalina madalina",
+        "marian costache",
+        "mihai wagner",
+        "raluca raluca",
+        "alexandru croitoru",
+      ].map(normalizeForEligibility)
+    );
+
+    agents = agents.filter((a) => {
+      const full = `${a.firstName || ""} ${a.lastName || ""}`;
+      return eligibleAgentNames.has(normalizeForEligibility(full));
+    });
 
     // Helper to get range condition
     const range = (table: any) => and(
@@ -3867,6 +3898,7 @@ export class DatabaseStorage implements IStorage {
         "dana dana",
         "madalina madalina",
         "iulian iulian",
+        "mihai wagner",
         "dragos frangache",
         "alexandru croitoru",
         "marian costache",
@@ -3901,6 +3933,12 @@ export class DatabaseStorage implements IStorage {
           normalizeName(agent.firstName) === "alexandra")
       ) {
         sediuId = teleormanSediu.id;
+      }
+
+      // Fallback: dacă agentul nu are sediu setat și nu a intrat în mapping-ul
+      // de nume, îl atribuim la București ca să intre în alocarea cheltuielilor showroom.
+      if (!sediuId && centralSediu) {
+        sediuId = centralSediu.id;
       }
 
       agentSediuMap[agent.id] = sediuId;
@@ -4004,25 +4042,10 @@ export class DatabaseStorage implements IStorage {
       }
     });
 
-    // Cheltuielile „Cota parte” se împart doar între agenții activi de vânzări:
-    // Dragos Frangache, Oana Frangache, Marian Costache, Razvan Rosu, Alexandru Croitoru
-    const cotaParteAgentsNames = new Set(
-      [
-        "dragos frangache",
-        "oana frangache",
-        "marian costache",
-        "razvan rosu",
-        "alexandru croitoru",
-      ].map((n) => n.toLowerCase()),
-    );
-
-    const cotaParteAgentIds: string[] = [];
-    agents.forEach((a) => {
-      const fullName = `${a.firstName} ${a.lastName}`.toLowerCase();
-      if (cotaParteAgentsNames.has(fullName)) {
-        cotaParteAgentIds.push(a.id);
-      }
-    });
+    // Cheltuielile „Cota parte” se împart între toți agenții.
+    const cotaParteAgentIds: string[] = agents
+      .map((a) => a.id)
+      .filter((id): id is string => !!id);
 
     const numAgentsCota = cotaParteAgentIds.length || 1;
     const shareIndirect = totalCotaParte / numAgentsCota;
