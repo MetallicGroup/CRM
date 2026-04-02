@@ -3673,6 +3673,9 @@ export class DatabaseStorage implements IStorage {
         "mihai wagner",
         "raluca raluca",
         "alexandru croitoru",
+        // cei din Showroom Constanța
+        "oana frangache",
+        "razvan rosu",
       ].map(normalizeForEligibility)
     );
 
