@@ -877,6 +877,37 @@ export async function registerRoutes(
 
       const data = updateClientSchema.parse(req.body);
 
+      // Golire fișiere ofertă: aceleași drepturi ca la ștergerea clientului
+      const clearsOfferFile = (
+        field: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3",
+      ) => {
+        const next = data[field];
+        const had = !!(existingClient as any)[field];
+        return (
+          had &&
+          next !== undefined &&
+          (next === "" || next === null)
+        );
+      };
+      if (
+        clearsOfferFile("ofertaFilename") ||
+        clearsOfferFile("ofertaFilename2") ||
+        clearsOfferFile("ofertaFilename3")
+      ) {
+        if (
+          !canUserDeleteClients({
+            role: req.userRole || "",
+            firstName: req.userFirstName,
+            lastName: req.userLastName,
+            specialKey: req.specialKey,
+          })
+        ) {
+          return res.status(403).json({
+            message: "Nu aveți dreptul să ștergeți fișierele de ofertă",
+          });
+        }
+      }
+
       // RBAC: Non-admins cannot change the agent assignment
       if (!isAdminOrOana(req)) {
         delete data.agentId;

@@ -1289,15 +1289,17 @@ export default function Clienti() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setFormData({ ...formData, ofertaFilename3: "" as any })}
-                          data-testid="button-remove-oferta-3"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {canDeleteClients && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, ofertaFilename3: "" as any })}
+                            data-testid="button-remove-oferta-3"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <ObjectUploader
@@ -1889,15 +1891,17 @@ export default function Clienti() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setFormData({ ...formData, ofertaFilename: "" })}
-                            data-testid="button-remove-oferta-1"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {canDeleteClients && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setFormData({ ...formData, ofertaFilename: "" })}
+                              data-testid="button-remove-oferta-1"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
                         </>
                       ) : (
                         <ObjectUploader
@@ -1940,15 +1944,17 @@ export default function Clienti() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setFormData({ ...formData, ofertaFilename2: "" })}
-                            data-testid="button-remove-oferta-2"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {canDeleteClients && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setFormData({ ...formData, ofertaFilename2: "" })}
+                              data-testid="button-remove-oferta-2"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
                         </>
                       ) : (
                         <ObjectUploader
