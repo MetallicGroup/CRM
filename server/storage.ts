@@ -4047,18 +4047,18 @@ export class DatabaseStorage implements IStorage {
     });
 
     // Cheltuielile „Cota parte” se împart doar între agenții de vânzări desemnați (nu la toți).
-    // Marian Toma: inclus până la martie 2026; din aprilie 2026 încolo nu mai intră la împărțire.
-    const includeMarianTomaCota =
-      an < 2026 || (an === 2026 && endMonth < 4);
+    // Dragos Frangache + Marian Toma: incluși până la martie 2026; din aprilie 2026 încolo nu mai intră la împărțire.
+    const cotaParteSeasonalCutoff = an < 2026 || (an === 2026 && endMonth < 4);
     const cotaParteBaseNames = [
-      "dragos frangache",
       "oana frangache",
       "marian costache",
       "alexandru croitoru",
       "razvan rosu",
       "mihai wagner",
     ];
-    if (includeMarianTomaCota) cotaParteBaseNames.push("marian toma");
+    if (cotaParteSeasonalCutoff) {
+      cotaParteBaseNames.push("dragos frangache", "marian toma");
+    }
     const cotaParteAgentsNames = new Set(cotaParteBaseNames.map((n) => normalizeName(n)));
     const cotaParteAgentIds: string[] = [];
     agents.forEach((a) => {

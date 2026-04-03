@@ -37,6 +37,34 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
 
 const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
 
+/** Profit brut afișat în tabel doar pentru acești agenți (restul: „—”). */
+const PROFIT_BRUT_VISIBLE_NAMES = new Set(
+  [
+    "dragos frangache",
+    "oana frangache",
+    "marian costache",
+    "alexandru croitoru",
+    "marian toma",
+    "razvan rosu",
+    "mihai wagner",
+  ].map((n) =>
+    n
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim(),
+  ),
+);
+
+function isProfitBrutVisible(fullName: string): boolean {
+  const key = fullName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  return PROFIT_BRUT_VISIBLE_NAMES.has(key);
+}
+
 export default function Angajati() {
   // Use new API hooks
   const { data: dbEmployees = [], isLoading: loadingEmployees } = useEmployees();
@@ -203,7 +231,9 @@ export default function Angajati() {
       totalVanzari += m.venitTotal || 0;
       totalAdaos += m.adaosTVA || 0;
       totalCheltuieli += (m.cheltuieliAgent || 0) + (m.cheltuieliShowroom || 0) + (m.cheltuieliIndirecte || 0);
-      totalProfitBrut += m.profitBrut || 0;
+      if (isProfitBrutVisible(emp.name)) {
+        totalProfitBrut += m.profitBrut || 0;
+      }
     });
 
     return { totalVanzari, totalAdaos, totalCheltuieli, totalProfitBrut };
@@ -565,13 +595,17 @@ export default function Angajati() {
                           {isAgent ? m.comisionValoare.toFixed(0) : "-"}
                         </TableCell>
                         <TableCell className={`font-bold text-lg border-l-4 ${
-                          isAgent
+                          isAgent && isProfitBrutVisible(emp.name)
                             ? m.profitBrut >= 0
                               ? "text-emerald-600 border-emerald-500"
                               : "text-red-600 border-red-500"
                             : "text-slate-400 border-gray-300"
                         }`}>
-                          {isAgent ? m.profitBrut.toFixed(0) : "-"}
+                          {isAgent
+                            ? isProfitBrutVisible(emp.name)
+                              ? m.profitBrut.toFixed(0)
+                              : "—"
+                            : "-"}
                         </TableCell>
 
                         <TableCell>

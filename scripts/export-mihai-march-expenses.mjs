@@ -207,18 +207,19 @@ async function main() {
       if (e.category_id === "cat-cota-parte") totalCotaParte += parseFloat(e.suma || "0");
     }
 
-    // Marian Toma: inclus până la martie 2026; din aprilie 2026 încolo nu (ca în getFinancialReport).
-    const includeMarianTomaCota =
+    // Dragos + Marian Toma: până la martie 2026; din aprilie 2026 încolo nu (ca în getFinancialReport).
+    const cotaParteSeasonalCutoff =
       year < 2026 || (year === 2026 && month < 4);
     const cotaParteBaseNames = [
-      "dragos frangache",
       "oana frangache",
       "marian costache",
       "alexandru croitoru",
       "razvan rosu",
       "mihai wagner",
     ];
-    if (includeMarianTomaCota) cotaParteBaseNames.push("marian toma");
+    if (cotaParteSeasonalCutoff) {
+      cotaParteBaseNames.push("dragos frangache", "marian toma");
+    }
     const cotaParteAgentsNames = new Set(cotaParteBaseNames.map(normalizeName));
     const cotaParteAgentIds = [];
     for (const a of agents) {
