@@ -8,6 +8,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import multer from "multer";
 import { eq, inArray, and } from "drizzle-orm";
+import { canUserDeleteClients } from "@shared/clientDeletePermissions";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -61,6 +62,20 @@ function isAdminOrOana(req: AuthRequest): boolean {
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   if (!isAdminOrOana(req)) {
     return res.status(403).json({ message: "Acces interzis - doar administratorii" });
+  }
+  next();
+}
+
+function requireClientDeletePermission(req: AuthRequest, res: Response, next: NextFunction) {
+  if (
+    !canUserDeleteClients({
+      role: req.userRole || "",
+      firstName: req.userFirstName,
+      lastName: req.userLastName,
+      specialKey: req.specialKey,
+    })
+  ) {
+    return res.status(403).json({ message: "Nu aveți dreptul să ștergeți clienți" });
   }
   next();
 }
@@ -977,8 +992,8 @@ export async function registerRoutes(
     }
   });
 
-  // Delete client (admin only)
-  app.delete("/api/clients/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+  // Delete client: doar conturi desemnate (vezi canUserDeleteClients)
+  app.delete("/api/clients/:id", requireAuth, requireClientDeletePermission, async (req: AuthRequest, res: Response) => {
     try {
       // Get client before deletion for profitability recalculation
       const existingClient = await storage.getClient(req.params.id);

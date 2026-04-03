@@ -174,10 +174,14 @@ export default function Vanzari() {
     const matchesCategory = selectedCategory === "all" || client.categorieProdus === selectedCategory;
     const matchesOrderStatus = selectedOrderStatus === "all" || client.stadiuComanda === selectedOrderStatus;
     
-    // Partner filter
+    // Partner filter — „Cu partener” = cu partener, dar fără parteneri comisionari (aceia sunt la filtrul dedicat)
+    const isComisionarPartner =
+      !!client.partnerId && comisionariPartnerIds.has(client.partnerId);
     const matchesPartner =
       partnerFilter === "all" ||
-      (partnerFilter === "with" && client.isPartnerOrder) ||
+      (partnerFilter === "with" &&
+        client.isPartnerOrder &&
+        !isComisionarPartner) ||
       (partnerFilter === "without" && !client.isPartnerOrder) ||
       (partnerFilter === "comisionari" &&
         !!client.partnerId &&

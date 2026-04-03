@@ -82,6 +82,7 @@ import type {
   FinishType,
   Brand,
 } from "@shared/schema";
+import { canUserDeleteClients } from "@shared/clientDeletePermissions";
 
 const OFFER_STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
   { value: "NOUA", label: "Nouă", color: "bg-blue-500/25 text-blue-200 border border-blue-500/40" },
@@ -421,6 +422,17 @@ function getClientPrioritate(client: { prioritate?: string | null; urgenta?: boo
 
 export default function Clienti() {
   const { isAdmin, user } = useAuth();
+  const canDeleteClients = useMemo(
+    () =>
+      !!user &&
+      canUserDeleteClients({
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        specialKey: user.specialKey,
+      }),
+    [user],
+  );
   const isRazvan =
     !!user &&
     (
@@ -1168,7 +1180,7 @@ export default function Clienti() {
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
-                        {isAdmin && (
+                        {canDeleteClients && (
                           <Button
                             variant="ghost"
                             size="icon"
