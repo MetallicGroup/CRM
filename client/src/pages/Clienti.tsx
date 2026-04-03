@@ -439,6 +439,7 @@ export default function Clienti() {
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [contactStatusFilter, setContactStatusFilter] = useState<"all" | "contactat" | "necontactat">("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -495,8 +496,16 @@ export default function Clienti() {
       filtered = filtered.filter((c) => c.sursa === sourceFilter);
     }
 
+    if (brandFilter !== "all") {
+      if (brandFilter === "__none__") {
+        filtered = filtered.filter((c) => !c.brand || String(c.brand).trim() === "");
+      } else {
+        filtered = filtered.filter((c) => c.brand === brandFilter);
+      }
+    }
+
     return filtered;
-  }, [clients, contactStatusFilter, sourceFilter]);
+  }, [clients, contactStatusFilter, sourceFilter, brandFilter]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["agents-minimal"],
@@ -796,6 +805,9 @@ export default function Clienti() {
     setSearch("");
     setStadiuFilter("all");
     setAgentFilter("all");
+    setContactStatusFilter("all");
+    setSourceFilter("all");
+    setBrandFilter("all");
   };
 
   return (
@@ -918,6 +930,23 @@ export default function Clienti() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger
+                className="w-full md:w-[200px]"
+                data-testid="select-brand-filter"
+              >
+                <SelectValue placeholder="Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate brandurile</SelectItem>
+                <SelectItem value="__none__">Fără brand</SelectItem>
+                {BRAND_OPTIONS.map((b) => (
+                  <SelectItem key={b.value} value={b.value}>
+                    {b.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
         </CardContent>
@@ -934,7 +963,12 @@ export default function Clienti() {
               <Users className="h-12 w-12 text-slate-400 mb-4" />
               <h3 className="text-lg font-medium">Niciun client găsit</h3>
               <p className="text-slate-400 mb-4">
-                {search || stadiuFilter !== "all" || agentFilter !== "all" || contactStatusFilter !== "all"
+                {search ||
+                stadiuFilter !== "all" ||
+                agentFilter !== "all" ||
+                contactStatusFilter !== "all" ||
+                sourceFilter !== "all" ||
+                brandFilter !== "all"
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
               </p>

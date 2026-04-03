@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,9 @@ export default function Vanzari() {
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<string>("all");
-  const [partnerFilter, setPartnerFilter] = useState<"all" | "with" | "without">("all");
+  const [partnerFilter, setPartnerFilter] = useState<
+    "all" | "with" | "without" | "comisionari"
+  >("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date | undefined>(endOfMonth(new Date()));
@@ -143,6 +145,22 @@ export default function Vanzari() {
     enabled: isAdmin, // Only load agents list for admins
   });
 
+  const { data: partnersComisionari = [] } = useQuery<{ id: string }[]>({
+    queryKey: ["partners-comisionari-ids"],
+    queryFn: async () => {
+      const res = await fetch(
+        "/api/partners?tipPartener=PARTENER_COMISIONAR&activ=true"
+      );
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const comisionariPartnerIds = useMemo(
+    () => new Set(partnersComisionari.map((p) => p.id)),
+    [partnersComisionari]
+  );
+
   const filteredClients = clients.filter((client) => {
     const matchesSearch = search === "" || 
       client.nume.toLowerCase().includes(search.toLowerCase()) ||
@@ -157,9 +175,13 @@ export default function Vanzari() {
     const matchesOrderStatus = selectedOrderStatus === "all" || client.stadiuComanda === selectedOrderStatus;
     
     // Partner filter
-    const matchesPartner = partnerFilter === "all" ||
+    const matchesPartner =
+      partnerFilter === "all" ||
       (partnerFilter === "with" && client.isPartnerOrder) ||
-      (partnerFilter === "without" && !client.isPartnerOrder);
+      (partnerFilter === "without" && !client.isPartnerOrder) ||
+      (partnerFilter === "comisionari" &&
+        !!client.partnerId &&
+        comisionariPartnerIds.has(client.partnerId));
 
     const matchesSource = sourceFilter === "all" || client.sursa === sourceFilter;
 
@@ -321,8 +343,15 @@ export default function Vanzari() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-[180px]">
-              <Select value={partnerFilter} onValueChange={(value) => setPartnerFilter(value as "all" | "with" | "without")}>
+            <div className="w-[220px]">
+              <Select
+                value={partnerFilter}
+                onValueChange={(value) =>
+                  setPartnerFilter(
+                    value as "all" | "with" | "without" | "comisionari"
+                  )
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Filtru partener" />
                 </SelectTrigger>
@@ -330,6 +359,9 @@ export default function Vanzari() {
                   <SelectItem value="all">Toate vânzările</SelectItem>
                   <SelectItem value="without">Fără partener</SelectItem>
                   <SelectItem value="with">Cu partener</SelectItem>
+                  <SelectItem value="comisionari">
+                    Parteneri comisionari
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
