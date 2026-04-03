@@ -37,8 +37,8 @@ const TYPE_COLORS: Record<EmployeeType, string> = {
 
 const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
 
-/** Profit brut afișat în tabel doar pentru acești agenți (restul: „—”). */
-const PROFIT_BRUT_VISIBLE_NAMES = new Set(
+/** Profit operațional, comision RON, profit brut: afișate doar pentru acești agenți (restul: „—”). */
+const AGENT_OPERATIVE_METRICS_VISIBLE_NAMES = new Set(
   [
     "dragos frangache",
     "oana frangache",
@@ -56,13 +56,13 @@ const PROFIT_BRUT_VISIBLE_NAMES = new Set(
   ),
 );
 
-function isProfitBrutVisible(fullName: string): boolean {
+function isAgentOperativeMetricsVisible(fullName: string): boolean {
   const key = fullName
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-  return PROFIT_BRUT_VISIBLE_NAMES.has(key);
+  return AGENT_OPERATIVE_METRICS_VISIBLE_NAMES.has(key);
 }
 
 export default function Angajati() {
@@ -231,7 +231,7 @@ export default function Angajati() {
       totalVanzari += m.venitTotal || 0;
       totalAdaos += m.adaosTVA || 0;
       totalCheltuieli += (m.cheltuieliAgent || 0) + (m.cheltuieliShowroom || 0) + (m.cheltuieliIndirecte || 0);
-      if (isProfitBrutVisible(emp.name)) {
+      if (isAgentOperativeMetricsVisible(emp.name)) {
         totalProfitBrut += m.profitBrut || 0;
       }
     });
@@ -574,35 +574,43 @@ export default function Angajati() {
                         </TableCell>
 
                         <TableCell className={`font-bold text-right ${
-                          isAgent
+                          isAgent && isAgentOperativeMetricsVisible(emp.name)
                             ? m.profitOperational >= 0
                               ? "text-emerald-600"
                               : "text-red-600"
                             : ""
                         }`}>
-                          {isAgent ? m.profitOperational.toFixed(0) : "-"}
+                          {isAgent
+                            ? isAgentOperativeMetricsVisible(emp.name)
+                              ? m.profitOperational.toFixed(0)
+                              : "—"
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           {isAgent ? `${m.comisionPercent.toFixed(2)}%` : "-"}
                         </TableCell>
                         <TableCell className={`font-bold text-right ${
-                          isAgent
+                          isAgent && isAgentOperativeMetricsVisible(emp.name)
                             ? m.profitOperational >= 0
                               ? "text-emerald-600"
                               : "text-red-600"
                             : ""
                         }`}>
-                          {isAgent ? m.comisionValoare.toFixed(0) : "-"}
+                          {isAgent
+                            ? isAgentOperativeMetricsVisible(emp.name)
+                              ? m.comisionValoare.toFixed(0)
+                              : "—"
+                            : "-"}
                         </TableCell>
                         <TableCell className={`font-bold text-lg border-l-4 ${
-                          isAgent && isProfitBrutVisible(emp.name)
+                          isAgent && isAgentOperativeMetricsVisible(emp.name)
                             ? m.profitBrut >= 0
                               ? "text-emerald-600 border-emerald-500"
                               : "text-red-600 border-red-500"
                             : "text-slate-400 border-gray-300"
                         }`}>
                           {isAgent
-                            ? isProfitBrutVisible(emp.name)
+                            ? isAgentOperativeMetricsVisible(emp.name)
                               ? m.profitBrut.toFixed(0)
                               : "—"
                             : "-"}
