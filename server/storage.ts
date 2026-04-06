@@ -3808,8 +3808,8 @@ export class DatabaseStorage implements IStorage {
 
       const profitOperational = adaosTVA - (cheltuieliAgent + cheltuieliShowroom + cheltuieliIndirecte);
 
-      // Comision %: valoare fixă 15% (la cerere)
-      const comisionPercent = 15;
+      // Comision %: valoare fixă 10% (la cerere)
+      const comisionPercent = 10;
       // Comision RON se calculează din valoarea absolută a profitului operațional,
       // astfel încât să fie întotdeauna un cost pozitiv care se SCADĂ.
       const comisionValoare = Math.abs(profitOperational) * (comisionPercent / 100);
