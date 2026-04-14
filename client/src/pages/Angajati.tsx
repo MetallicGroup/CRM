@@ -224,17 +224,17 @@ export default function Angajati() {
     let totalVanzari = 0;
     let totalAdaos = 0;
     let totalCheltuieli = 0;
-    let totalProfitBrut = 0;
 
     agentsForSummary.forEach(emp => {
       const m = emp.aggregatedMetrics as any;
       totalVanzari += m.venitTotal || 0;
       totalAdaos += m.adaosTVA || 0;
       totalCheltuieli += (m.cheltuieliAgent || 0) + (m.cheltuieliShowroom || 0) + (m.cheltuieliIndirecte || 0);
-      if (isAgentOperativeMetricsVisible(emp.name)) {
-        totalProfitBrut += m.profitBrut || 0;
-      }
     });
+
+    // Pentru cardul de sus, profitul brut trebuie să reflecte profitabilitatea totală:
+    // Adaos Total - Cheltuieli Totale.
+    const totalProfitBrut = totalAdaos - totalCheltuieli;
 
     return { totalVanzari, totalAdaos, totalCheltuieli, totalProfitBrut };
   }, [agentsForSummary]);
