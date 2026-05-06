@@ -91,12 +91,13 @@ export default function ParteneriComisionari() {
 
     const rows = sales.map((row) => {
       const v = row.valoareOferta ? parseFloat(row.valoareOferta) : 0;
-      const achizPart = row.achizitiePartener ? parseFloat(row.achizitiePartener) : 0;
       const achizFurn = row.pretAchizitie ? parseFloat(row.pretAchizitie) : 0;
-      const baza = v - achizFurn;
-      // Comision partener: (valoare vândută - achiziție furnizor) / 1.21
+      // Achiziție partener este mereu +10% peste achiziția furnizor.
+      const achizPart = achizFurn * 1.1;
+      const baza = v - achizPart;
+      // Comision partener: (valoare vândută - achiziție partener) / 1.21
       const comisionPartener = baza / 1.21;
-      const profit = achizPart - achizFurn; // Achizitie partener - Achizitie furnizor
+      const profit = achizPart - achizFurn; // Profit = Achiziție partener - Achiziție furnizor
 
       totalValoare += v;
       totalAchizPartner += achizPart;
