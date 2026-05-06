@@ -25,6 +25,12 @@ interface PartnerSaleRow {
   achizitiePartener: string | null;
 }
 
+const fmt2 = (n: number) =>
+  n.toLocaleString("ro-RO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 export default function ParteneriComisionari() {
   const { selectedMonth, selectedYear } = useStore();
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
@@ -204,9 +210,7 @@ export default function ParteneriComisionari() {
                               ? new Date(row.dataVanzarii).toLocaleDateString("ro-RO")
                               : "-"}
                           </TableCell>
-                          <TableCell className="text-right">
-                            {row.v.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                          </TableCell>
+                          <TableCell className="text-right">{fmt2(row.v)}</TableCell>
                           {canSeeAchizitii && (
                             <>
                               <TableCell className="text-right">
@@ -221,40 +225,28 @@ export default function ParteneriComisionari() {
                                   }}
                                 />
                               </TableCell>
-                              <TableCell className="text-right">
-                                {row.achizFurn.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                              </TableCell>
+                              <TableCell className="text-right">{fmt2(row.achizFurn)}</TableCell>
                             </>
                           )}
-                          <TableCell className="text-right">
-                            {row.comisionPartener.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                          </TableCell>
+                          <TableCell className="text-right">{fmt2(row.comisionPartener)}</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {row.profit.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                            {fmt2(row.profit)}
                           </TableCell>
                         </TableRow>
                       ))}
                       <TableRow className="font-semibold bg-slate-900/40">
                         <TableCell colSpan={2}>Total</TableCell>
-                        <TableCell className="text-right">
-                          {metrics.totals.totalValoare.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                        </TableCell>
+                        <TableCell className="text-right">{fmt2(metrics.totals.totalValoare)}</TableCell>
                         {canSeeAchizitii && (
                           <>
+                            <TableCell className="text-right">{fmt2(metrics.totals.totalAchizPartner)}</TableCell>
                             <TableCell className="text-right">
-                              {metrics.totals.totalAchizPartner.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {metrics.totals.totalAchizFurnizor.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
+                              {fmt2(metrics.totals.totalAchizFurnizor)}
                             </TableCell>
                           </>
                         )}
-                        <TableCell className="text-right">
-                          {metrics.totals.totalComision.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {metrics.totals.totalProfit.toLocaleString("ro-RO", { minimumFractionDigits: 2 })}
-                        </TableCell>
+                        <TableCell className="text-right">{fmt2(metrics.totals.totalComision)}</TableCell>
+                        <TableCell className="text-right">{fmt2(metrics.totals.totalProfit)}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
