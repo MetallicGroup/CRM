@@ -773,11 +773,11 @@ export async function registerRoutes(
         });
       }
 
-      // Auto-recalculate profitability if client is VANDUT with an agent
-      if (client.stadiuOferta === "VANDUT" && client.agentId && client.dataVanzarii) {
-        const saleDate = new Date(client.dataVanzarii);
-        const luna = saleDate.getUTCMonth() + 1;
-        const an = saleDate.getFullYear();
+      // Auto-recalculate profitability if client is LIVRAT with an agent
+      if (client.stadiuOferta === "VANDUT" && client.stadiuComanda === "LIVRAT" && client.agentId && client.dataLivrarii) {
+        const deliveryDate = new Date(client.dataLivrarii);
+        const luna = deliveryDate.getUTCMonth() + 1;
+        const an = deliveryDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(client.agentId, an, luna);
       }
 
@@ -965,28 +965,43 @@ export async function registerRoutes(
         }
       }
 
-      // Auto-recalculate profitability when relevant fields change
-      const wasVandut = existingClient.stadiuOferta === "VANDUT";
-      const isNowVandut = client?.stadiuOferta === "VANDUT";
+      // Auto-recalculate profitability when relevant fields change (strict by DATA LIVRĂRII)
+      const oldIncluded =
+        existingClient.stadiuOferta === "VANDUT" &&
+        existingClient.stadiuComanda === "LIVRAT" &&
+        !!existingClient.agentId &&
+        !!existingClient.dataLivrarii;
+      const newIncluded =
+        client?.stadiuOferta === "VANDUT" &&
+        client?.stadiuComanda === "LIVRAT" &&
+        !!client?.agentId &&
+        !!client?.dataLivrarii;
 
-      // Recalculate for old agent/date if it was VANDUT before (to subtract it)
-      if (wasVandut && existingClient.agentId && existingClient.dataVanzarii) {
-        const oldSaleDate = new Date(existingClient.dataVanzarii);
-        const oldLuna = oldSaleDate.getUTCMonth() + 1;
-        const oldAn = oldSaleDate.getFullYear();
-        await storage.recomputeAgentMonthlyProfit(existingClient.agentId, oldAn, oldLuna);
+      // Recalculate for old agent/month if it was included before (to subtract it)
+      if (oldIncluded) {
+        const oldDeliveryDate = new Date(existingClient.dataLivrarii!);
+        const oldLuna = oldDeliveryDate.getUTCMonth() + 1;
+        const oldAn = oldDeliveryDate.getFullYear();
+        await storage.recomputeAgentMonthlyProfit(existingClient.agentId!, oldAn, oldLuna);
       }
 
-      // Recalculate for new agent/date if it's VANDUT now (to add it)
-      if (isNowVandut && client?.agentId && client?.dataVanzarii) {
-        const newSaleDate = new Date(client.dataVanzarii);
-        const newLuna = newSaleDate.getUTCMonth() + 1;
-        const newAn = newSaleDate.getFullYear();
+      // Recalculate for new agent/month if it is included now (to add/update it)
+      if (newIncluded) {
+        const newDeliveryDate = new Date(client!.dataLivrarii!);
+        const newLuna = newDeliveryDate.getUTCMonth() + 1;
+        const newAn = newDeliveryDate.getFullYear();
+        const oldDeliveryTime = existingClient.dataLivrarii
+          ? new Date(existingClient.dataLivrarii).getTime()
+          : null;
+        const newDeliveryTime = new Date(client!.dataLivrarii!).getTime();
+
         // Only recalculate if it's different from what we just recalculated
-        if (!wasVandut ||
-          existingClient.agentId !== client.agentId ||
-          existingClient.dataVanzarii?.getTime() !== new Date(client.dataVanzarii).getTime()) {
-          await storage.recomputeAgentMonthlyProfit(client.agentId, newAn, newLuna);
+        if (
+          !oldIncluded ||
+          existingClient.agentId !== client!.agentId ||
+          oldDeliveryTime !== newDeliveryTime
+        ) {
+          await storage.recomputeAgentMonthlyProfit(client!.agentId!, newAn, newLuna);
         }
       }
 
@@ -1035,11 +1050,16 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Client negăsit" });
       }
 
-      // Recalculate profitability if deleted client was VANDUT
-      if (existingClient?.stadiuOferta === "VANDUT" && existingClient.agentId && existingClient.dataVanzarii) {
-        const saleDate = new Date(existingClient.dataVanzarii);
-        const luna = saleDate.getUTCMonth() + 1;
-        const an = saleDate.getFullYear();
+      // Recalculate profitability if deleted client was included in LIVRAT month metrics
+      if (
+        existingClient?.stadiuOferta === "VANDUT" &&
+        existingClient?.stadiuComanda === "LIVRAT" &&
+        existingClient.agentId &&
+        existingClient.dataLivrarii
+      ) {
+        const deliveryDate = new Date(existingClient.dataLivrarii);
+        const luna = deliveryDate.getUTCMonth() + 1;
+        const an = deliveryDate.getFullYear();
         await storage.recomputeAgentMonthlyProfit(existingClient.agentId, an, luna);
       }
 

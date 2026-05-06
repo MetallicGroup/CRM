@@ -2817,14 +2817,14 @@ export class DatabaseStorage implements IStorage {
   // ============ AGENT SALES PROFITABILITY METHODS ============
 
   async recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability> {
-    // Get all VANDUT clients for this agent in the specified month/year.
+    // Get all LIVRAT clients for this agent in the specified month/year.
     // Include:
     //  - vânzări directe (fără partnerId)
     //  - vânzări prin parteneri (distribuitori / colaboratori)
     // Exclude:
     //  - vânzările prin parteneri comisionari (partners.tipPartener = PARTENER_COMISIONAR)
     // Calculăm intervalul exact al lunii (folosind date locale) ca să nu existe decalaje de o zi
-    const soldClients = await db
+    const deliveredClients = await db
       .select({
         valoareOferta: clients.valoareOferta,
         pretAchizitie: clients.pretAchizitie,
@@ -2837,11 +2837,11 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.agentId, agentId),
           eq(clients.stadiuOferta, "VANDUT"),
-          eq(clients.incasat, true),
-          // Interval lună: folosim COALESCE(dataVanzarii, updatedAt),
-          // exact cum se face și în alte statistici (ca să prindem vânzările fără dată setată)
-          sql`EXTRACT(MONTH FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${luna}`,
-          sql`EXTRACT(YEAR FROM COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})) = ${an}`,
+          eq(clients.stadiuComanda, "LIVRAT"),
+          isNotNull(clients.dataLivrarii),
+          // Interval lună: profitabilitatea agenților se bazează strict pe DATA LIVRĂRII.
+          sql`EXTRACT(MONTH FROM ${clients.dataLivrarii}) = ${luna}`,
+          sql`EXTRACT(YEAR FROM ${clients.dataLivrarii}) = ${an}`,
           // Excludem doar partenerii comisionari
           or(
             isNull(clients.partnerId),
@@ -2867,11 +2867,11 @@ export class DatabaseStorage implements IStorage {
 
     // Aggregate sales by category
     // NOTE:
-    // - includem toți clienții VANDUȚI și ÎNCASAȚI (filtrul este deja în query),
+    // - includem toți clienții LIVRAȚI (filtrul este deja în query),
     //   indiferent dacă au sau nu Achiziție furnizor setată (pretAchizitie poate fi 0/null).
     // - clienții fără comision (comisionOferta = null/0) sunt incluși în venit și achiziție,
     //   dar excluși din calculul procentului de comision mediu.
-    for (const client of soldClients) {
+    for (const client of deliveredClients) {
       const valoare = parseFloat(client.valoareOferta || "0");
       const achizitie = parseFloat(client.pretAchizitie || "0");
 
