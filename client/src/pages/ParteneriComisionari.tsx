@@ -4,10 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useStore, monthToNumber } from "@/lib/store";
 import { MonthSelector } from "@/components/ui/month-selector";
-import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 
 interface Partner {
@@ -34,7 +32,6 @@ const fmt2 = (n: number) =>
 export default function ParteneriComisionari() {
   const { selectedMonth, selectedYear } = useStore();
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
   const { isAdmin, user } = useAuth();
   const isOana =
@@ -64,28 +61,6 @@ export default function ParteneriComisionari() {
       return res.json();
     },
     enabled: !!partnerId,
-  });
-
-  const updateAchizitieMutation = useMutation({
-    mutationFn: async ({ id, achizitiePartener }: { id: string; achizitiePartener: number }) => {
-      const res = await fetch(`/api/clients/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ achizitiePartener: achizitiePartener.toString() }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Eroare la salvarea achiziției partener");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partner-comisionar-sales"] });
-      toast.success("Achiziție partener actualizată");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
   });
 
   const metrics = useMemo(() => {
@@ -213,18 +188,7 @@ export default function ParteneriComisionari() {
                           <TableCell className="text-right">{fmt2(row.v)}</TableCell>
                           {canSeeAchizitii && (
                             <>
-                              <TableCell className="text-right">
-                                <Input
-                                  type="number"
-                                  className="w-28 h-8 text-right"
-                                  defaultValue={row.achizPart || ""}
-                                  onBlur={(e) => {
-                                    const val = parseFloat(e.target.value || "0");
-                                    const ach = isNaN(val) ? 0 : val;
-                                    updateAchizitieMutation.mutate({ id: row.id, achizitiePartener: ach });
-                                  }}
-                                />
-                              </TableCell>
+                              <TableCell className="text-right">{fmt2(row.achizPart)}</TableCell>
                               <TableCell className="text-right">{fmt2(row.achizFurn)}</TableCell>
                             </>
                           )}
