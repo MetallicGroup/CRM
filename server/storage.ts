@@ -3664,18 +3664,18 @@ export class DatabaseStorage implements IStorage {
     const eligibleAgentNames = new Set(
       [
         // cei pe care îi vrei tu
-        "daniel daniel",
-        "dana dana",
+        "danu daniel",
+        "marcu dana",
         "dragos frangache",
-        "iulian iulian",
-        "madalina madalina",
+        "marcu iulian",
+        "coman madalina",
         "marian costache",
         "marian toma",
         "mihai wagner",
-        "raluca raluca",
+        "munteanu raluca",
         "alexandru croitoru",
         // cei din Showroom Constanța
-        "oana frangache",
+        "oana moneaga",
         "razvan rosu",
       ].map(normalizeForEligibility)
     );
@@ -3727,7 +3727,7 @@ export class DatabaseStorage implements IStorage {
       if (!isNaN(v)) totalVenitProductie += v;
     }
     const venitProductiePerAgent = totalVenitProductie / 3; // o treime la fiecare din cei trei
-    const venitProductieAgentNames = ["kuke", "marian angajat", "laurentiu"];
+    const venitProductieAgentNames = ["kuke", "marin angajat", "laurentiu"];
     const isVenitProductieAgent = (firstName: string, lastName: string) => {
       const full = `${(firstName || "").trim()} ${(lastName || "").trim()}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return venitProductieAgentNames.some((n) => full.includes(n));
@@ -3897,11 +3897,11 @@ export class DatabaseStorage implements IStorage {
     const centralAgents = new Set(
       [
         // Nume actuale de user în aplicație
-        "daniel daniel",
-        "raluca raluca",
-        "dana dana",
-        "madalina madalina",
-        "iulian iulian",
+        "danu daniel",
+        "munteanu raluca",
+        "marcu dana",
+        "coman madalina",
+        "marcu iulian",
         "mihai wagner",
         "dragos frangache",
         "alexandru croitoru",
@@ -3909,7 +3909,7 @@ export class DatabaseStorage implements IStorage {
       ].map((n) => normalizeName(n)),
     );
     const constantaAgents = new Set(
-      ["oana frangache", "razvan rosu"].map((n) => normalizeName(n)),
+      ["oana moneaga", "razvan rosu"].map((n) => normalizeName(n)),
     );
     const giurgiuAgents = new Set(
       ["marian toma"].map((n) => normalizeName(n)),
@@ -4050,7 +4050,7 @@ export class DatabaseStorage implements IStorage {
     // Dragos Frangache + Marian Toma: incluși până la martie 2026; din aprilie 2026 încolo nu mai intră la împărțire.
     const cotaParteSeasonalCutoff = an < 2026 || (an === 2026 && endMonth < 4);
     const cotaParteBaseNames = [
-      "oana frangache",
+      "oana moneaga",
       "marian costache",
       "alexandru croitoru",
       "razvan rosu",
@@ -4163,13 +4163,12 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(clients.partnerId, partnerId),
           eq(clients.stadiuOferta, "VANDUT"),
-          or(
-            and(gte(clients.dataVanzarii, startDate), lte(clients.dataVanzarii, endDate)),
-            and(sql`${clients.dataVanzarii} IS NULL`, gte(clients.updatedAt, startDate), lte(clients.updatedAt, endDate))
-          )
+          eq(clients.stadiuComanda, "LIVRAT"),
+          isNotNull(clients.dataLivrarii),
+          and(gte(clients.dataLivrarii, startDate), lte(clients.dataLivrarii, endDate))
         )
       )
-      .orderBy(clients.dataVanzarii);
+      .orderBy(clients.dataLivrarii);
 
     return rows.map((r) => ({
       id: r.id,

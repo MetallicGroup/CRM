@@ -130,7 +130,7 @@ async function main() {
         "marian costache",
       ].map(normalizeName)
     );
-    const constantaAgents = new Set(["oana frangache", "razvan rosu"].map(normalizeName));
+    const constantaAgents = new Set(["oana moneaga", "razvan rosu"].map(normalizeName));
     const giurgiuAgents = new Set(["marian toma"].map(normalizeName));
     const teleormanAgents = new Set(["alexandra"].map(normalizeName));
 
@@ -211,7 +211,7 @@ async function main() {
     const cotaParteSeasonalCutoff =
       year < 2026 || (year === 2026 && month < 4);
     const cotaParteBaseNames = [
-      "oana frangache",
+      "oana moneaga",
       "marian costache",
       "alexandru croitoru",
       "razvan rosu",

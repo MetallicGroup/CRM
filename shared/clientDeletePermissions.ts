@@ -13,12 +13,12 @@ export function normalizePersonName(n: string): string {
 
 /** Nume complet normalizat (prenume + nume), aliniat la conturile reale din CRM. */
 const CLIENT_DELETE_ALLOWED_FULL_NAMES = new Set([
-  "madalina madalina",
-  "oana frangache",
-  "raluca raluca",
-  "iulian iulian",
-  "dana dana",
-  "daniel daniel",
+  "coman madalina",
+  "oana moneaga",
+  "munteanu raluca",
+  "marcu iulian",
+  "marcu dana",
+  "danu daniel",
   "daniel danu",
   "dragos frangache",
 ]);

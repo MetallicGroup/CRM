@@ -41,7 +41,7 @@ const MONTH_OPTIONS = MONTHS.map((m, i) => ({ label: m, value: i + 1 }));
 const AGENT_OPERATIVE_METRICS_VISIBLE_NAMES = new Set(
   [
     "dragos frangache",
-    "oana frangache",
+    "oana moneaga",
     "marian costache",
     "alexandru croitoru",
     "marian toma",

@@ -10,7 +10,7 @@ async function updateAgentNames() {
     // Lista agenților care trebuie să fie în filtre
     const allowedAgents = [
       { firstName: 'Dragos', lastName: 'Frangache' },
-      { firstName: 'Oana', lastName: 'Frangache' },
+      { firstName: 'Oana', lastName: 'Moneaga' },
       { firstName: 'Alexandru', lastName: 'Croitoru' },
       { firstName: 'Marian', lastName: 'Toma' },
       { firstName: 'Marian', lastName: 'Costache' },
@@ -41,8 +41,8 @@ async function updateAgentNames() {
       console.log('   ℹ️  Nu s-a găsit "Alexandru Alexandru" (poate e deja actualizat)');
     }
 
-    // Actualizează Oana Oana → Oana Frangache
-    console.log('\n📝 Actualizare Oana Oana → Oana Frangache...');
+    // Actualizează Oana Oana → Oana Moneaga
+    console.log('\n📝 Actualizare Oana Oana → Oana Moneaga...');
     const oanaOld = await db.select().from(users).where(
       and(
         like(users.firstName, '%Oana%'),
@@ -55,10 +55,10 @@ async function updateAgentNames() {
         await db.update(users)
           .set({ 
             firstName: 'Oana',
-            lastName: 'Frangache'
+            lastName: 'Moneaga'
           })
           .where(eq(users.id, user.id));
-        console.log(`   ✅ Actualizat: ${user.firstName} ${user.lastName} → Oana Frangache`);
+        console.log(`   ✅ Actualizat: ${user.firstName} ${user.lastName} → Oana Moneaga`);
       }
     } else {
       console.log('   ℹ️  Nu s-a găsit "Oana Oana" (poate e deja actualizat)');
