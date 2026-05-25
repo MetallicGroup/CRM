@@ -2225,9 +2225,15 @@ export class DatabaseStorage implements IStorage {
           "Dezvoltare/Inovatie",
           "Dezvoltare/Extindere",
           "Prestări servicii",
+          "Deplasari",
+        ];
+
+        const requiredWithIds = [
+          { id: "sub-deplasari", name: "Deplasari" },
         ];
 
         const existingNames = new Set(rows.map((r) => r.name));
+        const existingById = new Set(rows.map((r) => r.id));
         let displayOrderStart = rows.length > 0 ? Math.max(...rows.map((r) => r.displayOrder ?? 0)) + 1 : 1;
 
         for (const name of requiredNames) {
@@ -2243,6 +2249,27 @@ export class DatabaseStorage implements IStorage {
               } as any)
               .returning();
             rows.push(inserted);
+            existingNames.add(name);
+          }
+        }
+
+        for (const def of requiredWithIds) {
+          if (!existingById.has(def.id) && !existingNames.has(def.name)) {
+            const [inserted] = await db
+              .insert(expenseCategories)
+              .values({
+                id: def.id,
+                parentId,
+                name: def.name,
+                level: "sub",
+                displayOrder: displayOrderStart++,
+                active: true,
+              } as any)
+              .onConflictDoNothing()
+              .returning();
+            if (inserted) {
+              rows.push(inserted);
+            }
           }
         }
 
@@ -2358,6 +2385,7 @@ export class DatabaseStorage implements IStorage {
         { id: "sub-salubritate", parentId: "cat-generale", name: "Salubritate", displayOrder: 7 },
         { id: "sub-altele-generale", parentId: "cat-generale", name: "Altele", displayOrder: 8 },
         { id: "sub-prestari-servicii", parentId: "cat-generale", name: "Prestări servicii", displayOrder: 9 },
+        { id: "sub-deplasari", parentId: "cat-generale", name: "Deplasari", displayOrder: 10 },
       );
     } else if (parentId === "cat-cota-parte") {
       subs.push(

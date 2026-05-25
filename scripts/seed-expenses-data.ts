@@ -91,6 +91,7 @@ async function seed() {
         { id: 'sub-dezvoltare-inovatie', parentId: 'cat-generale', name: 'Dezvoltare/Inovatie', displayOrder: 11 },
         { id: 'sub-dezvoltare-extindere', parentId: 'cat-generale', name: 'Dezvoltare/Extindere', displayOrder: 12 },
         { id: 'sub-prestari-servicii', parentId: 'cat-generale', name: 'Prestări servicii', displayOrder: 13 },
+        { id: 'sub-deplasari', parentId: 'cat-generale', name: 'Deplasari', displayOrder: 14 },
     ];
 
     // Level 2: Sub (Cota parte) – marketing, contabil/jurist, protecția/medicina muncii, abonamente, salariu brut, comision, bonuri de masa
