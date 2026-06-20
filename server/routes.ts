@@ -2354,6 +2354,22 @@ export async function registerRoutes(
     }
   });
 
+  // Get clients included in an agent's profitability for a period
+  app.get("/api/profitabilitate/sales/:agentId/clients", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { agentId } = req.params;
+      const an = parseInt(req.query.an as string) || new Date().getFullYear();
+      const startMonth = parseInt(req.query.startMonth as string) || 1;
+      const endMonth = parseInt(req.query.endMonth as string) || startMonth;
+
+      const data = await storage.getAgentProfitabilityClients(agentId, an, startMonth, endMonth);
+      res.json(data);
+    } catch (error) {
+      console.error("Get agent profitability clients error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea clienților pentru profitabilitate" });
+    }
+  });
+
   // Get a specific agent's sales profitability for a year
   app.get("/api/profitabilitate/sales/:agentId", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {

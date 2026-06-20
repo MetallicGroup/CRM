@@ -8,6 +8,7 @@ import CRMDashboard from "@/pages/CRMDashboard";
 import TaskuriProiecte from "@/pages/TaskuriProiecte";
 import FinancialDashboard from "@/pages/Dashboard";
 import Angajati from "@/pages/Angajati";
+import AngajatClientiProfitabilitate from "@/pages/AngajatClientiProfitabilitate";
 import ShowroomRegional from "@/pages/ShowroomRegional";
 import Distributors from "@/pages/Distributors";
 import ParteneriComisionari from "@/pages/ParteneriComisionari";
@@ -136,6 +137,9 @@ function Router() {
       </Route>
       <Route path="/profitabilitate/raport">
         <ProtectedRoute component={FinancialDashboard} adminOnly />
+      </Route>
+      <Route path="/profitabilitate/angajati/:agentId/clienti">
+        <ProtectedRoute component={AngajatClientiProfitabilitate} adminOnly />
       </Route>
       <Route path="/profitabilitate/angajati">
         <ProtectedRoute component={Angajati} adminOnly />

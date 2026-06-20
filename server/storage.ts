@@ -285,6 +285,15 @@ export interface IStorage {
   recomputeAgentMonthlyProfit(agentId: string, an: number, luna: number): Promise<AgentSalesProfitability>;
   getAgentSalesProfitability(agentId: string, an: number): Promise<AgentSalesProfitability[]>;
   getAllAgentsSalesProfitability(an: number): Promise<AgentSalesProfitability[]>;
+  getAgentProfitabilityClients(
+    agentId: string,
+    an: number,
+    startMonth: number,
+    endMonth: number
+  ): Promise<{
+    clients: Array<Client & { partnerName: string | null; adaos: number; profitCategory: "GARD" | "ACOPERIS" }>;
+    totals: { venitTotal: number; achizitieTotal: number; adaosTotal: number; count: number };
+  }>;
 
   // Showroom profitability costs
   getShowroomProfitabilityCosts(luna: number, an: number): Promise<Record<string, {
@@ -3011,6 +3020,67 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(agentSalesProfitability).where(
       eq(agentSalesProfitability.an, an)
     );
+  }
+
+  async getAgentProfitabilityClients(
+    agentId: string,
+    an: number,
+    startMonth: number,
+    endMonth: number
+  ): Promise<{
+    clients: Array<Client & { partnerName: string | null; adaos: number; profitCategory: "GARD" | "ACOPERIS" }>;
+    totals: { venitTotal: number; achizitieTotal: number; adaosTotal: number; count: number };
+  }> {
+    const rows = await db
+      .select({
+        client: clients,
+        partnerName: partners.nume,
+      })
+      .from(clients)
+      .leftJoin(partners, eq(clients.partnerId, partners.id))
+      .where(
+        and(
+          eq(clients.agentId, agentId),
+          eq(clients.stadiuOferta, "VANDUT"),
+          eq(clients.stadiuComanda, "LIVRAT"),
+          isNotNull(clients.dataLivrarii),
+          sql`EXTRACT(YEAR FROM ${clients.dataLivrarii}) = ${an}`,
+          sql`EXTRACT(MONTH FROM ${clients.dataLivrarii}) >= ${startMonth}`,
+          sql`EXTRACT(MONTH FROM ${clients.dataLivrarii}) <= ${endMonth}`,
+          or(
+            isNull(clients.partnerId),
+            ne(partners.tipPartener, "PARTENER_COMISIONAR")
+          )
+        )
+      )
+      .orderBy(asc(clients.dataLivrarii));
+
+    let venitTotal = 0;
+    let achizitieTotal = 0;
+
+    const resultClients = rows.map(({ client, partnerName }) => {
+      const valoare = parseFloat(client.valoareOferta || "0");
+      const achizitie = parseFloat(client.pretAchizitie || "0");
+      venitTotal += valoare;
+      achizitieTotal += achizitie;
+
+      return {
+        ...client,
+        partnerName: partnerName ?? null,
+        adaos: valoare - achizitie,
+        profitCategory: client.categorieProdus === "GARD" ? "GARD" as const : "ACOPERIS" as const,
+      };
+    });
+
+    return {
+      clients: resultClients,
+      totals: {
+        venitTotal,
+        achizitieTotal,
+        adaosTotal: venitTotal - achizitieTotal,
+        count: resultClients.length,
+      },
+    };
   }
 
   async getShowroomProfitabilityCosts(luna: number, an: number): Promise<Record<string, {

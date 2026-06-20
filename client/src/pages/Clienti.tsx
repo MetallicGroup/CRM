@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -483,17 +483,7 @@ export default function Clienti() {
     return OFFER_STATUS_OPTIONS.filter((s) => s.value !== "RAZVAN");
   }, [isRazvan, isAlexandruCroitoru, isAdmin]);
 
-  // Dacă venim din Exporturi cu ?clientId=..., deschidem direct detaliile acelui client
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const clientId = params.get("clientId");
-    if (!clientId || clients.length === 0) return;
-
-    const target = clients.find((c) => c.id === clientId);
-    if (target) {
-      setViewClient(target);
-    }
-  }, [clients]);
+  const openedFromUrlRef = useRef<string | null>(null);
 
   const visibleClients = useMemo(() => {
     let filtered = clients;
@@ -790,6 +780,40 @@ export default function Clienti() {
     });
     setIsDialogOpen(true);
   };
+
+  // Deschide fișa clientului când venim cu ?editClientId=... sau ?clientId=... (ex. din Profitabilitate)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const editClientId = params.get("editClientId");
+    const clientId = params.get("clientId");
+    const targetId = editClientId || clientId;
+    if (!targetId) return;
+
+    const cacheKey = `${editClientId ? "edit" : "view"}:${targetId}`;
+    if (openedFromUrlRef.current === cacheKey) return;
+
+    const loadAndOpen = async () => {
+      let client: Client | undefined = clients.find((c) => c.id === targetId);
+      if (!client) {
+        try {
+          const res = await fetch(`/api/clients/${targetId}`, { credentials: "include" });
+          if (!res.ok) return;
+          client = await res.json();
+        } catch {
+          return;
+        }
+      }
+
+      openedFromUrlRef.current = cacheKey;
+      if (editClientId) {
+        openEditDialog(client);
+      } else {
+        setViewClient(client);
+      }
+    };
+
+    void loadAndOpen();
+  }, [clients]);
 
   const closeDialog = () => {
     setIsDialogOpen(false);
@@ -2354,6 +2378,25 @@ export default function Clienti() {
                 </div>
               )}
             </div>
+          )}
+
+          {viewClient && (
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setViewClient(null)}>
+                Închide
+              </Button>
+              <Button
+                onClick={() => {
+                  const client = viewClient;
+                  setViewClient(null);
+                  openEditDialog(client);
+                }}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Editează fișa completă
+              </Button>
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>

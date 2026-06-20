@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Download, Plus, Trash2, RefreshCw, Calendar } from "lucide-react";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useFinancialReport } from "@/hooks/use-financials";
 import { useStore, monthToNumber } from "@/lib/store";
@@ -77,10 +78,21 @@ export default function Angajati() {
   const currentYear = new Date().getFullYear();
   const currentMonthNum = new Date().getMonth() + 1;
 
+  const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
+
   // Date range state
-  const [startMonth, setStartMonth] = useState(currentMonthNum);
-  const [endMonth, setEndMonth] = useState(currentMonthNum);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [startMonth, setStartMonth] = useState(() => {
+    const fromUrl = initialParams.get("startMonth");
+    return fromUrl ? parseInt(fromUrl) : currentMonthNum;
+  });
+  const [endMonth, setEndMonth] = useState(() => {
+    const fromUrl = initialParams.get("endMonth");
+    return fromUrl ? parseInt(fromUrl) : currentMonthNum;
+  });
+  const [selectedYear, setSelectedYear] = useState(() => {
+    const fromUrl = initialParams.get("an");
+    return fromUrl ? parseInt(fromUrl) : currentYear;
+  });
   const isRangeMode = startMonth !== endMonth;
 
   // Unified financial report hook
@@ -540,7 +552,17 @@ export default function Angajati() {
                         data-testid={`row-employee-${emp.id}`}
                       >
                         <TableCell className="sticky left-0 bg-slate-950 z-10 font-medium border-r border-slate-800">
-                          <span data-testid={`text-name-${emp.id}`}>{emp.name}</span>
+                          {isAgent && (emp as any).agentUserId ? (
+                            <Link
+                              href={`/profitabilitate/angajati/${(emp as any).agentUserId}/clienti?an=${selectedYear}&startMonth=${startMonth}&endMonth=${endMonth}&name=${encodeURIComponent(emp.name)}`}
+                              className="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
+                              data-testid={`link-agent-${emp.id}`}
+                            >
+                              {emp.name}
+                            </Link>
+                          ) : (
+                            <span data-testid={`text-name-${emp.id}`}>{emp.name}</span>
+                          )}
                         </TableCell>
 
                         <TableCell>
