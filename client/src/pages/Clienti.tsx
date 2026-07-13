@@ -174,6 +174,7 @@ const COLOR_OPTIONS: { value: ColorRAL; label: string }[] = [
   { value: "RAL_3011", label: "RAL 3011 (Roșu închis)" },
   { value: "RAL_7001", label: "RAL 7001 (Gri argintiu)" },
   { value: "RAL_1015", label: "RAL 1015 (Crem)" },
+  { value: "RAL_5010", label: "RAL 5010 (Albastru)" },
 ];
 
 const THICKNESS_OPTIONS: { value: Thickness; label: string }[] = [

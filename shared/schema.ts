@@ -89,7 +89,8 @@ export const colorEnum = pgEnum("color_ral", [
   "RAL_6020",
   "RAL_3011",
   "RAL_7001",
-  "RAL_1015"
+  "RAL_1015",
+  "RAL_5010"
 ]);
 
 export const thicknessEnum = pgEnum("thickness", [
@@ -516,7 +517,7 @@ export type OfferStatus =
   | "CONTACTAT"
   | "NECONTACTAT";
 export type OrderStatus = "CUSTODIE" | "COMANDAT" | "LISTAT" | "IN_PRODUCTIE" | "PRODUS" | "LIVRAT";
-export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015";
+export type ColorRAL = "RAL_9005" | "RAL_7016" | "RAL_7024" | "RAL_8019" | "RAL_8017" | "RAL_3005" | "RAL_8004" | "RAL_9002" | "RAL_6005" | "RAL_6020" | "RAL_3011" | "RAL_7001" | "RAL_1015" | "RAL_5010";
 export type Thickness = "0.50" | "0.60";
 export type FinishType = "MAT" | "LUCIOS" | "BRILIANT" | "MAT_DUO" | "LUCIOS_DUO" | "BRILIANT_DUO";
 export type Brand = "CARETTA" | "BILKA" | "WETTERBEST" | "METALLIC_GROUP" | "MX" | "ZEBRA" | "FAKRO" | "VELUX" | "NOVATIK" | "METIGLA" | "BUDMAT" | "STUBAI" | "TPS" | "ROOF4YOU" | "CUTATA";
