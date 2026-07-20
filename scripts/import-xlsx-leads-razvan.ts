@@ -9,6 +9,9 @@ const XLSX_PATH =
   process.argv[2] ||
   "/Users/danudaniel/Downloads/Foaie de calcul fără titlu.xlsx";
 
+const IMPORT_NOTE =
+  process.argv[3] || `Import leads Excel ${XLSX_PATH.split("/").pop()}`;
+
 function normalizePhone(raw: string): string {
   let s = (raw || "").trim();
   if (s.startsWith("p:")) s = s.slice(2);
@@ -35,6 +38,23 @@ async function findRazvanId(): Promise<string> {
   return razvan.id;
 }
 
+function mapColumns(header: string[]): { nameIdx: number; phoneIdx: number; cityIdx: number | null } {
+  const lower = header.map((h) => String(h || "").toLowerCase().trim());
+
+  const nameIdx = lower.findIndex((h) => h.includes("full_name") || h === "nume" || h === "name");
+  const phoneIdx = lower.findIndex((h) => h.includes("phone") || h === "telefon");
+  const cityIdx = lower.findIndex((h) =>
+    h.includes("oras") || h.includes("oraș") || h.includes("localitate") || h.includes("city"),
+  );
+
+  if (nameIdx >= 0 && phoneIdx >= 0) {
+    return { nameIdx, phoneIdx, cityIdx: cityIdx >= 0 ? cityIdx : null };
+  }
+
+  // Fallback: name + phone in first two columns (older exports)
+  return { nameIdx: 0, phoneIdx: 1, cityIdx: null };
+}
+
 async function main() {
   if (!fs.existsSync(XLSX_PATH)) {
     throw new Error(`Fișier negăsit: ${XLSX_PATH}`);
@@ -45,6 +65,8 @@ async function main() {
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as string[][];
 
+  const header = data[0] || [];
+  const { nameIdx, phoneIdx, cityIdx } = mapColumns(header.map(String));
   const dataRows = data.slice(1);
   let imported = 0;
   let skipped = 0;
@@ -55,8 +77,9 @@ async function main() {
     const row = dataRows[i];
     if (!row || row.length === 0) continue;
 
-    const nume = String(row[0] || "").trim();
-    let telefon = normalizePhone(String(row[1] || ""));
+    const nume = String(row[nameIdx] || "").trim();
+    let telefon = normalizePhone(String(row[phoneIdx] || ""));
+    const localitate = cityIdx !== null ? String(row[cityIdx] || "").trim() || null : null;
 
     if (!nume && !telefon) continue;
     if (!telefon || telefon.length < 8) {
@@ -88,7 +111,7 @@ async function main() {
       await db.insert(clients).values({
         nume: finalNume,
         telefon,
-        localitate: null,
+        localitate,
         judet: null,
         email: null,
         agentId,
@@ -96,7 +119,7 @@ async function main() {
         stadiuOferta: "NECONTACTAT",
         categorieProdus: "GARD",
         contactat: false,
-        observatiiClient: "Import leads Excel Foaie de calcul fără titlu",
+        observatiiClient: IMPORT_NOTE,
       });
       imported++;
     } catch (err: unknown) {
