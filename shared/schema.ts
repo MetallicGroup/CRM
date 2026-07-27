@@ -424,13 +424,13 @@ export const createClientSchema = z.object({
   procentComision: z.string().optional(),
   comisionOferta: z.string().optional(),
   incasat: z.boolean().optional().default(false),
-  pretAchizitie: z.string().optional(),
-  achizitiePartener: z.string().optional(),
+  pretAchizitie: z.string().nullable().optional(),
+  achizitiePartener: z.string().nullable().optional(),
 
   // Secțiunea 5: Fișiere
-  ofertaFilename: z.string().optional(),
-  ofertaFilename2: z.string().optional(),
-  ofertaFilename3: z.string().optional(),
+  ofertaFilename: z.string().nullable().optional(),
+  ofertaFilename2: z.string().nullable().optional(),
+  ofertaFilename3: z.string().nullable().optional(),
 
   // Secțiunea 6: Follow-up
   dataRevenire1: z.string().optional(),
@@ -733,6 +733,7 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "STATUS_CHANGE",      // schimbare stadiu ofertă
   "PHONE_CLICK",        // click pe număr de telefon
   "FOLLOWUP_CLICK",     // bifare follow-up efectuat
+  "OFFER_FILE_CHANGE",  // încărcare / înlocuire / ștergere fișier ofertă
 ]);
 
 export const activityLogs = pgTable("activity_logs", {
@@ -750,7 +751,7 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
   createdAt: true,
 });
 
-export type ActivityType = "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+export type ActivityType = "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 

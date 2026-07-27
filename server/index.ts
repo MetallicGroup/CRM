@@ -112,6 +112,11 @@ async function ensureDatabaseEnums() {
   } catch (err) {
     console.error("Failed to ensure client_source enum has FURNIZORI:", err);
   }
+  try {
+    await pool.query("ALTER TYPE activity_type ADD VALUE IF NOT EXISTS 'OFFER_FILE_CHANGE'");
+  } catch (err) {
+    console.error("Failed to ensure activity_type enum has OFFER_FILE_CHANGE:", err);
+  }
 }
 
 async function ensureClientFileColumns() {

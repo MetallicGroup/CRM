@@ -67,6 +67,7 @@ import {
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
+import { OfferFileHistory } from "@/components/OfferFileHistory";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -456,6 +457,14 @@ export default function Clienti() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editSnapshot, setEditSnapshot] = useState<Partial<ExtendedCreateClient> | null>(null);
+  const [clearFlags, setClearFlags] = useState<{
+    clearOfertaFilename?: boolean;
+    clearOfertaFilename2?: boolean;
+    clearOfertaFilename3?: boolean;
+    clearPretAchizitie?: boolean;
+    clearAchizitiePartener?: boolean;
+  }>({});
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [viewClient, setViewClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<ExtendedCreateClient>>(defaultFormData);
@@ -655,6 +664,7 @@ export default function Clienti() {
       // Creăm cheltuiala de transport și la editare, dacă a fost completată
       await createTransportCheltuiala(updatedClient, formData);
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", updatedClient.id] });
       toast.success("Client actualizat cu succes");
       closeDialog();
     },
@@ -713,6 +723,8 @@ export default function Clienti() {
 
   const openCreateDialog = () => {
     setEditingClient(null);
+    setEditSnapshot(null);
+    setClearFlags({});
     setFormData({
       ...defaultFormData,
       agentId: isAdmin ? "" : (user?.id || ""),
@@ -721,9 +733,7 @@ export default function Clienti() {
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = (client: Client) => {
-    setEditingClient(client);
-    setFormData({
+  const clientToFormData = (client: Client): Partial<ExtendedCreateClient> => ({
       nume: client.nume,
       telefon: client.telefon,
       email: client.email || "",
@@ -778,8 +788,30 @@ export default function Clienti() {
       prioritate: getClientPrioritate(client as any),
       agentId: client.agentId || "",
       numCriteriu: client.numCriteriu ?? undefined,
-    });
+  });
+
+  const openEditDialog = async (client: Client) => {
+    setClearFlags({});
+    setPendingFiles({});
+    setEditingClient(client);
+    // Deschide imediat cu datele din listă, apoi reîncarcă fresh ca să nu pierdem salvări recente ale altui user
+    const initial = clientToFormData(client);
+    setFormData(initial);
+    setEditSnapshot(initial);
     setIsDialogOpen(true);
+
+    try {
+      const res = await fetch(`/api/clients/${client.id}`);
+      if (res.ok) {
+        const fresh: Client = await res.json();
+        const freshForm = clientToFormData(fresh);
+        setEditingClient(fresh);
+        setFormData(freshForm);
+        setEditSnapshot(freshForm);
+      }
+    } catch {
+      // păstrăm snapshot-ul din listă
+    }
   };
 
   // Deschide fișa clientului când venim cu ?editClientId=... sau ?clientId=... (ex. din Profitabilitate)
@@ -819,7 +851,55 @@ export default function Clienti() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingClient(null);
+    setEditSnapshot(null);
+    setClearFlags({});
     setPendingFiles({});
+  };
+
+  const buildUpdatePayload = () => {
+    const payload: Record<string, unknown> = { prioritate: formData.prioritate || null };
+    const snapshot = editSnapshot || {};
+
+    const keys = new Set([
+      ...Object.keys(formData),
+      ...Object.keys(snapshot),
+    ]);
+
+    for (const key of keys) {
+      if (key === "prioritate") continue;
+      const current = (formData as any)[key];
+      const original = (snapshot as any)[key];
+      // Compară normalizat ca string pentru a evita false dirty pe undefined vs ""
+      const curNorm = current === undefined || current === null ? "" : String(current);
+      const origNorm = original === undefined || original === null ? "" : String(original);
+      if (curNorm !== origNorm) {
+        payload[key] = current;
+      }
+    }
+
+    // Flag-uri explicite pentru ștergere intenționată (buton trash / golire achiziție)
+    if (clearFlags.clearOfertaFilename) {
+      payload.ofertaFilename = null;
+      payload.clearOfertaFilename = true;
+    }
+    if (clearFlags.clearOfertaFilename2) {
+      payload.ofertaFilename2 = null;
+      payload.clearOfertaFilename2 = true;
+    }
+    if (clearFlags.clearOfertaFilename3) {
+      payload.ofertaFilename3 = null;
+      payload.clearOfertaFilename3 = true;
+    }
+    if (clearFlags.clearPretAchizitie) {
+      payload.pretAchizitie = null;
+      payload.clearPretAchizitie = true;
+    }
+    if (clearFlags.clearAchizitiePartener) {
+      payload.achizitiePartener = null;
+      payload.clearAchizitiePartener = true;
+    }
+
+    return payload;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -830,10 +910,10 @@ export default function Clienti() {
       return;
     }
 
-    const payload = { ...formData, prioritate: formData.prioritate || null };
     if (editingClient) {
-      updateMutation.mutate({ id: editingClient.id, data: payload as CreateClient });
+      updateMutation.mutate({ id: editingClient.id, data: buildUpdatePayload() as any });
     } else {
+      const payload = { ...formData, prioritate: formData.prioritate || null };
       createMutation.mutate(payload as CreateClient);
     }
   };
@@ -1319,7 +1399,10 @@ export default function Clienti() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setFormData({ ...formData, ofertaFilename3: "" as any })}
+                            onClick={() => {
+                              setFormData({ ...formData, ofertaFilename3: "" as any });
+                              setClearFlags((f) => ({ ...f, clearOfertaFilename3: true }));
+                            }}
                             data-testid="button-remove-oferta-3"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -1331,8 +1414,13 @@ export default function Clienti() {
                         clientId={editingClient?.id}
                         fileType="oferta3"
                         pendingFile={pendingFiles.oferta3}
-                        onComplete={(objectPath, filename) => {
+                          onComplete={(objectPath, filename) => {
                           setFormData({ ...formData, ofertaFilename3: objectPath as any });
+                          setClearFlags((f) => ({ ...f, clearOfertaFilename3: false }));
+                          if (editingClient?.id) {
+                            queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                            queryClient.invalidateQueries({ queryKey: ["clients"] });
+                          }
                           toast.success(`Fișier "${filename}" încărcat cu succes`);
                         }}
                         onFileSelected={(file) => {
@@ -1865,12 +1953,17 @@ export default function Clienti() {
                         type="number"
                         step="0.01"
                         value={(formData as any).achizitiePartener || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const value = e.target.value;
                           setFormData({
                             ...formData,
-                            achizitiePartener: e.target.value,
-                          } as any)
-                        }
+                            achizitiePartener: value,
+                          } as any);
+                          setClearFlags((f) => ({
+                            ...f,
+                            clearAchizitiePartener: value === "" && !!(editSnapshot as any)?.achizitiePartener,
+                          }));
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1880,7 +1973,14 @@ export default function Clienti() {
                         type="number"
                         step="0.01"
                         value={formData.pretAchizitie}
-                        onChange={(e) => setFormData({ ...formData, pretAchizitie: e.target.value })}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, pretAchizitie: value });
+                          setClearFlags((f) => ({
+                            ...f,
+                            clearPretAchizitie: value === "" && !!(editSnapshot?.pretAchizitie),
+                          }));
+                        }}
                         data-testid="input-pret-achizitie"
                       />
                     </div>
@@ -1921,7 +2021,10 @@ export default function Clienti() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => setFormData({ ...formData, ofertaFilename: "" })}
+                              onClick={() => {
+                                setFormData({ ...formData, ofertaFilename: "" });
+                                setClearFlags((f) => ({ ...f, clearOfertaFilename: true }));
+                              }}
                               data-testid="button-remove-oferta-1"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
@@ -1935,6 +2038,11 @@ export default function Clienti() {
                           pendingFile={pendingFiles.oferta1}
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename: objectPath });
+                            setClearFlags((f) => ({ ...f, clearOfertaFilename: false }));
+                            if (editingClient?.id) {
+                              queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                              queryClient.invalidateQueries({ queryKey: ["clients"] });
+                            }
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
                           }}
                           onFileSelected={(file) => {
@@ -1974,7 +2082,10 @@ export default function Clienti() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => setFormData({ ...formData, ofertaFilename2: "" })}
+                              onClick={() => {
+                                setFormData({ ...formData, ofertaFilename2: "" });
+                                setClearFlags((f) => ({ ...f, clearOfertaFilename2: true }));
+                              }}
                               data-testid="button-remove-oferta-2"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
@@ -1988,6 +2099,11 @@ export default function Clienti() {
                           pendingFile={pendingFiles.oferta2}
                           onComplete={(objectPath, filename) => {
                             setFormData({ ...formData, ofertaFilename2: objectPath });
+                            setClearFlags((f) => ({ ...f, clearOfertaFilename2: false }));
+                            if (editingClient?.id) {
+                              queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                              queryClient.invalidateQueries({ queryKey: ["clients"] });
+                            }
                             toast.success(`Fișier "${filename}" încărcat cu succes`);
                           }}
                           onFileSelected={(file) => {
@@ -2003,6 +2119,11 @@ export default function Clienti() {
                     </div>
                   </div>
                 </div>
+                {editingClient?.id && (
+                  <div className="mt-4 border-t pt-4">
+                    <OfferFileHistory clientId={editingClient.id} />
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="followup" className="space-y-6 mt-4">
@@ -2378,6 +2499,10 @@ export default function Clienti() {
                   </div>
                 </div>
               )}
+
+              <div className="border-t pt-4">
+                <OfferFileHistory clientId={viewClient.id} />
+              </div>
             </div>
           )}
 

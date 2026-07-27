@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
 import multer from "multer";
 import { eq, inArray, and } from "drizzle-orm";
 import { canUserDeleteClients } from "@shared/clientDeletePermissions";
+import { protectClientUpdateFromAccidentalClear } from "./clientUpdateProtection";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -716,7 +717,14 @@ export async function registerRoutes(
       }
 
       // Non-admins can only see their own clients
-      if (!isAdminOrOana(req) && client.agentId !== req.userId) {
+      // (Razvan/Oana pot vedea orice — ca la PATCH — ca refetch-ul la edit să meargă)
+      const isRazvan =
+        !!req.userEmail?.toLowerCase().includes("razvan") ||
+        !!req.userFirstName?.toLowerCase().includes("razvan");
+      const isOanaUser =
+        !!req.userEmail?.toLowerCase().includes("oana") ||
+        !!req.userFirstName?.toLowerCase().includes("oana");
+      if (!isAdminOrOana(req) && !isRazvan && !isOanaUser && client.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la acest client" });
       }
 
@@ -724,6 +732,38 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get client error:", error);
       res.status(500).json({ message: "Eroare la încărcarea clientului" });
+    }
+  });
+
+  // Istoric activitate client (implicit: schimbări fișiere ofertă)
+  app.get("/api/clients/:id/activity", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const client = await storage.getClient(req.params.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client negăsit" });
+      }
+
+      const isRazvan =
+        !!req.userEmail?.toLowerCase().includes("razvan") ||
+        !!req.userFirstName?.toLowerCase().includes("razvan");
+      const isOana =
+        !!req.userEmail?.toLowerCase().includes("oana") ||
+        !!req.userFirstName?.toLowerCase().includes("oana");
+
+      if (!isAdminOrOana(req) && !isRazvan && !isOana && client.agentId !== req.userId) {
+        return res.status(403).json({ message: "Nu aveți acces la acest client" });
+      }
+
+      const typeParam = typeof req.query.type === "string" ? req.query.type : "OFFER_FILE_CHANGE";
+      const types = typeParam === "all"
+        ? undefined
+        : typeParam.split(",").map((t) => t.trim()).filter(Boolean) as any[];
+
+      const logs = await storage.getClientActivityLogs(req.params.id, types);
+      res.json(logs);
+    } catch (error) {
+      console.error("Get client activity error:", error);
+      res.status(500).json({ message: "Eroare la încărcarea istoricului" });
     }
   });
 
@@ -876,12 +916,16 @@ export async function registerRoutes(
       }
 
       const data = updateClientSchema.parse(req.body);
+      const body = req.body as Record<string, unknown>;
+
+      // Nu permite golirea accidentală a niciunui câmp deja completat (orice user / orice cont)
+      const safeData = protectClientUpdateFromAccidentalClear(existingClient, data, body);
 
       // Golire fișiere ofertă: aceleași drepturi ca la ștergerea clientului
       const clearsOfferFile = (
         field: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3",
       ) => {
-        const next = data[field];
+        const next = safeData[field];
         const had = !!(existingClient as any)[field];
         return (
           had &&
@@ -910,13 +954,13 @@ export async function registerRoutes(
 
       // RBAC: Non-admins cannot change the agent assignment
       if (!isAdminOrOana(req)) {
-        delete data.agentId;
+        delete safeData.agentId;
       }
 
       // Rezolvă partnerId la edit (id sau nume → id)
       if (data.partnerId !== undefined && data.partnerId !== null && data.partnerId !== "") {
         const resolvedId = await storage.getOrCreatePartnerId(data.partnerId);
-        data.partnerId = resolvedId ?? undefined;
+        safeData.partnerId = resolvedId ?? undefined;
       }
 
       // Track status changes and follow-up clicks
@@ -924,22 +968,65 @@ export async function registerRoutes(
       const oldFollowUp1 = existingClient.followUpEfectuat1;
       const oldFollowUp2 = existingClient.followUpEfectuat2;
       const oldFollowUp3 = existingClient.followUpEfectuat3;
+      const oldOffer1 = existingClient.ofertaFilename || null;
+      const oldOffer2 = existingClient.ofertaFilename2 || null;
+      const oldOffer3 = (existingClient as any).ofertaFilename3 || null;
 
-      const client = await storage.updateClient(req.params.id, data);
+      const client = await storage.updateClient(req.params.id, safeData);
 
       // Log status change
-      if (client && data.stadiuOferta && data.stadiuOferta !== oldStatus && client.agentId && req.userId) {
+      if (client && safeData.stadiuOferta && safeData.stadiuOferta !== oldStatus && client.agentId && req.userId) {
         await storage.createActivityLog({
           userId: client.agentId,
           clientId: client.id,
           type: "STATUS_CHANGE",
-          meta: { from: oldStatus, to: data.stadiuOferta },
+          meta: { from: oldStatus, to: safeData.stadiuOferta },
         });
+      }
+
+      // Log offer file changes (upload / replace / clear via form save)
+      if (client && req.userId) {
+        const offerFields: Array<{
+          key: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3";
+          slot: 1 | 2 | 3;
+          oldPath: string | null;
+        }> = [
+          { key: "ofertaFilename", slot: 1, oldPath: oldOffer1 },
+          { key: "ofertaFilename2", slot: 2, oldPath: oldOffer2 },
+          { key: "ofertaFilename3", slot: 3, oldPath: oldOffer3 },
+        ];
+
+        for (const field of offerFields) {
+          if ((safeData as any)[field.key] === undefined) continue;
+          const nextRaw = (safeData as any)[field.key];
+          const nextPath = nextRaw ? String(nextRaw) : null;
+          if (nextPath === field.oldPath) continue;
+
+          const action = !field.oldPath && nextPath
+            ? "upload"
+            : field.oldPath && !nextPath
+              ? "clear"
+              : "replace";
+
+          await storage.createActivityLog({
+            userId: req.userId,
+            clientId: client.id,
+            type: "OFFER_FILE_CHANGE",
+            meta: {
+              slot: field.slot,
+              field: field.key,
+              action,
+              from: field.oldPath,
+              to: nextPath,
+              byName: [req.userFirstName, req.userLastName].filter(Boolean).join(" ").trim() || null,
+            },
+          });
+        }
       }
 
       // Log follow-up clicks
       if (client && client.agentId && req.userId) {
-        if (data.followUpEfectuat1 && !oldFollowUp1) {
+        if (safeData.followUpEfectuat1 && !oldFollowUp1) {
           await storage.createActivityLog({
             userId: client.agentId,
             clientId: client.id,
@@ -947,7 +1034,7 @@ export async function registerRoutes(
             meta: { followUpNumber: 1 },
           });
         }
-        if (data.followUpEfectuat2 && !oldFollowUp2) {
+        if (safeData.followUpEfectuat2 && !oldFollowUp2) {
           await storage.createActivityLog({
             userId: client.agentId,
             clientId: client.id,
@@ -955,7 +1042,7 @@ export async function registerRoutes(
             meta: { followUpNumber: 2 },
           });
         }
-        if (data.followUpEfectuat3 && !oldFollowUp3) {
+        if (safeData.followUpEfectuat3 && !oldFollowUp3) {
           await storage.createActivityLog({
             userId: client.agentId,
             clientId: client.id,
@@ -2740,6 +2827,14 @@ export async function registerRoutes(
       console.log(`[Upload API] Uploading to object storage: ${objectName} `);
       const objectPath = await objectStorageService.uploadFromBuffer(req.file.buffer, objectName);
 
+      const existingClient = await storage.getClient(clientId);
+      const slotMap: Record<string, { field: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3"; slot: 1 | 2 | 3 }> = {
+        oferta1: { field: "ofertaFilename", slot: 1 },
+        oferta2: { field: "ofertaFilename2", slot: 2 },
+        oferta3: { field: "ofertaFilename3", slot: 3 },
+      };
+      const mapped = slotMap[fileType];
+
       if (fileType === "oferta1") {
         console.log(`[Upload API] Updating client ${clientId} with oferta1: ${objectPath} `);
         await storage.updateClient(clientId, { ofertaFilename: objectPath });
@@ -2749,6 +2844,26 @@ export async function registerRoutes(
       } else if (fileType === "oferta3") {
         console.log(`[Upload API] Updating client ${clientId} with oferta3: ${objectPath} `);
         await storage.updateClient(clientId, { ofertaFilename3: objectPath } as any);
+      }
+
+      if (mapped && existingClient && req.userId) {
+        const oldPath = ((existingClient as any)[mapped.field] as string | null) || null;
+        if (oldPath !== objectPath) {
+          await storage.createActivityLog({
+            userId: req.userId,
+            clientId,
+            type: "OFFER_FILE_CHANGE",
+            meta: {
+              slot: mapped.slot,
+              field: mapped.field,
+              action: oldPath ? "replace" : "upload",
+              from: oldPath,
+              to: objectPath,
+              originalFilename: req.file.originalname,
+              byName: [req.userFirstName, req.userLastName].filter(Boolean).join(" ").trim() || null,
+            },
+          });
+        }
       }
 
       console.log(`[Upload API] Client upload success: ${objectPath} `);

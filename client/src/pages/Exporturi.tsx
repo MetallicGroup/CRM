@@ -41,7 +41,7 @@ interface ActivityDetail {
   clientId: string;
   clientName: string;
   clientPhone: string | null;
-  type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+  type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
   createdAt: string;
   meta: Record<string, any> | null;
   clientNotes: string | null;
@@ -468,6 +468,15 @@ export default function Exporturi() {
                           actionLabel = "Follow-up efectuat";
                           const nr = row.meta?.followUpNumber as number | undefined;
                           detail = nr ? `Follow-up ${nr} bifat ca efectuat` : "Follow-up bifat ca efectuat";
+                        } else if (row.type === "OFFER_FILE_CHANGE") {
+                          actionLabel = "Fișier ofertă";
+                          const slot = row.meta?.slot as number | undefined;
+                          const action = row.meta?.action as string | undefined;
+                          const actionRo =
+                            action === "upload" ? "încărcat" :
+                            action === "replace" ? "înlocuit" :
+                            action === "clear" ? "șters" : "modificat";
+                          detail = `Ofertă ${slot ?? "?"} ${actionRo}`;
                         }
 
                         return (
@@ -577,6 +586,7 @@ export default function Exporturi() {
                     {selectedActivity.type === "PHONE_CLICK" && "Click telefon"}
                     {selectedActivity.type === "STATUS_CHANGE" && "Schimbare status"}
                     {selectedActivity.type === "FOLLOWUP_CLICK" && "Follow-up efectuat"}
+                    {selectedActivity.type === "OFFER_FILE_CHANGE" && "Fișier ofertă"}
                   </p>
                 </div>
                 <div>
@@ -595,6 +605,15 @@ export default function Exporturi() {
                     {selectedActivity.type === "FOLLOWUP_CLICK" && (() => {
                       const nr = selectedActivity.meta?.followUpNumber as number | undefined;
                       return nr ? `Follow-up ${nr} bifat ca efectuat` : "Follow-up bifat ca efectuat";
+                    })()}
+                    {selectedActivity.type === "OFFER_FILE_CHANGE" && (() => {
+                      const slot = selectedActivity.meta?.slot as number | undefined;
+                      const action = selectedActivity.meta?.action as string | undefined;
+                      const actionRo =
+                        action === "upload" ? "încărcat" :
+                        action === "replace" ? "înlocuit" :
+                        action === "clear" ? "șters" : "modificat";
+                      return `Ofertă ${slot ?? "?"} ${actionRo}`;
                     })()}
                   </p>
                 </div>

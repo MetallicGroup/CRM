@@ -194,9 +194,17 @@ export interface IStorage {
   createActivityLog(data: {
     userId: string;
     clientId: string;
-    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
     meta?: Record<string, unknown>;
   }): Promise<void>;
+  getClientActivityLogs(clientId: string, types?: Array<"LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE">): Promise<Array<{
+    id: string;
+    userId: string;
+    userName: string | null;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
+    createdAt: Date;
+    meta: Record<string, unknown> | null;
+  }>>;
   getAgentActivitySummary(params: {
     agentId: string;
     from: Date;
@@ -220,7 +228,7 @@ export interface IStorage {
     clientId: string;
     clientName: string;
     clientPhone: string | null;
-    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
     createdAt: Date;
     meta: Record<string, unknown> | null;
   }>>;
@@ -649,8 +657,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateClient(id: string, data: UpdateClient): Promise<Client | undefined> {
-    const parseDecimal = (val: string | undefined): string | null => {
-      if (!val || val === "") return null;
+    const parseDecimal = (val: string | null | undefined): string | null => {
+      if (val === null) return null;
+      if (val === undefined || val === "") return null;
       const num = parseFloat(val);
       return isNaN(num) ? null : num.toString();
     };
@@ -710,12 +719,43 @@ export class DatabaseStorage implements IStorage {
     if (data.procentComision !== undefined) updateData.procentComision = data.procentComision !== "" ? String(data.procentComision).trim() : null;
     if (data.comisionOferta !== undefined) updateData.comisionOferta = parseDecimal(data.comisionOferta);
     if (data.incasat !== undefined) updateData.incasat = data.incasat;
-    if (data.pretAchizitie !== undefined) updateData.pretAchizitie = parseDecimal(data.pretAchizitie);
-    if ((data as any).achizitiePartener !== undefined)
-      updateData.achizitiePartener = parseDecimal((data as any).achizitiePartener);
-    if (data.ofertaFilename !== undefined) updateData.ofertaFilename = data.ofertaFilename || null;
-    if (data.ofertaFilename2 !== undefined) updateData.ofertaFilename2 = data.ofertaFilename2 || null;
-    if ((data as any).ofertaFilename3 !== undefined) updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
+    if (data.pretAchizitie !== undefined) {
+      // null = clear explicit; "" ignorat (anti-accidental); valoare = update
+      if (data.pretAchizitie === null) {
+        updateData.pretAchizitie = null;
+      } else if (data.pretAchizitie !== "") {
+        updateData.pretAchizitie = parseDecimal(data.pretAchizitie);
+      }
+    }
+    if ((data as any).achizitiePartener !== undefined) {
+      if ((data as any).achizitiePartener === null) {
+        updateData.achizitiePartener = null;
+      } else if ((data as any).achizitiePartener !== "") {
+        updateData.achizitiePartener = parseDecimal((data as any).achizitiePartener);
+      }
+    }
+    // Fișiere ofertă: "" nu șterge — doar null explicit (după flag clear* pe route)
+    if (data.ofertaFilename !== undefined) {
+      if (data.ofertaFilename === "") {
+        // ignore accidental empty string
+      } else {
+        updateData.ofertaFilename = data.ofertaFilename || null;
+      }
+    }
+    if (data.ofertaFilename2 !== undefined) {
+      if (data.ofertaFilename2 === "") {
+        // ignore accidental empty string
+      } else {
+        updateData.ofertaFilename2 = data.ofertaFilename2 || null;
+      }
+    }
+    if ((data as any).ofertaFilename3 !== undefined) {
+      if ((data as any).ofertaFilename3 === "") {
+        // ignore accidental empty string
+      } else {
+        updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
+      }
+    }
     if (data.dataRevenire1 !== undefined) updateData.dataRevenire1 = parseDate(data.dataRevenire1);
     if (data.comentariuObservatii1 !== undefined) updateData.comentariuObservatii1 = data.comentariuObservatii1 || null;
     if (data.followUpEfectuat1 !== undefined) updateData.followUpEfectuat1 = data.followUpEfectuat1;
@@ -771,7 +811,7 @@ export class DatabaseStorage implements IStorage {
   async createActivityLog(data: {
     userId: string;
     clientId: string;
-    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
     meta?: Record<string, unknown>;
   }): Promise<void> {
     await db.insert(activityLogs).values({
@@ -780,6 +820,47 @@ export class DatabaseStorage implements IStorage {
       type: data.type,
       meta: (data.meta || null) as any,
     });
+  }
+
+  async getClientActivityLogs(
+    clientId: string,
+    types?: Array<"LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE">,
+  ): Promise<Array<{
+    id: string;
+    userId: string;
+    userName: string | null;
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
+    createdAt: Date;
+    meta: Record<string, unknown> | null;
+  }>> {
+    const conditions = [eq(activityLogs.clientId, clientId)];
+    if (types && types.length > 0) {
+      conditions.push(inArray(activityLogs.type, types as any));
+    }
+
+    const rows = await db
+      .select({
+        id: activityLogs.id,
+        userId: activityLogs.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        type: activityLogs.type,
+        createdAt: activityLogs.createdAt,
+        meta: activityLogs.meta,
+      })
+      .from(activityLogs)
+      .leftJoin(users, eq(activityLogs.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(activityLogs.createdAt));
+
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      userName: [r.firstName, r.lastName].filter(Boolean).join(" ").trim() || null,
+      type: r.type as any,
+      createdAt: r.createdAt,
+      meta: (r.meta as Record<string, unknown> | null) || null,
+    }));
   }
 
   async createCrmMessage(senderId: string, recipientId: string, body: string): Promise<{ id: string; senderId: string; recipientId: string; body: string; readAt: Date | null; createdAt: Date }> {
@@ -1124,7 +1205,7 @@ export class DatabaseStorage implements IStorage {
     clientName: string;
     clientPhone: string | null;
     clientNotes: string | null;
-    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK";
+    type: "LEAD_AUTO" | "LEAD_MANUAL" | "STATUS_CHANGE" | "PHONE_CLICK" | "FOLLOWUP_CLICK" | "OFFER_FILE_CHANGE";
     createdAt: Date;
     meta: Record<string, unknown> | null;
   }>> {
