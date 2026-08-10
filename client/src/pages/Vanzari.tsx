@@ -123,11 +123,13 @@ export default function Vanzari() {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set("stadiuOferta", "VANDUT");
+      // Trimitem doar ziua calendaristică (YYYY-MM-DD), fără UTC —
+      // ca 31 iulie să rămână în iulie, nu să „alunece” în august.
       if (dateFrom) {
-        params.set("dateFrom", dateFrom.toISOString());
+        params.set("dateFrom", format(dateFrom, "yyyy-MM-dd"));
       }
       if (dateTo) {
-        params.set("dateTo", dateTo.toISOString());
+        params.set("dateTo", format(dateTo, "yyyy-MM-dd"));
       }
       const res = await fetch(`/api/clients?${params.toString()}`);
       if (!res.ok) throw new Error("Eroare la încărcarea vânzărilor");
@@ -532,7 +534,9 @@ export default function Vanzari() {
                       </TableCell>
                     )}
                     <TableCell className="text-slate-400">
-                      {format(new Date(client.dataVanzarii || client.updatedAt), "d MMM yyyy", { locale: ro })}
+                      {client.dataVanzarii
+                        ? format(new Date(client.dataVanzarii), "d MMM yyyy", { locale: ro })
+                        : "—"}
                     </TableCell>
                   </TableRow>
                 ))}

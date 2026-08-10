@@ -502,22 +502,46 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    // Pentru VANDUT: folosim COALESCE(dataVanzarii, updatedAt) ca vânzările fără data_vanzarii setată
-    // să apară tot (folosim updatedAt = când a fost marcat ca vândut)
+    // Filtru pe ziua calendaristică (YYYY-MM-DD), fără decalaj de timezone.
+    // O vânzare din 31 iulie rămâne în iulie, indiferent de UTC pe server.
+    // Pentru VANDUT fără data_vanzarii: fallback la updatedAt.
+    const parseCalendarDay = (val: string, endOfDay: boolean): Date | null => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(val.trim());
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        if (!y || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+        return endOfDay
+          ? new Date(Date.UTC(y, mo - 1, d, 23, 59, 59, 999))
+          : new Date(Date.UTC(y, mo - 1, d, 0, 0, 0, 0));
+      }
+      const dt = new Date(val);
+      if (isNaN(dt.getTime())) return null;
+      const y = dt.getUTCFullYear();
+      const mo = dt.getUTCMonth();
+      const d = dt.getUTCDate();
+      return endOfDay
+        ? new Date(Date.UTC(y, mo, d, 23, 59, 59, 999))
+        : new Date(Date.UTC(y, mo, d, 0, 0, 0, 0));
+    };
+
     if (filters?.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      conditions.push(
-        sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) >= ${fromDate})`
-      );
+      const fromDate = parseCalendarDay(filters.dateFrom, false);
+      if (fromDate) {
+        conditions.push(
+          sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) >= ${fromDate})`
+        );
+      }
     }
 
     if (filters?.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      conditions.push(
-        sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) <= ${toDate})`
-      );
+      const toDate = parseCalendarDay(filters.dateTo, true);
+      if (toDate) {
+        conditions.push(
+          sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) <= ${toDate})`
+        );
+      }
     }
 
     if (conditions.length > 0) {
