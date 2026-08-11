@@ -60,6 +60,18 @@ function isAdminOrOana(req: AuthRequest): boolean {
   return req.userRole === "ADMIN" || (req.userRole === "SPECIAL" && req.specialKey === "OANA");
 }
 
+/** Useri de încredere care pot edita/vedea orice client fără restricții. */
+function isTrustedEditor(req: AuthRequest): boolean {
+  if (isAdminOrOana(req)) return true;
+  const first = (req.userFirstName || "").toLowerCase();
+  const email = (req.userEmail || "").toLowerCase();
+  if (first.includes("razvan") || email.includes("razvan")) return true;
+  if (first.includes("oana") || email.includes("oana")) return true;
+  if (first.includes("madalina") || email.includes("madalina")) return true;
+  if (first.includes("raluca") || email.includes("raluca")) return true;
+  return false;
+}
+
 function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   if (!isAdminOrOana(req)) {
     return res.status(403).json({ message: "Acces interzis - doar administratorii" });
@@ -618,26 +630,14 @@ export async function registerRoutes(
 
       const requestedAgentId = agentId as string | undefined;
 
-      // Non-admins pot vedea doar propriii clienți,
-      // cu excepția lui Razvan (poate filtra Alexandru) și Oana (poate filtra orice agent).
+      // Trusted editors (admin, Oana, Razvan, Madalina, Raluca) văd toți clienții;
+      // restul văd doar pe ai lor.
       let filterAgentId = requestedAgentId;
-      if (!isAdminOrOana(req)) {
-        const isRazvan =
-          !!req.userEmail?.toLowerCase().includes("razvan") ||
-          !!req.userFirstName?.toLowerCase().includes("razvan");
-        const isOana =
-          !!req.userEmail?.toLowerCase().includes("oana") ||
-          !!req.userFirstName?.toLowerCase().includes("oana");
-
-        if (isOana) {
-          // Oana: poate selecta orice agent și vede doar clienții acelui agent; "all" = toți clienții
-          filterAgentId = requestedAgentId === "all" || !requestedAgentId ? undefined : requestedAgentId;
-        } else if (isRazvan) {
-          // Dacă Razvan nu a ales un agent explicit, vede propriii clienți
-          filterAgentId = requestedAgentId || req.userId;
-        } else {
-          filterAgentId = req.userId;
-        }
+      if (!isTrustedEditor(req)) {
+        filterAgentId = req.userId;
+      } else if (!isAdminOrOana(req)) {
+        // Trusted non-admin: pot selecta orice agent; fără selecție = toți
+        filterAgentId = requestedAgentId === "all" || !requestedAgentId ? undefined : requestedAgentId;
       }
 
       const clients = await storage.getAllClients({
@@ -717,14 +717,7 @@ export async function registerRoutes(
       }
 
       // Non-admins can only see their own clients
-      // (Razvan/Oana pot vedea orice — ca la PATCH — ca refetch-ul la edit să meargă)
-      const isRazvan =
-        !!req.userEmail?.toLowerCase().includes("razvan") ||
-        !!req.userFirstName?.toLowerCase().includes("razvan");
-      const isOanaUser =
-        !!req.userEmail?.toLowerCase().includes("oana") ||
-        !!req.userFirstName?.toLowerCase().includes("oana");
-      if (!isAdminOrOana(req) && !isRazvan && !isOanaUser && client.agentId !== req.userId) {
+      if (!isTrustedEditor(req) && client.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la acest client" });
       }
 
@@ -743,14 +736,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Client negăsit" });
       }
 
-      const isRazvan =
-        !!req.userEmail?.toLowerCase().includes("razvan") ||
-        !!req.userFirstName?.toLowerCase().includes("razvan");
-      const isOana =
-        !!req.userEmail?.toLowerCase().includes("oana") ||
-        !!req.userFirstName?.toLowerCase().includes("oana");
-
-      if (!isAdminOrOana(req) && !isRazvan && !isOana && client.agentId !== req.userId) {
+      if (!isTrustedEditor(req) && client.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți acces la acest client" });
       }
 
@@ -789,7 +775,7 @@ export async function registerRoutes(
       const data = createClientSchema.parse(req.body);
 
       // RBAC: Non-admins can only create clients assigned to themselves
-      if (!isAdminOrOana(req)) {
+      if (!isAdminOrOana(req) && !isTrustedEditor(req)) {
         data.agentId = req.userId;
       } else if (!data.agentId) {
         // Admin creates without agent - leave unassigned
@@ -902,16 +888,8 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Client negăsit" });
       }
 
-      const isRazvan =
-        !!req.userEmail?.toLowerCase().includes("razvan") ||
-        !!req.userFirstName?.toLowerCase().includes("razvan");
-      const isOana =
-        !!req.userEmail?.toLowerCase().includes("oana") ||
-        !!req.userFirstName?.toLowerCase().includes("oana");
-
-      // Non-admins pot modifica doar propriii clienți,
-      // cu excepția lui Razvan și Oana care pot edita orice client.
-      if (!isAdminOrOana(req) && !isRazvan && !isOana && existingClient.agentId !== req.userId) {
+      // Non-admins / non-trusted pot modifica doar propriii clienți.
+      if (!isTrustedEditor(req) && existingClient.agentId !== req.userId) {
         return res.status(403).json({ message: "Nu aveți permisiunea să modificați acest client" });
       }
 
@@ -952,8 +930,8 @@ export async function registerRoutes(
         }
       }
 
-      // RBAC: Non-admins cannot change the agent assignment
-      if (!isAdminOrOana(req)) {
+      // RBAC: Non-admins/non-trusted cannot change the agent assignment
+      if (!isAdminOrOana(req) && !isTrustedEditor(req)) {
         delete safeData.agentId;
       }
 
