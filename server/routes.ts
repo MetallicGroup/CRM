@@ -901,10 +901,13 @@ export async function registerRoutes(
         console.log(`[PATCH client ${req.params.id}] user=${req.userEmail} stadiuComanda: body=${JSON.stringify(body.stadiuComanda)} parsed=${JSON.stringify(data.stadiuComanda)} existing=${existingClient.stadiuComanda}`);
       }
 
-      // Nu permite golirea accidentală a niciunui câmp deja completat (orice user / orice cont)
-      const safeData = protectClientUpdateFromAccidentalClear(existingClient, data, body);
+      // Nu permite golirea accidentală — exceptând editorii de încredere (Madalina, Raluca, admin…)
+      // care pot șterge intenționat orice câmp (date, oferte, prețuri etc.).
+      const safeData = protectClientUpdateFromAccidentalClear(existingClient, data, body, {
+        allowClear: isTrustedEditor(req),
+      });
 
-      // Golire fișiere ofertă: aceleași drepturi ca la ștergerea clientului
+      // Golire fișiere ofertă: trusted editors SAU cei cu drept de ștergere clienți
       const clearsOfferFile = (
         field: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3",
       ) => {
@@ -921,14 +924,15 @@ export async function registerRoutes(
         clearsOfferFile("ofertaFilename2") ||
         clearsOfferFile("ofertaFilename3")
       ) {
-        if (
-          !canUserDeleteClients({
+        const canClearOffer =
+          isTrustedEditor(req) ||
+          canUserDeleteClients({
             role: req.userRole || "",
             firstName: req.userFirstName,
             lastName: req.userLastName,
             specialKey: req.specialKey,
-          })
-        ) {
+          });
+        if (!canClearOffer) {
           return res.status(403).json({
             message: "Nu aveți dreptul să ștergeți fișierele de ofertă",
           });

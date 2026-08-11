@@ -873,9 +873,12 @@ export default function Clienti() {
       const curNorm = current === undefined || current === null ? "" : String(current);
       const origNorm = original === undefined || original === null ? "" : String(original);
       if (curNorm !== origNorm) {
-        // Dacă userul a golit un câmp din ALWAYS_APPLY (ex. stadiuComanda "none" → undefined),
-        // trimitem null explicit ca serverul să-l golească.
-        payload[key] = current === undefined ? null : current;
+        // Golire intenționată: "" / undefined → null, ca serverul să șteargă câmpul
+        // (data vanzării, data livrării, stadiu comandă etc.).
+        payload[key] =
+          current === undefined || current === null || current === ""
+            ? null
+            : current;
       }
     }
 

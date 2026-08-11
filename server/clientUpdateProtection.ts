@@ -52,14 +52,17 @@ const CLEAR_FLAG_BY_FIELD: Record<string, string> = {
 
 /**
  * Elimină din payload actualizările care ar goli un câmp deja completat de alt user.
- * Regula: valorile goale nu suprascriu valori existente, decât cu flag clear* explicit.
+ * Regula: valorile goale nu suprascriu valori existente, decât cu flag clear* explicit
+ * SAU când allowClear=true (editori de încredere: admin, Madalina, Raluca, etc.).
  */
 export function protectClientUpdateFromAccidentalClear(
   existing: Client,
   data: UpdateClient,
   body: Record<string, unknown>,
+  options?: { allowClear?: boolean },
 ): UpdateClient {
   const next = { ...data };
+  const allowClear = options?.allowClear === true;
 
   for (const key of Object.keys(next) as Array<keyof UpdateClient>) {
     if (ALWAYS_APPLY.has(key as string)) continue;
@@ -71,7 +74,7 @@ export function protectClientUpdateFromAccidentalClear(
     const clearFlag = CLEAR_FLAG_BY_FIELD[key as string];
 
     if (incomingIsEmpty(incoming) && existingHasValue(existingVal)) {
-      if (clearFlag && body[clearFlag] === true) {
+      if (allowClear || (clearFlag && body[clearFlag] === true)) {
         (next as any)[key] = null;
       } else {
         delete (next as any)[key];

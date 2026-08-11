@@ -735,13 +735,35 @@ export class DatabaseStorage implements IStorage {
         }
       }
     }
-    if (data.dataOfertarii !== undefined) updateData.dataOfertarii = parseDate(data.dataOfertarii);
+    if (data.dataOfertarii !== undefined) {
+      updateData.dataOfertarii = data.dataOfertarii === null || data.dataOfertarii === ""
+        ? null
+        : parseDate(data.dataOfertarii);
+    }
     if (data.avans !== undefined) updateData.avans = data.avans;
     if (data.stadiuComanda !== undefined) updateData.stadiuComanda = data.stadiuComanda || null;
-    if (data.dataVanzarii !== undefined) updateData.dataVanzarii = parseDate(data.dataVanzarii);
-    if (data.dataLivrarii !== undefined) updateData.dataLivrarii = parseDate(data.dataLivrarii);
-    if (data.procentComision !== undefined) updateData.procentComision = data.procentComision !== "" ? String(data.procentComision).trim() : null;
-    if (data.comisionOferta !== undefined) updateData.comisionOferta = parseDecimal(data.comisionOferta);
+    if (data.dataVanzarii !== undefined) {
+      updateData.dataVanzarii = data.dataVanzarii === null || data.dataVanzarii === ""
+        ? null
+        : parseDate(data.dataVanzarii);
+    }
+    if (data.dataLivrarii !== undefined) {
+      updateData.dataLivrarii = data.dataLivrarii === null || data.dataLivrarii === ""
+        ? null
+        : parseDate(data.dataLivrarii);
+    }
+    if (data.procentComision !== undefined) {
+      updateData.procentComision =
+        data.procentComision === null || data.procentComision === ""
+          ? null
+          : String(data.procentComision).trim();
+    }
+    if (data.comisionOferta !== undefined) {
+      updateData.comisionOferta =
+        data.comisionOferta === null || data.comisionOferta === ""
+          ? null
+          : parseDecimal(data.comisionOferta);
+    }
     if (data.incasat !== undefined) updateData.incasat = data.incasat;
     if (data.pretAchizitie !== undefined) {
       // null = clear explicit; "" ignorat (anti-accidental); valoare = update
@@ -780,13 +802,25 @@ export class DatabaseStorage implements IStorage {
         updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
       }
     }
-    if (data.dataRevenire1 !== undefined) updateData.dataRevenire1 = parseDate(data.dataRevenire1);
+    if (data.dataRevenire1 !== undefined) {
+      updateData.dataRevenire1 = data.dataRevenire1 === null || data.dataRevenire1 === ""
+        ? null
+        : parseDate(data.dataRevenire1);
+    }
     if (data.comentariuObservatii1 !== undefined) updateData.comentariuObservatii1 = data.comentariuObservatii1 || null;
     if (data.followUpEfectuat1 !== undefined) updateData.followUpEfectuat1 = data.followUpEfectuat1;
-    if (data.dataRevenire2 !== undefined) updateData.dataRevenire2 = parseDate(data.dataRevenire2);
+    if (data.dataRevenire2 !== undefined) {
+      updateData.dataRevenire2 = data.dataRevenire2 === null || data.dataRevenire2 === ""
+        ? null
+        : parseDate(data.dataRevenire2);
+    }
     if (data.comentariuObservatii2 !== undefined) updateData.comentariuObservatii2 = data.comentariuObservatii2 || null;
     if (data.followUpEfectuat2 !== undefined) updateData.followUpEfectuat2 = data.followUpEfectuat2;
-    if (data.dataRevenire3 !== undefined) updateData.dataRevenire3 = parseDate(data.dataRevenire3);
+    if (data.dataRevenire3 !== undefined) {
+      updateData.dataRevenire3 = data.dataRevenire3 === null || data.dataRevenire3 === ""
+        ? null
+        : parseDate(data.dataRevenire3);
+    }
     if (data.comentariuObservatii3 !== undefined) updateData.comentariuObservatii3 = data.comentariuObservatii3 || null;
     if (data.followUpEfectuat3 !== undefined) updateData.followUpEfectuat3 = data.followUpEfectuat3;
     if (data.observatiiClient !== undefined) updateData.observatiiClient = data.observatiiClient || null;
