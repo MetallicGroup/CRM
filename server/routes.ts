@@ -896,6 +896,11 @@ export async function registerRoutes(
       const data = updateClientSchema.parse(req.body);
       const body = req.body as Record<string, unknown>;
 
+      // Debug: log ce trimite clientul pentru stadiuComanda
+      if (body.stadiuComanda !== undefined || data.stadiuComanda !== undefined) {
+        console.log(`[PATCH client ${req.params.id}] user=${req.userEmail} stadiuComanda: body=${JSON.stringify(body.stadiuComanda)} parsed=${JSON.stringify(data.stadiuComanda)} existing=${existingClient.stadiuComanda}`);
+      }
+
       // Nu permite golirea accidentală a niciunui câmp deja completat (orice user / orice cont)
       const safeData = protectClientUpdateFromAccidentalClear(existingClient, data, body);
 

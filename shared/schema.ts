@@ -418,7 +418,7 @@ export const createClientSchema = z.object({
   avans: z.boolean().optional().default(false),
   avansSuma: z.string().optional(),
   avansIncasat: z.boolean().optional().default(false),
-  stadiuComanda: z.enum(["CUSTODIE", "COMANDAT", "LISTAT", "IN_PRODUCTIE", "PRODUS", "LIVRAT"]).optional(),
+  stadiuComanda: z.enum(["CUSTODIE", "COMANDAT", "LISTAT", "IN_PRODUCTIE", "PRODUS", "LIVRAT"]).nullable().optional(),
   dataVanzarii: z.string().optional(),
   dataLivrarii: z.string().optional(),
   procentComision: z.string().optional(),
