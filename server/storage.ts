@@ -526,21 +526,22 @@ export class DatabaseStorage implements IStorage {
         : new Date(Date.UTC(y, mo, d, 0, 0, 0, 0));
     };
 
+    const dateField =
+      filters?.stadiuOferta === "VANDUT"
+        ? sql`COALESCE(${clients.dataVanzarii}, ${clients.updatedAt})`
+        : sql`COALESCE(${clients.dataAdaugare}, ${clients.createdAt})`;
+
     if (filters?.dateFrom) {
       const fromDate = parseCalendarDay(filters.dateFrom, false);
       if (fromDate) {
-        conditions.push(
-          sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) >= ${fromDate})`
-        );
+        conditions.push(sql`${dateField} >= ${fromDate}`);
       }
     }
 
     if (filters?.dateTo) {
       const toDate = parseCalendarDay(filters.dateTo, true);
       if (toDate) {
-        conditions.push(
-          sql`(COALESCE(${clients.dataVanzarii}, ${clients.updatedAt}) <= ${toDate})`
-        );
+        conditions.push(sql`${dateField} <= ${toDate}`);
       }
     }
 

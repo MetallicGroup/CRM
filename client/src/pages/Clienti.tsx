@@ -57,7 +57,7 @@ import {
   Eye,
   Package,
   FileText,
-  Calendar,
+  Calendar as CalendarIcon,
   MessageSquare,
   Handshake,
   Download,
@@ -70,6 +70,12 @@ import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader
 import { OfferFileHistory } from "@/components/OfferFileHistory";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type {
   Client,
@@ -454,6 +460,8 @@ export default function Clienti() {
   const [contactStatusFilter, setContactStatusFilter] = useState<"all" | "contactat" | "necontactat">("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [brandFilter, setBrandFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -474,12 +482,14 @@ export default function Clienti() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["clients", search, stadiuFilter, agentFilter],
+    queryKey: ["clients", search, stadiuFilter, agentFilter, dateFrom, dateTo],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (stadiuFilter && stadiuFilter !== "all") params.set("stadiuOferta", stadiuFilter);
       if (agentFilter && agentFilter !== "all") params.set("agentId", agentFilter);
+      if (dateFrom) params.set("dateFrom", format(dateFrom, "yyyy-MM-dd"));
+      if (dateTo) params.set("dateTo", format(dateTo, "yyyy-MM-dd"));
 
       const res = await fetch(`/api/clients?${params}`);
       if (!res.ok) throw new Error("Eroare la încărcarea clienților");
@@ -930,6 +940,8 @@ export default function Clienti() {
     setContactStatusFilter("all");
     setSourceFilter("all");
     setBrandFilter("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
   };
 
   return (
@@ -1070,6 +1082,58 @@ export default function Clienti() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex flex-col md:flex-row gap-4 mt-4">
+            <div className="w-full md:w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data de la</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateFrom && "text-slate-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "PPP", { locale: ro }) : "Selectați data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="w-full md:w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data până la</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateTo && "text-slate-400"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "PPP", { locale: ro }) : "Selectați data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
         </CardContent>
       </Card>
@@ -1090,7 +1154,9 @@ export default function Clienti() {
                 agentFilter !== "all" ||
                 contactStatusFilter !== "all" ||
                 sourceFilter !== "all" ||
-                brandFilter !== "all"
+                brandFilter !== "all" ||
+                dateFrom ||
+                dateTo
                   ? "Modifică filtrele pentru a vedea mai mulți clienți"
                   : "Adaugă primul client pentru a începe"}
               </p>
@@ -1341,7 +1407,7 @@ export default function Clienti() {
                   Ofertă
                 </TabsTrigger>
                 <TabsTrigger value="followup" className="gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <CalendarIcon className="h-4 w-4" />
                   Follow-up
                 </TabsTrigger>
                 <TabsTrigger value="notes" className="gap-2">
