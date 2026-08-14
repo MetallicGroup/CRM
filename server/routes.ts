@@ -65,7 +65,6 @@ function isTrustedEditor(req: AuthRequest): boolean {
   if (isAdminOrOana(req)) return true;
   const first = (req.userFirstName || "").toLowerCase();
   const email = (req.userEmail || "").toLowerCase();
-  if (first.includes("razvan") || email.includes("razvan")) return true;
   if (first.includes("oana") || email.includes("oana")) return true;
   if (first.includes("madalina") || email.includes("madalina")) return true;
   if (first.includes("raluca") || email.includes("raluca")) return true;
@@ -630,8 +629,8 @@ export async function registerRoutes(
 
       const requestedAgentId = agentId as string | undefined;
 
-      // Trusted editors (admin, Oana, Razvan, Madalina, Raluca) văd toți clienții;
-      // restul văd doar pe ai lor.
+      // Trusted editors (admin, Oana, Madalina, Raluca) văd toți clienții;
+      // restul (inclusiv Razvan) văd doar pe ai lor.
       let filterAgentId = requestedAgentId;
       if (!isTrustedEditor(req)) {
         filterAgentId = req.userId;

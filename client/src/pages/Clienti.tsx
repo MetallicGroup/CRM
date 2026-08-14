@@ -540,8 +540,8 @@ export default function Clienti() {
         return [];
       }
     },
-    // Pentru Razvan și Oana avem nevoie de lista de agenți (filtru după agent)
-    enabled: isAdmin || isRazvan || isOana,
+    // Pentru admin și Oana avem nevoie de lista de agenți (filtru după agent)
+    enabled: isAdmin || isOana,
     retry: false,
   });
 
@@ -1016,24 +1016,16 @@ export default function Clienti() {
                 ))}
               </SelectContent>
             </Select>
-            {(isAdmin || isRazvan || isOana) && (
+            {(isAdmin || isOana) && (
               <Select value={agentFilter} onValueChange={setAgentFilter}>
                 <SelectTrigger className="w-full md:w-[200px]" data-testid="select-agent-filter">
                   <SelectValue placeholder="Toți agenții" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toți agenții</SelectItem>
-                  {(
-                    isAdmin || isOana
-                      ? agents.filter((a: any) => a.role === "AGENT" || a.role === "ADMIN")
-                      : // Pentru Razvan, afișăm doar agentul Alexandru Croitoru
-                        agents.filter(
-                          (a: any) =>
-                            a.email === "alexandru@metallicgroup.ro" ||
-                            (a.firstName?.toLowerCase() === "alexandru" &&
-                              a.lastName?.toLowerCase().includes("croitoru"))
-                        )
-                  ).map((agent: any) => (
+                  {agents
+                    .filter((a: any) => a.role === "AGENT" || a.role === "ADMIN")
+                    .map((agent: any) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.firstName} {agent.lastName}
                     </SelectItem>
