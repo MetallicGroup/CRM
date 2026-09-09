@@ -116,7 +116,7 @@ export default function Ofertare() {
   const [culoare, setCuloare] = useState("");
   const [modelGard, setModelGard] = useState<string>("");
   const [grosime, setGrosime] = useState<string>("");
-  const [discountPercent, setDiscountPercent] = useState(20);
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [panouri, setPanouri] = useState<{ lungime: number; inaltime: number; nrPanouri: number }[]>(PANOURI_DEFAULT);
   const [accesorii, setAccesorii] = useState<{ denumire: string; um: string; pretBuc: number; cant: number }[]>(
     ACCESORII_INITIAL.map((a) => ({ ...a, cant: 0 }))
@@ -190,9 +190,9 @@ export default function Ofertare() {
     const data: OfertaPdfData = {
       agentName,
       agentTitle: isRazvan ? "Agent Vanzari" : "Director Vanzari",
-      agentPhone: "0760 259 460",
+      agentPhone: isRazvan ? "0731954653" : "0760 259 460",
       agentEmail: isRazvan
-        ? "razvan.rosu@mtallicroof.ro"
+        ? "razvan@metallicroof.ro"
         : "dragos.frangache@metallicroof.ro",
       agentAddress: "Bld Aurel Vlaicu 181, Constanta, Romania",
       client: client || "—",
@@ -447,7 +447,11 @@ export default function Ofertare() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-slate-400">Discount: {discountPercent}% = preț achiziție</p>
+              {discountPercent > 0 ? (
+                <p className="text-sm text-slate-400">Discount: {discountPercent}% = preț achiziție</p>
+              ) : (
+                <p className="text-sm text-slate-400">Fără discount</p>
+              )}
               <p className="text-xl font-bold">TOTAL GENERAL: {totalGeneral.toFixed(2)} lei</p>
             </div>
             <Button onClick={handleDownloadPdf} size="lg" className="gap-2" data-testid="button-download-pdf">

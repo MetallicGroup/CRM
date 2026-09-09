@@ -94,26 +94,29 @@ async function drawHeader(
   pageWidth: number,
 ): Promise<number> {
   const logo = await loadLogoDataUrl();
-  // Black header bar for gold-on-black logo
+  // Logo real: 767×128 → ratio ~6:1 — nu-l comprima pe verticală
+  const logoH = 14;
+  const logoW = logoH * (767 / 128); // ~84mm
+  const headerH = 26;
+
   doc.setFillColor(0, 0, 0);
-  doc.rect(0, 0, pageWidth, 28, 'F');
+  doc.rect(0, 0, pageWidth, headerH, 'F');
 
   if (logo) {
-    // Logo approx 42 x 16 mm
-    doc.addImage(logo, 'PNG', MARGIN, 6, 42, 16);
+    doc.addImage(logo, 'PNG', MARGIN, (headerH - logoH) / 2, logoW, logoH);
   } else {
     doc.setTextColor(...GOLD);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('METALLIC GROUP', MARGIN, 17);
+    doc.text('METALLIC GROUP', MARGIN, 16);
   }
 
   doc.setTextColor(220, 220, 220);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('www.metallicgroup.ro', pageWidth - MARGIN, 17, { align: 'right' });
+  doc.text('www.metallicgroup.ro', pageWidth - MARGIN, headerH / 2 + 1.5, { align: 'right' });
 
-  let y = 36;
+  let y = headerH + 10;
   doc.setTextColor(...CHARCOAL);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
@@ -223,11 +226,14 @@ export async function generateOfertaPdf(data: OfertaPdfData): Promise<void> {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...CHARCOAL);
-  doc.text(
-    `Model gard: ${data.modelGard}  |  Grosime: ${data.grosime}  |  Discount: ${data.discountPercent}%`,
-    MARGIN,
-    y,
-  );
+  const configParts = [
+    `Model gard: ${data.modelGard}`,
+    `Grosime: ${data.grosime}`,
+  ];
+  if (data.discountPercent > 0) {
+    configParts.push(`Discount: ${data.discountPercent}%`);
+  }
+  doc.text(configParts.join('  |  '), MARGIN, y);
   y += 8;
 
   y = ensureSpace(doc, y, 40, pageWidth);
@@ -304,8 +310,10 @@ export async function generateOfertaPdf(data: OfertaPdfData): Promise<void> {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(...CHARCOAL);
-  doc.text(`DISCOUNT: ${data.discountPercent}% (pret achizitie)`, MARGIN, y);
-  y += 8;
+  if (data.discountPercent > 0) {
+    doc.text(`DISCOUNT: ${data.discountPercent}% (pret achizitie)`, MARGIN, y);
+    y += 8;
+  }
   doc.setFontSize(14);
   doc.setTextColor(...GOLD);
   doc.text(`TOTAL GENERAL: ${data.totalGeneral.toFixed(2)} lei`, MARGIN, y);
