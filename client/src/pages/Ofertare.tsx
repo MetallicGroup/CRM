@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Download } from "lucide-react";
 import { generateOfertaPdf, type OfertaPdfData } from "@/lib/ofertaPdf";
+import { toast } from "sonner";
 
 const MODELS = [
   "MX 25",
@@ -90,6 +91,41 @@ const CULORI = [
   "GRAPHITE",
 ];
 
+/** Mapare grosime din fișa client → Ofertare */
+function mapClientGrosime(grosime: string | null | undefined): string {
+  if (!grosime) return "";
+  if (grosime === "0.50" || grosime.startsWith("0.5")) return "0.5mm DV";
+  if (grosime === "0.60" || grosime.startsWith("0.6")) return "0.6mm DV";
+  return GROSIMI.find((g) => g === grosime) || "";
+}
+
+/** Mapare culoare RAL_* din client → eticheta din Ofertare */
+function mapClientCuloare(culoare: string | null | undefined): string {
+  if (!culoare) return "";
+  if ((CULORI as readonly string[]).includes(culoare)) return culoare;
+  const code = culoare.replace(/_/g, " ").toUpperCase();
+  const match = CULORI.find((c) => c.toUpperCase().startsWith(code));
+  return match || "";
+}
+
+function mapClientModel(model: string | null | undefined, brand?: string | null): string {
+  if (model) {
+    const exact = MODELS.find((m) => m === model || m.toLowerCase() === model.toLowerCase());
+    if (exact) return exact;
+    const partial = MODELS.find(
+      (m) =>
+        m.toLowerCase().includes(model.toLowerCase()) ||
+        model.toLowerCase().includes(m.toLowerCase()),
+    );
+    if (partial) return partial;
+  }
+  if (brand) {
+    const byBrand = MODELS.find((m) => m.toLowerCase().startsWith(brand.toLowerCase()));
+    if (byBrand) return byBrand;
+  }
+  return "";
+}
+
 const PANOURI_DEFAULT = [
   { lungime: 0, inaltime: 0, nrPanouri: 0 },
   { lungime: 0, inaltime: 0, nrPanouri: 0 },
@@ -106,6 +142,7 @@ export default function Ofertare() {
       user.firstName?.toLowerCase().includes("razvan"));
   /** Răzvan (și adminii) pot edita prețurile de pe Accesorii auxiliare */
   const canEditAccesoriiPrices = isRazvan || isAdmin;
+  const prefillDone = useRef(false);
 
   const [client, setClient] = useState("");
   const [cnpCui, setCnpCui] = useState("");
@@ -121,6 +158,37 @@ export default function Ofertare() {
   const [accesorii, setAccesorii] = useState<{ denumire: string; um: string; pretBuc: number; cant: number }[]>(
     ACCESORII_INITIAL.map((a) => ({ ...a, cant: 0 }))
   );
+
+  // Prefill din /clienti?fromClient=...
+  useEffect(() => {
+    if (prefillDone.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const fromClientId = params.get("fromClient");
+    if (!fromClientId) return;
+    prefillDone.current = true;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/clients/${fromClientId}`, { credentials: "include" });
+        if (!res.ok) {
+          toast.error("Nu s-au putut încărca datele clientului");
+          return;
+        }
+        const c = await res.json();
+        // Contact (fără sursă / agent) + produs relevant pentru Ofertare
+        setClient(c.nume || "");
+        setTelefon(c.telefon || "");
+        setLocalitate(c.localitate || "");
+        setJudet(c.judet || "");
+        setCuloare(mapClientCuloare(c.culoare));
+        setModelGard(mapClientModel(c.model, c.brand));
+        setGrosime(mapClientGrosime(c.grosime));
+        toast.success(`Date preluate de la „${c.nume || "client"}"`);
+      } catch {
+        toast.error("Eroare la încărcarea clientului pentru ofertare");
+      }
+    })();
+  }, []);
 
   const panouriCuMp = useMemo(() => {
     return panouri.map((p) => {

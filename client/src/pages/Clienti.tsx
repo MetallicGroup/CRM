@@ -66,6 +66,7 @@ import {
   Search as SearchIcon,
   UserRound,
   Check,
+  FileEdit,
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
@@ -79,6 +80,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 import type {
   Client,
   CreateClient,
@@ -432,6 +434,7 @@ function getClientPrioritate(client: { prioritate?: string | null; urgenta?: boo
 
 export default function Clienti() {
   const { isAdmin, user } = useAuth();
+  const [, setLocation] = useLocation();
   const canDeleteClients = useMemo(
     () =>
       !!user &&
@@ -1391,6 +1394,16 @@ export default function Clienti() {
                             <SearchIcon className="h-3.5 w-3.5" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-amber-500 hover:text-amber-400 hover:bg-amber-500/15"
+                          onClick={() => setLocation(`/ofertare?fromClient=${client.id}`)}
+                          title="Deschide Ofertare cu datele clientului"
+                          data-testid={`button-ofertare-${client.id}`}
+                        >
+                          <FileEdit className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
