@@ -240,6 +240,22 @@ export type SafeUser = Omit<User, "passwordHash">;
 
 // ============ CLIENTS ============
 
+/** Snapshot formular Ofertare salvat pe client (precompletare + regenerare PDF) */
+export type OfertaFormSnapshot = {
+  client: string;
+  cnpCui: string;
+  telefon: string;
+  strada: string;
+  localitate: string;
+  judet: string;
+  culoare: string;
+  modelGard: string;
+  grosime: string;
+  discountPercent: number;
+  panouri: { lungime: number; inaltime: number; nrPanouri: number }[];
+  accesorii: { denumire: string; um: string; pretBuc: number; cant: number }[];
+};
+
 export const clients = pgTable("clients", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
 
@@ -288,6 +304,8 @@ export const clients = pgTable("clients", {
   ofertaFilename: varchar("oferta_filename", { length: 255 }),
   ofertaFilename2: varchar("oferta_filename_2", { length: 255 }),
   ofertaFilename3: varchar("oferta_filename_3", { length: 255 }),
+  /** Snapshot formular Ofertare (pt. precompletare la regenerare PDF) */
+  ofertaFormData: json("oferta_form_data").$type<OfertaFormSnapshot | null>().default(null),
 
   // SECȚIUNEA 6: Follow-up 1
   dataRevenire1: timestamp("data_revenire_1"),
@@ -431,6 +449,36 @@ export const createClientSchema = z.object({
   ofertaFilename: z.string().nullable().optional(),
   ofertaFilename2: z.string().nullable().optional(),
   ofertaFilename3: z.string().nullable().optional(),
+  ofertaFormData: z
+    .object({
+      client: z.string(),
+      cnpCui: z.string(),
+      telefon: z.string(),
+      strada: z.string(),
+      localitate: z.string(),
+      judet: z.string(),
+      culoare: z.string(),
+      modelGard: z.string(),
+      grosime: z.string(),
+      discountPercent: z.number(),
+      panouri: z.array(
+        z.object({
+          lungime: z.number(),
+          inaltime: z.number(),
+          nrPanouri: z.number(),
+        }),
+      ),
+      accesorii: z.array(
+        z.object({
+          denumire: z.string(),
+          um: z.string(),
+          pretBuc: z.number(),
+          cant: z.number(),
+        }),
+      ),
+    })
+    .nullable()
+    .optional(),
 
   // Secțiunea 6: Follow-up
   dataRevenire1: z.string().nullable().optional(),

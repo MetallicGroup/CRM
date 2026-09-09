@@ -5,9 +5,9 @@ import { Loader2, Upload, Check, X, FileIcon } from "lucide-react";
 
 interface ObjectUploaderProps {
   clientId?: string;
-  fileType: "oferta1" | "oferta2";
+  fileType: "oferta1" | "oferta2" | "oferta3";
   onComplete?: (objectPath: string, filename: string) => void;
-  onFileSelected?: (file: File, fileType: "oferta1" | "oferta2") => void;
+  onFileSelected?: (file: File, fileType: "oferta1" | "oferta2" | "oferta3") => void;
   onError?: (error: Error) => void;
   buttonClassName?: string;
   children: ReactNode;
@@ -154,7 +154,7 @@ export function ObjectUploader({
   );
 }
 
-export async function uploadFileForClient(file: File, clientId: string, fileType: "oferta1" | "oferta2"): Promise<{ objectPath: string; filename: string }> {
+export async function uploadFileForClient(file: File, clientId: string, fileType: "oferta1" | "oferta2" | "oferta3"): Promise<{ objectPath: string; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('clientId', clientId);

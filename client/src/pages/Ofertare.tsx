@@ -11,8 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { generateOfertaPdf, type OfertaPdfData } from "@/lib/ofertaPdf";
+import { uploadFileForClient } from "@/components/ObjectUploader";
+import type { OfertaFormSnapshot } from "@shared/schema";
 import { toast } from "sonner";
 
 const MODELS = [
@@ -143,6 +145,8 @@ export default function Ofertare() {
   /** Răzvan (și adminii) pot edita prețurile de pe Accesorii auxiliare */
   const canEditAccesoriiPrices = isRazvan || isAdmin;
   const prefillDone = useRef(false);
+  const fromClientIdRef = useRef<string | null>(null);
+  const [savingPdf, setSavingPdf] = useState(false);
 
   const [client, setClient] = useState("");
   const [cnpCui, setCnpCui] = useState("");
@@ -159,6 +163,27 @@ export default function Ofertare() {
     ACCESORII_INITIAL.map((a) => ({ ...a, cant: 0 }))
   );
 
+  const applyFormSnapshot = (snap: OfertaFormSnapshot) => {
+    setClient(snap.client || "");
+    setCnpCui(snap.cnpCui || "");
+    setTelefon(snap.telefon || "");
+    setStrada(snap.strada || "");
+    setLocalitate(snap.localitate || "");
+    setJudet(snap.judet || "");
+    setCuloare(snap.culoare || "");
+    setModelGard(snap.modelGard || "");
+    setGrosime(snap.grosime || "");
+    setDiscountPercent(typeof snap.discountPercent === "number" ? snap.discountPercent : 0);
+    if (Array.isArray(snap.panouri) && snap.panouri.length > 0) {
+      const padded = [...snap.panouri];
+      while (padded.length < 5) padded.push({ lungime: 0, inaltime: 0, nrPanouri: 0 });
+      setPanouri(padded.slice(0, Math.max(5, snap.panouri.length)));
+    }
+    if (Array.isArray(snap.accesorii) && snap.accesorii.length > 0) {
+      setAccesorii(snap.accesorii.map((a) => ({ ...a })));
+    }
+  };
+
   // Prefill din /clienti?fromClient=...
   useEffect(() => {
     if (prefillDone.current) return;
@@ -166,6 +191,7 @@ export default function Ofertare() {
     const fromClientId = params.get("fromClient");
     if (!fromClientId) return;
     prefillDone.current = true;
+    fromClientIdRef.current = fromClientId;
 
     (async () => {
       try {
@@ -175,15 +201,21 @@ export default function Ofertare() {
           return;
         }
         const c = await res.json();
-        // Contact (fără sursă / agent) + produs relevant pentru Ofertare
-        setClient(c.nume || "");
-        setTelefon(c.telefon || "");
-        setLocalitate(c.localitate || "");
-        setJudet(c.judet || "");
-        setCuloare(mapClientCuloare(c.culoare));
-        setModelGard(mapClientModel(c.model, c.brand));
-        setGrosime(mapClientGrosime(c.grosime));
-        toast.success(`Date preluate de la „${c.nume || "client"}"`);
+        const saved = c.ofertaFormData as OfertaFormSnapshot | null | undefined;
+        if (saved && typeof saved === "object") {
+          applyFormSnapshot(saved);
+          toast.success(`Ofertă anterioară preluată pentru „${c.nume || "client"}"`);
+        } else {
+          // Prima ofertă: contact (fără sursă / agent) + produs
+          setClient(c.nume || "");
+          setTelefon(c.telefon || "");
+          setLocalitate(c.localitate || "");
+          setJudet(c.judet || "");
+          setCuloare(mapClientCuloare(c.culoare));
+          setModelGard(mapClientModel(c.model, c.brand));
+          setGrosime(mapClientGrosime(c.grosime));
+          toast.success(`Date preluate de la „${c.nume || "client"}"`);
+        }
       } catch {
         toast.error("Eroare la încărcarea clientului pentru ofertare");
       }
@@ -280,7 +312,53 @@ export default function Ofertare() {
       totalValoareAccesorii,
       totalGeneral,
     };
-    await generateOfertaPdf(data);
+
+    const linkedClientId = fromClientIdRef.current;
+    setSavingPdf(true);
+    try {
+      const blob = await generateOfertaPdf(data);
+
+      if (linkedClientId) {
+        const filename = `Oferta_${(client || "Client").replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        const file = new File([blob], filename, { type: "application/pdf" });
+        await uploadFileForClient(file, linkedClientId, "oferta1");
+
+        const snapshot: OfertaFormSnapshot = {
+          client,
+          cnpCui,
+          telefon,
+          strada,
+          localitate,
+          judet,
+          culoare,
+          modelGard,
+          grosime,
+          discountPercent,
+          panouri,
+          accesorii,
+        };
+        const patchRes = await fetch(`/api/clients/${linkedClientId}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ofertaFormData: snapshot,
+            valoareOferta: totalGeneral.toFixed(2),
+            dataOfertarii: new Date().toISOString().slice(0, 10),
+          }),
+        });
+        if (!patchRes.ok) {
+          const err = await patchRes.json().catch(() => ({}));
+          throw new Error(err.message || "Nu s-a putut salva formularul ofertei pe fișa clientului");
+        }
+        toast.success("PDF descărcat și salvat la Fișier Ofertă 1 pe fișa clientului");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Eroare la generarea / salvarea ofertei");
+    } finally {
+      setSavingPdf(false);
+    }
   };
 
   return (
@@ -522,9 +600,15 @@ export default function Ofertare() {
               )}
               <p className="text-xl font-bold">TOTAL GENERAL: {totalGeneral.toFixed(2)} lei</p>
             </div>
-            <Button onClick={handleDownloadPdf} size="lg" className="gap-2" data-testid="button-download-pdf">
-              <Download className="h-5 w-5" />
-              Descarcă PDF
+            <Button
+              onClick={handleDownloadPdf}
+              size="lg"
+              className="gap-2"
+              disabled={savingPdf}
+              data-testid="button-download-pdf"
+            >
+              {savingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+              {savingPdf ? "Se salvează..." : "Descarcă PDF"}
             </Button>
           </div>
         </CardContent>

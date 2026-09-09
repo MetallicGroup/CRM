@@ -901,41 +901,20 @@ export async function registerRoutes(
       }
 
       // Nu permite golirea accidentală — exceptând editorii de încredere (Madalina, Raluca, admin…)
-      // care pot șterge intenționat orice câmp (date, oferte, prețuri etc.).
+      // care pot șterge intenționat câmpuri (date, prețuri etc.). Fișierele ofertă NU se șterg prin PATCH.
       const safeData = protectClientUpdateFromAccidentalClear(existingClient, data, body, {
         allowClear: isTrustedEditor(req),
       });
 
-      // Golire fișiere ofertă: trusted editors SAU cei cu drept de ștergere clienți
-      const clearsOfferFile = (
-        field: "ofertaFilename" | "ofertaFilename2" | "ofertaFilename3",
-      ) => {
-        const next = safeData[field];
-        const had = !!(existingClient as any)[field];
-        return (
-          had &&
-          next !== undefined &&
-          (next === "" || next === null)
-        );
-      };
+      // Blochează explicit ștergerea fișierelor ofertă (rămân doar prin replace la upload / regenerare PDF)
       if (
-        clearsOfferFile("ofertaFilename") ||
-        clearsOfferFile("ofertaFilename2") ||
-        clearsOfferFile("ofertaFilename3")
+        body.clearOfertaFilename === true ||
+        body.clearOfertaFilename2 === true ||
+        body.clearOfertaFilename3 === true
       ) {
-        const canClearOffer =
-          isTrustedEditor(req) ||
-          canUserDeleteClients({
-            role: req.userRole || "",
-            firstName: req.userFirstName,
-            lastName: req.userLastName,
-            specialKey: req.specialKey,
-          });
-        if (!canClearOffer) {
-          return res.status(403).json({
-            message: "Nu aveți dreptul să ștergeți fișierele de ofertă",
-          });
-        }
+        return res.status(403).json({
+          message: "Fișierele de ofertă nu pot fi șterse — doar înlocuite prin încărcare sau regenerare PDF",
+        });
       }
 
       // RBAC: Non-admins/non-trusted cannot change the agent assignment

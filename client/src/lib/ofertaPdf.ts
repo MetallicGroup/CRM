@@ -214,7 +214,7 @@ function drawTableHeader(
   return y + 5;
 }
 
-export async function generateOfertaPdf(data: OfertaPdfData): Promise<void> {
+export async function generateOfertaPdf(data: OfertaPdfData): Promise<Blob> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = await drawHeader(doc, 'OFERTA / COMANDA CLIENT', pageWidth);
@@ -329,7 +329,18 @@ export async function generateOfertaPdf(data: OfertaPdfData): Promise<void> {
   doc.text('Metallic Group  ·  Document comercial', MARGIN, pageHeight - 7);
   doc.text('1 / 1', pageWidth - MARGIN, pageHeight - 7, { align: 'right' });
 
-  doc.save(`Oferta_${(data.client || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  const filename = `Oferta_${(data.client || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  const blob = doc.output('blob');
+  // Descarcă local
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return blob;
 }
 
 export async function generateAccesoriiPdf(data: AccesoriiPdfData): Promise<void> {

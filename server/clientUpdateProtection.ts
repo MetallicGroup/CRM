@@ -54,6 +54,9 @@ const CLEAR_FLAG_BY_FIELD: Record<string, string> = {
  * Elimină din payload actualizările care ar goli un câmp deja completat de alt user.
  * Regula: valorile goale nu suprascriu valori existente, decât cu flag clear* explicit
  * SAU când allowClear=true (editori de încredere: admin, Madalina, Raluca, etc.).
+ *
+ * Excepție: fișierele ofertă (ofertaFilename*) NU se șterg niciodată prin PATCH —
+ * doar înlocuire prin upload.
  */
 export function protectClientUpdateFromAccidentalClear(
   existing: Client,
@@ -64,8 +67,23 @@ export function protectClientUpdateFromAccidentalClear(
   const next = { ...data };
   const allowClear = options?.allowClear === true;
 
+  // Fișiere ofertă: niciodată golire prin PATCH (nici pentru trusted editors)
+  for (const field of ["ofertaFilename", "ofertaFilename2", "ofertaFilename3"] as const) {
+    const incoming = (next as any)[field];
+    if (incoming === null || incoming === "") {
+      delete (next as any)[field];
+    }
+  }
+
   for (const key of Object.keys(next) as Array<keyof UpdateClient>) {
     if (ALWAYS_APPLY.has(key as string)) continue;
+    if (
+      key === "ofertaFilename" ||
+      key === "ofertaFilename2" ||
+      key === "ofertaFilename3"
+    ) {
+      continue;
+    }
 
     const incoming = (next as any)[key];
     if (incoming === undefined) continue;

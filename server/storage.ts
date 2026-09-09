@@ -782,26 +782,36 @@ export class DatabaseStorage implements IStorage {
       }
     }
     // Fișiere ofertă: "" nu șterge — doar null explicit (după flag clear* pe route)
+    // Notă: route-ul blochează acum golirea; upload-ul setează path nou (replace).
     if (data.ofertaFilename !== undefined) {
       if (data.ofertaFilename === "") {
         // ignore accidental empty string
+      } else if (data.ofertaFilename === null) {
+        // ignore clear — fișierele ofertă nu se șterg
       } else {
-        updateData.ofertaFilename = data.ofertaFilename || null;
+        updateData.ofertaFilename = data.ofertaFilename;
       }
     }
     if (data.ofertaFilename2 !== undefined) {
       if (data.ofertaFilename2 === "") {
         // ignore accidental empty string
+      } else if (data.ofertaFilename2 === null) {
+        // ignore clear
       } else {
-        updateData.ofertaFilename2 = data.ofertaFilename2 || null;
+        updateData.ofertaFilename2 = data.ofertaFilename2;
       }
     }
     if ((data as any).ofertaFilename3 !== undefined) {
       if ((data as any).ofertaFilename3 === "") {
         // ignore accidental empty string
+      } else if ((data as any).ofertaFilename3 === null) {
+        // ignore clear
       } else {
-        updateData.ofertaFilename3 = (data as any).ofertaFilename3 || null;
+        updateData.ofertaFilename3 = (data as any).ofertaFilename3;
       }
+    }
+    if ((data as any).ofertaFormData !== undefined) {
+      updateData.ofertaFormData = (data as any).ofertaFormData;
     }
     if (data.dataRevenire1 !== undefined) {
       updateData.dataRevenire1 = data.dataRevenire1 === null || data.dataRevenire1 === ""

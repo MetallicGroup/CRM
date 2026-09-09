@@ -957,18 +957,7 @@ export default function Clienti() {
     }
 
     // Flag-uri explicite pentru ștergere intenționată (buton trash / golire achiziție)
-    if (clearFlags.clearOfertaFilename) {
-      payload.ofertaFilename = null;
-      payload.clearOfertaFilename = true;
-    }
-    if (clearFlags.clearOfertaFilename2) {
-      payload.ofertaFilename2 = null;
-      payload.clearOfertaFilename2 = true;
-    }
-    if (clearFlags.clearOfertaFilename3) {
-      payload.ofertaFilename3 = null;
-      payload.clearOfertaFilename3 = true;
-    }
+    // Fișierele ofertă nu se șterg prin update — doar înlocuire prin upload / regenerare PDF
     if (clearFlags.clearPretAchizitie) {
       payload.pretAchizitie = null;
       payload.clearPretAchizitie = true;
@@ -1637,20 +1626,27 @@ export default function Clienti() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        {canDeleteClients && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setFormData({ ...formData, ofertaFilename3: "" as any });
-                              setClearFlags((f) => ({ ...f, clearOfertaFilename3: true }));
-                            }}
-                            data-testid="button-remove-oferta-3"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <ObjectUploader
+                          clientId={editingClient?.id}
+                          fileType="oferta3"
+                          pendingFile={pendingFiles.oferta3}
+                          onComplete={(objectPath, filename) => {
+                            setFormData({ ...formData, ofertaFilename3: objectPath as any });
+                            setClearFlags((f) => ({ ...f, clearOfertaFilename3: false }));
+                            if (editingClient?.id) {
+                              queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                              queryClient.invalidateQueries({ queryKey: ["clients"] });
+                            }
+                            toast.success(`Fișier "${filename}" înlocuit cu succes`);
+                          }}
+                          onFileSelected={(file) => {
+                            setPendingFiles({ ...pendingFiles, oferta3: file });
+                            toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
+                          }}
+                          onError={(error) => toast.error(error.message)}
+                        >
+                          Înlocuiește
+                        </ObjectUploader>
                       </>
                     ) : (
                       <ObjectUploader
@@ -2259,20 +2255,27 @@ export default function Clienti() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          {canDeleteClients && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setFormData({ ...formData, ofertaFilename: "" });
-                                setClearFlags((f) => ({ ...f, clearOfertaFilename: true }));
-                              }}
-                              data-testid="button-remove-oferta-1"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
+                          <ObjectUploader
+                            clientId={editingClient?.id}
+                            fileType="oferta1"
+                            pendingFile={pendingFiles.oferta1}
+                            onComplete={(objectPath, filename) => {
+                              setFormData({ ...formData, ofertaFilename: objectPath });
+                              setClearFlags((f) => ({ ...f, clearOfertaFilename: false }));
+                              if (editingClient?.id) {
+                                queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                                queryClient.invalidateQueries({ queryKey: ["clients"] });
+                              }
+                              toast.success(`Fișier "${filename}" înlocuit cu succes`);
+                            }}
+                            onFileSelected={(file) => {
+                              setPendingFiles({ ...pendingFiles, oferta1: file });
+                              toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
+                            }}
+                            onError={(error) => toast.error(error.message)}
+                          >
+                            Înlocuiește
+                          </ObjectUploader>
                         </>
                       ) : (
                         <ObjectUploader
@@ -2320,20 +2323,27 @@ export default function Clienti() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          {canDeleteClients && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setFormData({ ...formData, ofertaFilename2: "" });
-                                setClearFlags((f) => ({ ...f, clearOfertaFilename2: true }));
-                              }}
-                              data-testid="button-remove-oferta-2"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
+                          <ObjectUploader
+                            clientId={editingClient?.id}
+                            fileType="oferta2"
+                            pendingFile={pendingFiles.oferta2}
+                            onComplete={(objectPath, filename) => {
+                              setFormData({ ...formData, ofertaFilename2: objectPath });
+                              setClearFlags((f) => ({ ...f, clearOfertaFilename2: false }));
+                              if (editingClient?.id) {
+                                queryClient.invalidateQueries({ queryKey: ["client-offer-file-history", editingClient.id] });
+                                queryClient.invalidateQueries({ queryKey: ["clients"] });
+                              }
+                              toast.success(`Fișier "${filename}" înlocuit cu succes`);
+                            }}
+                            onFileSelected={(file) => {
+                              setPendingFiles({ ...pendingFiles, oferta2: file });
+                              toast.success(`Fișier "${file.name}" selectat - va fi încărcat la salvare`);
+                            }}
+                            onError={(error) => toast.error(error.message)}
+                          >
+                            Înlocuiește
+                          </ObjectUploader>
                         </>
                       ) : (
                         <ObjectUploader
