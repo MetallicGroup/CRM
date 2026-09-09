@@ -64,6 +64,8 @@ import {
   File as FileIcon,
   Upload,
   Search as SearchIcon,
+  UserRound,
+  Check,
 } from "lucide-react";
 import { ClientImportDialog } from "@/components/ClientImportDialog";
 import { ObjectUploader, uploadFileForClient } from "@/components/ObjectUploader";
@@ -480,6 +482,10 @@ export default function Clienti() {
   const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false);
   const [sheetId, setSheetId] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [nameSuggestOpen, setNameSuggestOpen] = useState(false);
+  const [debouncedNume, setDebouncedNume] = useState("");
+  const [filledFromClientId, setFilledFromClientId] = useState<string | null>(null);
+  const nameSuggestRef = useRef<HTMLDivElement>(null);
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["clients", search, stadiuFilter, agentFilter, dateFrom, dateTo],
@@ -496,6 +502,59 @@ export default function Clienti() {
       return res.json();
     },
   });
+
+  // Autocomplete nume — doar la client nou
+  useEffect(() => {
+    if (editingClient || !isDialogOpen) {
+      setDebouncedNume("");
+      return;
+    }
+    const t = setTimeout(() => setDebouncedNume((formData.nume || "").trim()), 220);
+    return () => clearTimeout(t);
+  }, [formData.nume, editingClient, isDialogOpen]);
+
+  const { data: nameMatches = [], isFetching: fetchingNameMatches } = useQuery<Client[]>({
+    queryKey: ["clients-name-suggest", debouncedNume],
+    queryFn: async () => {
+      const params = new URLSearchParams({ search: debouncedNume });
+      const res = await fetch(`/api/clients?${params}`, { credentials: "include" });
+      if (!res.ok) return [];
+      const all: Client[] = await res.json();
+      const q = debouncedNume.toLowerCase();
+      return all
+        .filter((c) => (c.nume || "").toLowerCase().includes(q))
+        .slice(0, 8);
+    },
+    enabled: !editingClient && isDialogOpen && debouncedNume.length >= 2,
+    staleTime: 15_000,
+  });
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!nameSuggestRef.current?.contains(e.target as Node)) {
+        setNameSuggestOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const applyContactFromExisting = (client: Client) => {
+    setFormData((prev) => ({
+      ...prev,
+      nume: client.nume || prev.nume,
+      telefon: client.telefon || "",
+      email: client.email || "",
+      judet: client.judet || "",
+      localitate: client.localitate || "",
+      sursa: (client.sursa as ClientSource) || prev.sursa || "ALTELE",
+      isPartnerOrder: client.isPartnerOrder || false,
+      partnerId: client.partnerId || "",
+    }));
+    setFilledFromClientId(client.id);
+    setNameSuggestOpen(false);
+    toast.success(`Date contact preluate de la „${client.nume}"`);
+  };
 
   const offerStatusOptionsForUser = useMemo(() => {
     const canSeeRazvanStatus = isRazvan || isAlexandruCroitoru || isAdmin;
@@ -735,6 +794,8 @@ export default function Clienti() {
     setEditingClient(null);
     setEditSnapshot(null);
     setClearFlags({});
+    setFilledFromClientId(null);
+    setNameSuggestOpen(false);
     setFormData({
       ...defaultFormData,
       agentId: isAdmin ? "" : (user?.id || ""),
@@ -1410,15 +1471,121 @@ export default function Clienti() {
 
               <TabsContent value="contact" className="space-y-4 mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2" ref={nameSuggestRef}>
                     <Label htmlFor="nume">Nume *</Label>
-                    <Input
-                      id="nume"
-                      value={formData.nume}
-                      onChange={(e) => setFormData({ ...formData, nume: e.target.value })}
-                      required
-                      data-testid="input-nume"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="nume"
+                        value={formData.nume}
+                        onChange={(e) => {
+                          setFormData({ ...formData, nume: e.target.value });
+                          setFilledFromClientId(null);
+                          if (!editingClient) setNameSuggestOpen(true);
+                        }}
+                        onFocus={() => {
+                          if (!editingClient && (formData.nume || "").trim().length >= 2) {
+                            setNameSuggestOpen(true);
+                          }
+                        }}
+                        autoComplete="off"
+                        required
+                        data-testid="input-nume"
+                        className={cn(filledFromClientId && "border-emerald-500/60")}
+                      />
+                      {!editingClient && nameSuggestOpen && debouncedNume.length >= 2 && (
+                        <div
+                          className="absolute z-50 left-0 right-0 mt-1.5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/95 shadow-2xl backdrop-blur-md"
+                          data-testid="name-suggestions"
+                        >
+                          <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between">
+                            <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                              Clienți existenți
+                            </span>
+                            {fetchingNameMatches && (
+                              <span className="text-[11px] text-slate-500">Caut…</span>
+                            )}
+                          </div>
+                          {nameMatches.length === 0 && !fetchingNameMatches ? (
+                            <div className="px-3 py-4 text-sm text-slate-500 text-center">
+                              Niciun client cu acest nume
+                            </div>
+                          ) : (
+                            <ul className="max-h-64 overflow-y-auto py-1">
+                              {nameMatches.map((match) => {
+                                const sourceLabel =
+                                  SOURCE_OPTIONS.find((s) => s.value === match.sursa)?.label ||
+                                  match.sursa ||
+                                  "";
+                                const loc = [match.localitate, match.judet]
+                                  .filter(Boolean)
+                                  .join(", ");
+                                return (
+                                  <li key={match.id}>
+                                    <button
+                                      type="button"
+                                      className="w-full text-left px-3 py-2.5 hover:bg-slate-800/80 transition-colors flex gap-3 items-start group"
+                                      onClick={() => applyContactFromExisting(match)}
+                                      data-testid={`name-suggest-${match.id}`}
+                                    >
+                                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300 group-hover:bg-emerald-500/20 group-hover:text-emerald-300">
+                                        <UserRound className="h-4 w-4" />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium text-slate-100 truncate">
+                                            {match.nume}
+                                          </span>
+                                          {filledFromClientId === match.id && (
+                                            <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                          )}
+                                        </div>
+                                        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
+                                          {match.telefon && (
+                                            <span className="inline-flex items-center gap-1">
+                                              <Phone className="h-3 w-3" />
+                                              {match.telefon}
+                                            </span>
+                                          )}
+                                          {match.email && (
+                                            <span className="inline-flex items-center gap-1 truncate">
+                                              <Mail className="h-3 w-3" />
+                                              {match.email}
+                                            </span>
+                                          )}
+                                          {loc && (
+                                            <span className="inline-flex items-center gap-1 truncate">
+                                              <MapPin className="h-3 w-3" />
+                                              {loc}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                          {getOfferStatusBadge(match.stadiuOferta)}
+                                          {sourceLabel && (
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                                              {sourceLabel}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                          <div className="px-3 py-2 border-t border-slate-800 text-[11px] text-slate-500">
+                            Click pe un client ca să preiei telefon, email, locație și sursă
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {filledFromClientId && !editingClient && (
+                      <p className="text-xs text-emerald-400/90 flex items-center gap-1.5">
+                        <Check className="h-3.5 w-3.5" />
+                        Date contact preluate dintr-un client existent — poți modifica înainte de salvare
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="telefon">Telefon *</Label>

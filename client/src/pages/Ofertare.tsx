@@ -99,7 +99,14 @@ const PANOURI_DEFAULT = [
 ];
 
 export default function Ofertare() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const isRazvan =
+    !!user &&
+    (user.email?.toLowerCase().includes("razvan") ||
+      user.firstName?.toLowerCase().includes("razvan"));
+  /** Răzvan (și adminii) pot edita prețurile de pe Accesorii auxiliare */
+  const canEditAccesoriiPrices = isRazvan || isAdmin;
+
   const [client, setClient] = useState("");
   const [cnpCui, setCnpCui] = useState("");
   const [telefon, setTelefon] = useState("");
@@ -170,13 +177,23 @@ export default function Ofertare() {
     });
   };
 
-  const handleDownloadPdf = () => {
+  const updateAccesoriuPret = (index: number, pretBuc: number) => {
+    setAccesorii((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], pretBuc };
+      return next;
+    });
+  };
+
+  const handleDownloadPdf = async () => {
     const agentName = user ? `${user.firstName} ${user.lastName}` : "Agent";
     const data: OfertaPdfData = {
       agentName,
-      agentTitle: "Director Vanzari",
+      agentTitle: isRazvan ? "Agent Vanzari" : "Director Vanzari",
       agentPhone: "0760 259 460",
-      agentEmail: "dragos.frangache@metallicroof.ro",
+      agentEmail: isRazvan
+        ? "razvan.rosu@mtallicroof.ro"
+        : "dragos.frangache@metallicroof.ro",
       agentAddress: "Bld Aurel Vlaicu 181, Constanta, Romania",
       client: client || "—",
       cnpCui: cnpCui || "—",
@@ -195,7 +212,7 @@ export default function Ofertare() {
       totalValoareAccesorii,
       totalGeneral,
     };
-    generateOfertaPdf(data);
+    await generateOfertaPdf(data);
   };
 
   return (
@@ -396,7 +413,26 @@ export default function Ofertare() {
                           onChange={(e) => updateAccesoriuCant(i, Number(e.target.value) || 0)}
                         />
                       </td>
-                      <td className="p-2">{a.pretBuc} lei</td>
+                      <td className="p-2">
+                        {canEditAccesoriiPrices ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              className="w-24 h-8"
+                              value={a.pretBuc || ""}
+                              onChange={(e) =>
+                                updateAccesoriuPret(i, Number(e.target.value) || 0)
+                              }
+                              data-testid={`input-accesoriu-pret-${i}`}
+                            />
+                            <span className="text-slate-400 text-xs">lei</span>
+                          </div>
+                        ) : (
+                          <span>{a.pretBuc} lei</span>
+                        )}
+                      </td>
                       <td className="p-2 font-medium">{accesoriiCuTotal[i].total > 0 ? `${accesoriiCuTotal[i].total.toFixed(2)} lei` : "—"}</td>
                     </tr>
                   ))}
