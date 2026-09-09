@@ -343,7 +343,7 @@ export default function Ofertare() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ofertaFormData: snapshot,
-            valoareOferta: totalGeneral.toFixed(2),
+            valoareOferta: totalValoareGard.toFixed(2),
             dataOfertarii: new Date().toISOString().slice(0, 10),
           }),
         });
