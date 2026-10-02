@@ -12,6 +12,15 @@ const XLSX_PATH =
 const IMPORT_NOTE =
   process.argv[3] || `Import leads Excel ${XLSX_PATH.split("/").pop()}`;
 
+const SOURCE = (process.argv[4] || "FACEBOOK") as
+  | "FACEBOOK"
+  | "TIKTOK"
+  | "GOOGLE"
+  | "RECLAME"
+  | "SITE"
+  | "RECOMANDARE"
+  | "ALTELE";
+
 function normalizePhone(raw: string): string {
   let s = (raw || "").trim();
   if (s.startsWith("p:")) s = s.slice(2);
@@ -115,7 +124,7 @@ async function main() {
         judet: null,
         email: null,
         agentId,
-        sursa: "FACEBOOK",
+        sursa: SOURCE,
         stadiuOferta: "NECONTACTAT",
         categorieProdus: "GARD",
         contactat: false,

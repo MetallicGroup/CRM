@@ -387,6 +387,8 @@ const defaultFormData: Partial<ExtendedCreateClient> = {
   finisaj: undefined,
   culoare: undefined,
   mlRulouProd: "",
+  mlRulouProd156: "",
+  mlRulouProd125: "",
   smartDripstop: false,
   valoareOferta: "",
   stadiuOferta: "NOUA",
@@ -824,6 +826,8 @@ export default function Clienti() {
       finisaj: client.finisaj || undefined,
       culoare: client.culoare || undefined,
       mlRulouProd: client.mlRulouProd || "",
+      mlRulouProd156: client.mlRulouProd156 || "",
+      mlRulouProd125: client.mlRulouProd125 || "",
       smartDripstop: client.smartDripstop || false,
       valoareOferta: client.valoareOferta || "",
       stadiuOferta: (client.stadiuOferta as any === "NOU" ? "NOUA" :
@@ -1434,7 +1438,7 @@ export default function Clienti() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[90vh] overflow-y-auto sm:max-h-[90vh]">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[95vh] overflow-y-auto sm:max-h-[95vh]">
           <DialogHeader>
             <DialogTitle>
               {editingClient
@@ -1962,18 +1966,42 @@ export default function Clienti() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="mlRulouProd">ML Rulou Producție</Label>
-                    <Input
-                      id="mlRulouProd"
-                      type="number"
-                      step="0.01"
-                      value={formData.mlRulouProd}
-                      onChange={(e) => setFormData({ ...formData, mlRulouProd: e.target.value })}
-                      data-testid="input-ml-rulou"
-                    />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="mlRulouProd">ML Rulou Producție 31,2</Label>
+                      <Input
+                        id="mlRulouProd"
+                        type="number"
+                        step="0.01"
+                        value={formData.mlRulouProd}
+                        onChange={(e) => setFormData({ ...formData, mlRulouProd: e.target.value })}
+                        data-testid="input-ml-rulou-312"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mlRulouProd156">ML Rulou Producție 15,6</Label>
+                      <Input
+                        id="mlRulouProd156"
+                        type="number"
+                        step="0.01"
+                        value={formData.mlRulouProd156 || ""}
+                        onChange={(e) => setFormData({ ...formData, mlRulouProd156: e.target.value })}
+                        data-testid="input-ml-rulou-156"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mlRulouProd125">ML Rulou Producție 125</Label>
+                      <Input
+                        id="mlRulouProd125"
+                        type="number"
+                        step="0.01"
+                        value={formData.mlRulouProd125 || ""}
+                        onChange={(e) => setFormData({ ...formData, mlRulouProd125: e.target.value })}
+                        data-testid="input-ml-rulou-125"
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2 pt-8">
+                  <div className="flex items-center space-x-2 pt-8 sm:self-start">
                     <Checkbox
                       id="smartDripstop"
                       checked={formData.smartDripstop}

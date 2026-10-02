@@ -282,6 +282,8 @@ export const clients = pgTable("clients", {
   grosime: varchar("grosime", { length: 20 }),
   finisaj: varchar("finisaj", { length: 50 }),
   mlRulouProd: decimal("ml_rulou_prod", { precision: 10, scale: 2 }),
+  mlRulouProd156: decimal("ml_rulou_prod_156", { precision: 10, scale: 2 }),
+  mlRulouProd125: decimal("ml_rulou_prod_125", { precision: 10, scale: 2 }),
   smartDripstop: boolean("smart_dripstop").default(false),
 
   // SECȚIUNEA 4: Ofertă și vânzare
@@ -413,6 +415,8 @@ export const createClientSchema = z.object({
   grosime: z.string().optional(),
   finisaj: z.string().optional(),
   mlRulouProd: z.string().optional(),
+  mlRulouProd156: z.string().optional(),
+  mlRulouProd125: z.string().optional(),
   smartDripstop: z.boolean().optional().default(false),
 
   // Secțiunea 4: Ofertă și vânzare

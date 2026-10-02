@@ -826,6 +826,8 @@ export async function registerRoutes(
     dataOfertarii: z.string().optional(),
     sursa: z.string().optional(),
     mlRulouProd: z.string().optional(),
+    mlRulouProd156: z.string().optional(),
+    mlRulouProd125: z.string().optional(),
     valoareOferta: z.string().optional(),
     categorieProdus: z.string().optional(),
     brand: z.string().optional(),

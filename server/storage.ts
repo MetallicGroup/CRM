@@ -634,6 +634,8 @@ export class DatabaseStorage implements IStorage {
       grosime: data.grosime || null,
       finisaj: data.finisaj || null,
       mlRulouProd: parseDecimal(data.mlRulouProd),
+      mlRulouProd156: parseDecimal((data as any).mlRulouProd156),
+      mlRulouProd125: parseDecimal((data as any).mlRulouProd125),
       smartDripstop: data.smartDripstop || false,
       valoareOferta: parseDecimal(data.valoareOferta),
       stadiuOferta: data.stadiuOferta || "NOUA",
@@ -719,6 +721,8 @@ export class DatabaseStorage implements IStorage {
     if (data.grosime !== undefined) updateData.grosime = data.grosime || null;
     if (data.finisaj !== undefined) updateData.finisaj = data.finisaj || null;
     if (data.mlRulouProd !== undefined) updateData.mlRulouProd = parseDecimal(data.mlRulouProd);
+    if ((data as any).mlRulouProd156 !== undefined) updateData.mlRulouProd156 = parseDecimal((data as any).mlRulouProd156);
+    if ((data as any).mlRulouProd125 !== undefined) updateData.mlRulouProd125 = parseDecimal((data as any).mlRulouProd125);
     if (data.smartDripstop !== undefined) updateData.smartDripstop = data.smartDripstop;
     if (data.valoareOferta !== undefined) updateData.valoareOferta = parseDecimal(data.valoareOferta);
     if (data.avansSuma !== undefined) updateData.avansSuma = parseDecimal(data.avansSuma);
@@ -1596,6 +1600,8 @@ export class DatabaseStorage implements IStorage {
           dataOfertarii: parseDate(row.dataOfertarii),
           sursa: mapSursa(row.sursa),
           mlRulouProd: parseValue(row.mlRulouProd),
+          mlRulouProd156: parseValue(row.mlRulouProd156),
+          mlRulouProd125: parseValue(row.mlRulouProd125),
           valoareOferta: parsedValue,
           categorieProdus: row.categorieProdus?.toUpperCase()?.includes("GARD") ? "GARD" :
             row.categorieProdus?.toUpperCase()?.includes("ACOPERIS") ? "ACOPERIS" : undefined,
