@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Plus } from "lucide-react";
 import { generateOfertaPdf, type OfertaPdfData } from "@/lib/ofertaPdf";
 import { uploadFileForClient } from "@/components/ObjectUploader";
 import type { OfertaFormSnapshot } from "@shared/schema";
@@ -277,6 +277,10 @@ export default function Ofertare() {
     });
   };
 
+  const addPanouRow = () => {
+    setPanouri((prev) => [...prev, { lungime: 0, inaltime: 0, nrPanouri: 0 }]);
+  };
+
   const updateAccesoriuCant = (index: number, cant: number) => {
     setAccesorii((prev) => {
       const next = [...prev];
@@ -481,8 +485,20 @@ export default function Ofertare() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle>Desfășurator panouri</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={addPanouRow}
+            data-testid="button-add-panou-row"
+            title="Adaugă linie panouri"
+          >
+            <Plus className="h-4 w-4" />
+            Adaugă linie
+          </Button>
         </CardHeader>
         <CardContent>
             <div className="overflow-x-auto">
@@ -533,7 +549,20 @@ export default function Ofertare() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-2 font-medium">TOTAL MP: {totalMp.toFixed(2)}</p>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p className="font-medium">TOTAL MP: {totalMp.toFixed(2)}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={addPanouRow}
+                data-testid="button-add-panou-row-bottom"
+                title="Adaugă linie panouri"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
         </CardContent>
       </Card>
 
