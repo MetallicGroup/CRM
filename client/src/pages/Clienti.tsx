@@ -176,6 +176,8 @@ const COLOR_OPTIONS: { value: ColorRAL; label: string }[] = [
   { value: "RAL_7016", label: "RAL 7016 (Gri antracit)" },
   { value: "RAL_7024", label: "RAL 7024 (Gri grafit)" },
   { value: "RAL_8019", label: "RAL 8019 (Maro gri)" },
+  { value: "RAL_8019_MARO_BRUN_MAT", label: "RAL 8019 Maro Brun Mat" },
+  { value: "RAL_8019_MARO_BRUN_BRILIANT", label: "RAL 8019 Maro Brun Briliant" },
   { value: "RAL_8017", label: "RAL 8017 (Maro ciocolată)" },
   { value: "RAL_3005", label: "RAL 3005 (Vișiniu)" },
   { value: "RAL_8004", label: "RAL 8004 (Maro cupru)" },
