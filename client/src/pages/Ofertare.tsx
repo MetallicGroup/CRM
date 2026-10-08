@@ -87,6 +87,8 @@ const CULORI = [
   "RAL 3005 VISINIU BRILIANT",
   "RAL 9005 NEGRU MAT",
   "RAL 8017 MARO LUCIOS",
+  "RAL 8019 MARO BRUN MAT",
+  "RAL 8019 MARO BRUN BRILIANT",
   "MAHON",
   "STEJAR AURIU",
   "MESTEACAN",
@@ -106,7 +108,13 @@ function mapClientCuloare(culoare: string | null | undefined): string {
   if (!culoare) return "";
   if ((CULORI as readonly string[]).includes(culoare)) return culoare;
   const code = culoare.replace(/_/g, " ").toUpperCase();
-  const match = CULORI.find((c) => c.toUpperCase().startsWith(code));
+  const exact = CULORI.find((c) => c.toUpperCase() === code);
+  if (exact) return exact;
+  // Match pe prefix doar dacă e egal sau urmat de spațiu (evită RAL_8019 → primul 8019 din listă)
+  const match = CULORI.find((c) => {
+    const u = c.toUpperCase();
+    return u === code || u.startsWith(code + " ");
+  });
   return match || "";
 }
 
