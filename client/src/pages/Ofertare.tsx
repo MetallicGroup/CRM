@@ -549,20 +549,7 @@ export default function Ofertare() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="font-medium">TOTAL MP: {totalMp.toFixed(2)}</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={addPanouRow}
-                data-testid="button-add-panou-row-bottom"
-                title="Adaugă linie panouri"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            <p className="mt-2 font-medium">TOTAL MP: {totalMp.toFixed(2)}</p>
         </CardContent>
       </Card>
 
